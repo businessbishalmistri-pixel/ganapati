@@ -5,7 +5,7 @@
 import { supabase, STORE_ORGANIZATION_ID, submitStoreApiOrder } from './supabase';
 import { saveOrder, getSavedOrders } from './orderService';
 
-export const STORE_API_KEY = 'xyvot_pk_live_8936e6_xplj248m4sv6g3';
+export const STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
 
 // 1. Send OTP (Calls Supabase backend, NEVER calls Facebook)
 export const sendWhatsAppOtp = async (phoneNumber) => {
