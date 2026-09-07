@@ -1,11 +1,52 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
+import { 
+  fetchCustomerCloudCart, 
+  syncCustomerCloudCart, 
+  STORE_ORGANIZATION_ID, 
+  sanitizeWhatsAppPhone 
+} from '../services/supabase';
 
 const CartContext = createContext();
 const CART_STORAGE_KEY = 'quickcart_cart_items';
 
+/**
+ * Merge local guest cart items with remote cloud items
+ */
+function mergeCarts(localItems, cloudItems) {
+  const mergedMap = new Map();
+
+  // 1. Add cloud items
+  (cloudItems || []).forEach((item) => {
+    const key = item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : item.id);
+    mergedMap.set(key, { ...item, cartKey: key, cartItemId: key });
+  });
+
+  // 2. Merge / Append local items
+  (localItems || []).forEach((localItem) => {
+    const key = localItem.cartKey || localItem.cartItemId || (localItem.variantId ? `${localItem.id}_${localItem.variantId}` : localItem.id);
+    if (mergedMap.has(key)) {
+      const existing = mergedMap.get(key);
+      const totalQty = (existing.quantity || 1) + (localItem.quantity || 1);
+      const maxStock = existing.stockQuantity || existing.stock || localItem.stockQuantity || localItem.stock || 999;
+      mergedMap.set(key, {
+        ...existing,
+        ...localItem,
+        quantity: Math.min(totalQty, maxStock),
+      });
+    } else {
+      mergedMap.set(key, { ...localItem, cartKey: key, cartItemId: key });
+    }
+  });
+
+  return Array.from(mergedMap.values());
+}
+
 export const CartProvider = ({ children }) => {
   const { showToast } = useToast();
+  const { customer } = useAuth();
+
   const [cartItems, setCartItems] = useState(() => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
@@ -19,13 +60,92 @@ export const CartProvider = ({ children }) => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [justAddedId, setJustAddedId] = useState(null);
 
+  const initialSyncDoneRef = useRef(false);
+  const lastCustomerPhoneRef = useRef(customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null);
+  const syncTimeoutRef = useRef(null);
+
+  // 1. Persist to localStorage optimistically on every change
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
     } catch (e) {
-      console.error(e);
+      console.error('Failed to save cart to localStorage', e);
     }
   }, [cartItems]);
+
+  // 2. Auth State Change Listener (Login / Logout / Cross-device Cloud Sync)
+  useEffect(() => {
+    const currentPhone = customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null;
+    const previousPhone = lastCustomerPhoneRef.current;
+    lastCustomerPhoneRef.current = currentPhone;
+
+    if (currentPhone) {
+      // User is logged in
+      let isMounted = true;
+      initialSyncDoneRef.current = false;
+
+      (async () => {
+        try {
+          const cloudItems = await fetchCustomerCloudCart(currentPhone, STORE_ORGANIZATION_ID);
+          if (!isMounted) return;
+
+          let currentLocalItems = [];
+          try {
+            const saved = localStorage.getItem(CART_STORAGE_KEY);
+            if (saved) currentLocalItems = JSON.parse(saved);
+          } catch (e) {}
+
+          const merged = mergeCarts(currentLocalItems, cloudItems);
+          setCartItems(merged);
+          
+          // Sync merged cart back to cloud
+          if (merged.length > 0 || (cloudItems && cloudItems.length > 0)) {
+            syncCustomerCloudCart(currentPhone, STORE_ORGANIZATION_ID, merged);
+          }
+        } catch (err) {
+          console.warn('Error during cloud cart sync:', err);
+        } finally {
+          if (isMounted) {
+            initialSyncDoneRef.current = true;
+          }
+        }
+      })();
+
+      return () => {
+        isMounted = false;
+      };
+    } else if (previousPhone && !currentPhone) {
+      // User logged out -> wipe local cart session
+      initialSyncDoneRef.current = false;
+      setCartItems([]);
+      try {
+        localStorage.removeItem(CART_STORAGE_KEY);
+      } catch (e) {}
+    } else {
+      // Guest mode
+      initialSyncDoneRef.current = true;
+    }
+  }, [customer?.phone]);
+
+  // 3. Debounced (300ms) background sync to Supabase store_customers for logged-in user mutations
+  useEffect(() => {
+    const currentPhone = customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null;
+    if (!currentPhone || !initialSyncDoneRef.current) return;
+
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = setTimeout(() => {
+      syncCustomerCloudCart(currentPhone, STORE_ORGANIZATION_ID, cartItems);
+    }, 300);
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, [cartItems, customer?.phone]);
 
   const addToCart = (product, quantity = 1, selectedVariant = null) => {
     const itemStock = selectedVariant 
@@ -129,7 +249,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (cartKey) => {
-    const item = cartItems.find((i) => (i.cartKey || i.cartItemId || i.id) === cartKey);
+    const item = cartItems.find((i) => (i.cartKey || i.cartItemId || item?.id) === cartKey);
     setCartItems((prevItems) => prevItems.filter((i) => (i.cartKey || i.cartItemId || i.id) !== cartKey));
     if (item) {
       const vLabel = item.variantName || (item.selectedVariant ? (item.selectedVariant.name || item.selectedVariant.size) : '');
@@ -139,6 +259,14 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCartItems([]);
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch (e) {}
+
+    const currentPhone = customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null;
+    if (currentPhone) {
+      syncCustomerCloudCart(currentPhone, STORE_ORGANIZATION_ID, []);
+    }
     showToast('Cart cleared', 'info');
   };
 

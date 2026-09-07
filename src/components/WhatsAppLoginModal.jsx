@@ -3,11 +3,13 @@ import { X, ArrowRight, CheckCircle, Smartphone, User, MapPin, Mail, Home, Brief
 import { requestStoreWhatsAppOtp, verifyStoreWhatsAppOtp, upsertStoreCustomerProfile } from '../services/supabase';
 import { addressService } from '../services/addressService';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { LocationPicker } from './LocationPicker';
 
 export const WhatsAppLoginModal = () => {
-  const { isAuthOpen, setIsAuthOpen, setCurrentCustomer } = useAuth();
+  const { isAuthOpen, setIsAuthOpen, setCurrentCustomer, postAuthAction, setPostAuthAction } = useAuth();
+  const { setIsCheckoutOpen } = useCart();
   const { showToast } = useToast();
 
   const [phone, setPhone] = useState('');
@@ -66,6 +68,7 @@ export const WhatsAppLoginModal = () => {
     setPhone('');
     setStep('phone');
     setOtpDigits(['', '', '', '', '', '']);
+    setPostAuthAction(null);
   };
 
   const formatMinutes = (seconds) => {
@@ -176,7 +179,11 @@ export const WhatsAppLoginModal = () => {
         showToast('OTP verified! Please set up your delivery details.', 'info');
       } else {
         showToast(`Welcome back, ${loggedInCust.fullName || 'Customer'}!`, 'success');
+        const shouldCheckout = postAuthAction === 'checkout';
         closeLoginModal();
+        if (shouldCheckout) {
+          setIsCheckoutOpen(true);
+        }
       }
     } catch (err) {
       showToast('Invalid OTP code. Please check your WhatsApp.', 'error');
@@ -252,7 +259,11 @@ export const WhatsAppLoginModal = () => {
       }
 
       showToast('Profile & delivery address saved! Ready for 1-click checkout.', 'success');
+      const shouldCheckout = postAuthAction === 'checkout';
       closeLoginModal();
+      if (shouldCheckout) {
+        setIsCheckoutOpen(true);
+      }
     } catch (err) {
       showToast('Failed to save profile: ' + (err.message || 'Unknown error'), 'error');
     } finally {

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X, Trash2, ShoppingBag, ArrowRight, Plus, Minus, AlertCircle, Package, Lock } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
 export const CartDrawer = () => {
@@ -16,6 +17,7 @@ export const CartDrawer = () => {
     setIsCheckoutOpen,
   } = useCart();
 
+  const { customer, openLoginModal } = useAuth();
   const { settings } = useSettings();
 
   useEffect(() => {
@@ -30,7 +32,12 @@ export const CartDrawer = () => {
 
   const handleProceedToCheckout = () => {
     setIsCartOpen(false);
-    setIsCheckoutOpen(true);
+    if (!customer) {
+      // Guest cart preserved locally -> Prompt WhatsApp OTP verification
+      openLoginModal('checkout');
+    } else {
+      setIsCheckoutOpen(true);
+    }
   };
 
   return (

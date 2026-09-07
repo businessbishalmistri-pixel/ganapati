@@ -319,3 +319,57 @@ export async function submitStoreApiOrder(apiKey, orderPayload) {
     invoice_number: invNumber
   };
 }
+
+/**
+ * 4. Cloud Cart Persistence (Option B - store_customers JSONB cart)
+ */
+export async function fetchCustomerCloudCart(phone, orgId) {
+  if (!phone) return [];
+  const cleanPhone = sanitizeWhatsAppPhone(phone);
+  const targetOrg = orgId || STORE_ORGANIZATION_ID;
+
+  try {
+    const { data, error } = await supabase
+      .from('store_customers')
+      .select('cart')
+      .eq('admin_id', targetOrg)
+      .eq('phone', cleanPhone)
+      .maybeSingle();
+
+    if (error || !data) {
+      return [];
+    }
+    return Array.isArray(data.cart) ? data.cart : [];
+  } catch (err) {
+    console.warn('fetchCustomerCloudCart warning:', err);
+    return [];
+  }
+}
+
+export async function syncCustomerCloudCart(phone, orgId, items) {
+  if (!phone) return false;
+  const cleanPhone = sanitizeWhatsAppPhone(phone);
+  const targetOrg = orgId || STORE_ORGANIZATION_ID;
+  const cartData = Array.isArray(items) ? items : [];
+
+  try {
+    const { error } = await supabase
+      .from('store_customers')
+      .update({
+        cart: cartData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('admin_id', targetOrg)
+      .eq('phone', cleanPhone);
+
+    if (error) {
+      console.warn('syncCustomerCloudCart notice:', error?.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('syncCustomerCloudCart warning:', err);
+    return false;
+  }
+}
+

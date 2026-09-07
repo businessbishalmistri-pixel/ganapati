@@ -22,11 +22,17 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [postAuthAction, setPostAuthAction] = useState(null); // 'checkout' | null
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileInitialTab, setProfileInitialTab] = useState('hub');
   const [profileInitialSubView, setProfileInitialSubView] = useState('list');
   const [profileOrigin, setProfileOrigin] = useState('direct'); // 'direct' | 'checkout'
+
+  const openLoginModal = (action = null) => {
+    setPostAuthAction(action);
+    setIsAuthOpen(true);
+  };
 
   const openAddressBook = (tab = 'address', subView = 'list', origin = 'direct') => {
     setProfileInitialTab(tab);
@@ -163,6 +169,9 @@ export const AuthProvider = ({ children }) => {
         setCurrentCustomer: setCustomer,
         isAuthOpen,
         setIsAuthOpen,
+        postAuthAction,
+        setPostAuthAction,
+        openLoginModal,
         isOrdersOpen,
         setIsOrdersOpen,
         isProfileOpen,
