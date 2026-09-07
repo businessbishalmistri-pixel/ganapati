@@ -413,7 +413,7 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
 
                       <button
                         type="button"
-                        onClick={() => openAddressBook('address', 'list')}
+                        onClick={() => openAddressBook('address', 'list', 'checkout')}
                         className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-white hover:bg-slate-100 text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
                       >
                         <span>Change</span>
@@ -447,7 +447,7 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => openAddressBook('address', 'add')}
+                      onClick={() => openAddressBook('address', 'add', 'checkout')}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -550,7 +550,7 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. Bishal Mistri"
+                            placeholder="Full name"
                             value={customerInfo.name}
                             onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                             className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border-0 focus:bg-white focus:ring-1 focus:ring-slate-400 outline-none transition-all"
@@ -563,7 +563,7 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
                           </label>
                           <input
                             type="tel"
-                            placeholder="98765 43210"
+                            placeholder="10-digit mobile number"
                             value={customerInfo.phone}
                             onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value.replace(/\D/g, '') })}
                             className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border-0 focus:bg-white focus:ring-1 focus:ring-slate-400 outline-none transition-all"

@@ -42,7 +42,8 @@ export const CustomerProfileModal = () => {
     profileInitialTab,
     setProfileInitialTab,
     profileInitialSubView,
-    setProfileInitialSubView
+    setProfileInitialSubView,
+    profileOrigin
   } = useAuth();
   const { showToast } = useToast();
   const { settings } = useSettings();
@@ -139,7 +140,14 @@ export const CustomerProfileModal = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isProfileOpen) {
-        if (activeTab === 'address' && addressSubView !== 'list') {
+        if (profileOrigin === 'checkout') {
+          if (activeTab === 'address' && addressSubView !== 'list' && profileInitialSubView === 'list') {
+            setAddressSubView('list');
+            setEditingAddressId(null);
+          } else {
+            closeModal();
+          }
+        } else if (activeTab === 'address' && addressSubView !== 'list') {
           setAddressSubView('list');
           setEditingAddressId(null);
         } else if (activeTab !== 'hub') {
@@ -151,7 +159,7 @@ export const CustomerProfileModal = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isProfileOpen, setIsProfileOpen, activeTab, addressSubView]);
+  }, [isProfileOpen, setIsProfileOpen, activeTab, addressSubView, profileOrigin, profileInitialSubView]);
 
   if (!isProfileOpen) return null;
 
@@ -268,6 +276,9 @@ export const CustomerProfileModal = () => {
     if (newDefault) {
       syncDefaultAddressToProfile(newDefault);
       showToast(`"${newDefault.tag || newDefault.label || 'Address'}" marked as default delivery address!`, 'success');
+      if (profileOrigin === 'checkout') {
+        closeModal();
+      }
     }
   };
 
@@ -332,12 +343,17 @@ export const CustomerProfileModal = () => {
       editingAddressId ? 'Address updated successfully!' : 'New address saved to your address book!',
       'success'
     );
-    setAddressSubView('list');
-    setEditingAddressId(null);
+
+    if (profileOrigin === 'checkout') {
+      closeModal();
+    } else {
+      setAddressSubView('list');
+      setEditingAddressId(null);
+    }
   };
 
   const displayName = activeCustomer?.fullName || activeCustomer?.name || 'Customer';
-  const displayPhone = activeCustomer?.phone ? `+91 ${activeCustomer.phone}` : '+91 98765 43210';
+  const displayPhone = activeCustomer?.phone ? `+91 ${activeCustomer.phone}` : '';
   const defaultAddressObj = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
 
   return (
@@ -359,7 +375,14 @@ export const CustomerProfileModal = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (activeTab === 'address' && addressSubView !== 'list') {
+                    if (profileOrigin === 'checkout') {
+                      if (activeTab === 'address' && addressSubView !== 'list' && profileInitialSubView === 'list') {
+                        setAddressSubView('list');
+                        setEditingAddressId(null);
+                      } else {
+                        closeModal();
+                      }
+                    } else if (activeTab === 'address' && addressSubView !== 'list') {
                       setAddressSubView('list');
                       setEditingAddressId(null);
                     } else {
@@ -799,7 +822,7 @@ export const CustomerProfileModal = () => {
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. Bishal Mistri"
+                          placeholder="Full name"
                           value={formName}
                           onChange={(e) => setFormName(e.target.value)}
                           className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border border-transparent focus:border-slate-400 focus:bg-white outline-none transition-all"
@@ -814,7 +837,7 @@ export const CustomerProfileModal = () => {
                           </label>
                           <input
                             type="tel"
-                            placeholder="9876543210"
+                            placeholder="10-digit mobile number"
                             value={formPhone}
                             onChange={(e) => setFormPhone(e.target.value)}
                             className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border border-transparent focus:border-slate-400 focus:bg-white outline-none transition-all"
@@ -827,7 +850,7 @@ export const CustomerProfileModal = () => {
                           </label>
                           <input
                             type="email"
-                            placeholder="oliva@example.com"
+                            placeholder="name@example.com"
                             value={formEmail}
                             onChange={(e) => setFormEmail(e.target.value)}
                             className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border border-transparent focus:border-slate-400 focus:bg-white outline-none transition-all"
@@ -844,7 +867,7 @@ export const CustomerProfileModal = () => {
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. Station Road, 4no Gali, Near City Hospital"
+                          placeholder="House / Flat / Street / Landmark"
                           value={formAddress}
                           onChange={(e) => setFormAddress(e.target.value)}
                           className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border border-transparent focus:border-slate-400 focus:bg-white outline-none transition-all"

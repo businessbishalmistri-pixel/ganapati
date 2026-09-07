@@ -26,10 +26,12 @@ export const AuthProvider = ({ children }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileInitialTab, setProfileInitialTab] = useState('hub');
   const [profileInitialSubView, setProfileInitialSubView] = useState('list');
+  const [profileOrigin, setProfileOrigin] = useState('direct'); // 'direct' | 'checkout'
 
-  const openAddressBook = (tab = 'address', subView = 'list') => {
+  const openAddressBook = (tab = 'address', subView = 'list', origin = 'direct') => {
     setProfileInitialTab(tab);
     setProfileInitialSubView(subView);
+    setProfileOrigin(origin);
     setIsProfileOpen(true);
   };
 
@@ -169,6 +171,8 @@ export const AuthProvider = ({ children }) => {
         setProfileInitialTab,
         profileInitialSubView,
         setProfileInitialSubView,
+        profileOrigin,
+        setProfileOrigin,
         openAddressBook,
         otpState,
         sendWhatsAppOtp,
