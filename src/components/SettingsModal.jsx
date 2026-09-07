@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { getSavedOrders } from '../services/orderService';
 import { inventoryApi } from '../services/inventoryApi';
+import { STORE_API_KEY } from '../services/supabase';
 
 export const SettingsModal = ({ onCatalogReset }) => {
   const { settings, updateSettings, isSettingsOpen, setIsSettingsOpen } = useSettings();
@@ -283,13 +284,13 @@ export const SettingsModal = ({ onCatalogReset }) => {
                   <input
                     type="text"
                     readOnly
-                    value="xyvot_pk_live_8d59e2_n4tuqdx7wivkrw"
+                    value={STORE_API_KEY}
                     className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 text-slate-700 select-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText('xyvot_pk_live_8d59e2_n4tuqdx7wivkrw');
+                      navigator.clipboard.writeText(STORE_API_KEY);
                       showToast('API Key copied to clipboard!', 'success');
                     }}
                     className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"

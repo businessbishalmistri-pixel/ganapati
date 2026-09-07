@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://qirpufadoruqvgubpqzx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpcnB1ZmFkb3J1cXZndWJwcXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjgwODUsImV4cCI6MjEwMzk0NDA4NX0.WBzX3E401higTSSrjYMx5LQEcOptiiaU_4Id5j_X8PI';
 
-export const DEFAULT_STORE_API_KEY = 'xyvot_pk_live_8d59e2_n4tuqdx7wivkrw';
+export const DEFAULT_STORE_API_KEY = 'xyvot_pk_live_8936e6_xplj248m4sv6g3';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
