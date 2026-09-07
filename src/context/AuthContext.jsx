@@ -139,6 +139,13 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('quickcart_customer_session');
       localStorage.removeItem('customer_saved_addresses');
       localStorage.removeItem('quickcart_saved_orders');
+
+      // Purge any dynamically keyed customer records
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('xyvot_customer_') || key.startsWith('customer_')) {
+          localStorage.removeItem(key);
+        }
+      });
     } catch (e) {}
     setCustomer(null);
     if (typeof window !== 'undefined') {

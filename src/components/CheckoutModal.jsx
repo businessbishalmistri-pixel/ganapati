@@ -41,134 +41,115 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
   // Delivery Method: 'shipping' (Home Delivery) | 'pickup' (Store Pickup)
   const [deliveryMethod, setDeliveryMethod] = useState('shipping');
 
-  // Contact State (Initialized from default address or active session)
+  // Contact State (Initialized from activeCustomer only)
   const [customerInfo, setCustomerInfo] = useState(() => {
-    const defaultAddr = addressService.getDefaultAddress();
-    if (defaultAddr) {
+    if (activeCustomer) {
+      const defaultAddr = addressService.getDefaultAddress();
       return {
-        name: defaultAddr.name || defaultAddr.recipientName || '',
-        phone: defaultAddr.phone || '',
-        email: ''
+        name: defaultAddr?.name || defaultAddr?.recipientName || activeCustomer.fullName || activeCustomer.name || '',
+        phone: defaultAddr?.phone || activeCustomer.phone || '',
+        email: activeCustomer.email || ''
       };
     }
-    try {
-      const saved = JSON.parse(localStorage.getItem('customer_session') || localStorage.getItem('quickcart_customer_session') || '{}');
-      return {
-        name: saved.fullName || saved.name || saved.full_name || saved.customer_name || '',
-        phone: saved.phone || '',
-        email: saved.email || ''
-      };
-    } catch (e) {
-      return { name: '', phone: '', email: '' };
-    }
+    return { name: '', phone: '', email: '' };
   });
 
-  // Shipping Address State
+  // Shipping Address State (Initialized from activeCustomer only)
   const [shippingAddress, setShippingAddress] = useState(() => {
-    const defaultAddr = addressService.getDefaultAddress();
-    if (defaultAddr) {
+    if (activeCustomer) {
+      const defaultAddr = addressService.getDefaultAddress();
+      if (defaultAddr) {
+        return {
+          tag: defaultAddr.tag || defaultAddr.label || 'Home',
+          street: defaultAddr.address || defaultAddr.street || '',
+          city: defaultAddr.city || 'Habra / Ashoknagar',
+          state: defaultAddr.state || 'West Bengal',
+          postalCode: defaultAddr.postalCode || defaultAddr.pincode || '743263',
+          notes: '',
+          coordinates: {
+            lat: defaultAddr.gpsCoords?.lat ?? defaultAddr.lat ?? 22.8291,
+            lng: defaultAddr.gpsCoords?.lng ?? defaultAddr.lng ?? 88.6148
+          }
+        };
+      }
       return {
-        tag: defaultAddr.tag || defaultAddr.label || 'Home',
-        street: defaultAddr.address || defaultAddr.street || '',
-        city: defaultAddr.city || 'Habra / Ashoknagar',
-        state: defaultAddr.state || 'West Bengal',
-        postalCode: defaultAddr.postalCode || defaultAddr.pincode || '743263',
-        notes: '',
+        tag: 'Home',
+        street: activeCustomer.address || activeCustomer.shippingAddress?.street || '',
+        city: activeCustomer.city || activeCustomer.shippingAddress?.city || 'Habra',
+        state: activeCustomer.state || activeCustomer.shippingAddress?.state || 'West Bengal',
+        postalCode: activeCustomer.postalCode || activeCustomer.shippingAddress?.postalCode || '743263',
+        notes: activeCustomer.notes || '',
         coordinates: {
-          lat: defaultAddr.gpsCoords?.lat ?? defaultAddr.lat ?? 22.8291,
-          lng: defaultAddr.gpsCoords?.lng ?? defaultAddr.lng ?? 88.6148
+          lat: activeCustomer.gpsLat || activeCustomer.shippingAddress?.coordinates?.lat || 22.8291,
+          lng: activeCustomer.gpsLng || activeCustomer.shippingAddress?.coordinates?.lng || 88.6148
         }
       };
     }
-    try {
-      const saved = JSON.parse(localStorage.getItem('customer_session') || localStorage.getItem('quickcart_customer_session') || '{}');
-      return {
-        tag: 'Home',
-        street: saved.address || saved.shippingAddress?.street || '',
-        city: saved.city || saved.shippingAddress?.city || 'Habra',
-        state: saved.state || saved.shippingAddress?.state || 'West Bengal',
-        postalCode: saved.postalCode || saved.shippingAddress?.postalCode || '743263',
-        notes: saved.notes || '',
-        coordinates: {
-          lat: saved.gpsLat || saved.shippingAddress?.coordinates?.lat || 22.8291,
-          lng: saved.gpsLng || saved.shippingAddress?.coordinates?.lng || 88.6148
-        }
-      };
-    } catch (e) {
-      return {
-        tag: 'Home',
-        street: '',
-        city: 'Habra',
-        state: 'West Bengal',
-        postalCode: '743263',
-        notes: '',
-        coordinates: { lat: 22.8291, lng: 88.6148 }
-      };
-    }
+    return {
+      tag: 'Home',
+      street: '',
+      city: 'Habra',
+      state: 'West Bengal',
+      postalCode: '743263',
+      notes: '',
+      coordinates: { lat: 22.8291, lng: 88.6148 }
+    };
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditingPickupPerson, setIsEditingPickupPerson] = useState(false);
 
-  // Sync shipping address & customer contact from default address / session
+  // Sync shipping address & customer contact ONLY when logged in
   const syncShippingDetails = () => {
-    const defaultAddr = addressService.getDefaultAddress();
-    let cust = activeCustomer;
-    if (!cust) {
-      try {
-        cust = JSON.parse(localStorage.getItem('customer_session') || localStorage.getItem('quickcart_customer_session') || '{}');
-      } catch (e) {}
-    }
+    if (activeCustomer) {
+      const defaultAddr = addressService.getDefaultAddress();
+      if (defaultAddr) {
+        setCustomerInfo({
+          name: defaultAddr.name || defaultAddr.recipientName || activeCustomer.fullName || activeCustomer.name || '',
+          phone: defaultAddr.phone || activeCustomer.phone || '',
+          email: activeCustomer.email || ''
+        });
 
-    if (defaultAddr) {
+        setShippingAddress({
+          tag: defaultAddr.tag || defaultAddr.label || 'Home',
+          street: defaultAddr.address || defaultAddr.street || '',
+          city: defaultAddr.city || 'Habra / Ashoknagar',
+          state: defaultAddr.state || 'West Bengal',
+          postalCode: defaultAddr.postalCode || defaultAddr.pincode || '743263',
+          notes: '',
+          coordinates: {
+            lat: defaultAddr.gpsCoords?.lat ?? defaultAddr.lat ?? 22.8291,
+            lng: defaultAddr.gpsCoords?.lng ?? defaultAddr.lng ?? 88.6148
+          }
+        });
+      } else {
+        setCustomerInfo({
+          name: activeCustomer.fullName || activeCustomer.name || '',
+          phone: activeCustomer.phone || '',
+          email: activeCustomer.email || ''
+        });
+
+        setShippingAddress({
+          tag: 'Home',
+          street: activeCustomer.address || activeCustomer.shippingAddress?.street || '',
+          city: activeCustomer.city || activeCustomer.shippingAddress?.city || 'Habra / Ashoknagar',
+          state: activeCustomer.state || activeCustomer.shippingAddress?.state || 'West Bengal',
+          postalCode: activeCustomer.postalCode || activeCustomer.shippingAddress?.postalCode || '743263',
+          notes: activeCustomer.notes || '',
+          coordinates: {
+            lat: activeCustomer.gpsLat || activeCustomer.shippingAddress?.coordinates?.lat || 22.8291,
+            lng: activeCustomer.gpsLng || activeCustomer.shippingAddress?.coordinates?.lng || 88.6148
+          }
+        });
+      }
+    } else {
+      // Clean guest state
       setCustomerInfo((prev) => ({
-        name: defaultAddr.name || defaultAddr.recipientName || cust?.fullName || cust?.name || prev.name || '',
-        phone: defaultAddr.phone || cust?.phone || prev.phone || '',
-        email: cust?.email || prev.email || ''
+        name: prev.name || '',
+        phone: prev.phone || '',
+        email: prev.email || ''
       }));
-
-      setShippingAddress({
-        tag: defaultAddr.tag || defaultAddr.label || 'Home',
-        street: defaultAddr.address || defaultAddr.street || '',
-        city: defaultAddr.city || 'Habra / Ashoknagar',
-        state: defaultAddr.state || 'West Bengal',
-        postalCode: defaultAddr.postalCode || defaultAddr.pincode || '743263',
-        notes: '',
-        coordinates: {
-          lat: defaultAddr.gpsCoords?.lat ?? defaultAddr.lat ?? 22.8291,
-          lng: defaultAddr.gpsCoords?.lng ?? defaultAddr.lng ?? 88.6148
-        }
-      });
-    } else if (cust && (cust.fullName || cust.name || cust.phone || cust.address)) {
-      const custName = cust.fullName || cust.name || cust.full_name || cust.customer_name || '';
-      const custPhone = cust.phone || '';
-      const custEmail = cust.email || '';
-      const custStreet = cust.address || cust.shippingAddress?.street || '';
-      const custCity = cust.city || cust.shippingAddress?.city || 'Habra / Ashoknagar';
-      const custState = cust.state || cust.shippingAddress?.state || 'West Bengal';
-      const custPincode = cust.postalCode || cust.shippingAddress?.postalCode || '743263';
-      const custLat = cust.gpsLat || cust.shippingAddress?.coordinates?.lat || 22.8291;
-      const custLng = cust.gpsLng || cust.shippingAddress?.coordinates?.lng || 88.6148;
-
-      setCustomerInfo({
-        name: custName,
-        phone: custPhone,
-        email: custEmail
-      });
-
-      setShippingAddress({
-        tag: 'Home',
-        street: custStreet,
-        city: custCity,
-        state: custState,
-        postalCode: custPincode,
-        notes: cust.notes || '',
-        coordinates: {
-          lat: custLat,
-          lng: custLng
-        }
-      });
     }
   };
 
@@ -280,8 +261,8 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
           createdAt: new Date().toISOString()
         };
 
-        // 3. Save / Update customer profile in background for future 1-click checkouts
-        if (deliveryMethod === 'shipping') {
+        // 3. Save / Update customer profile in background ONLY for authenticated users
+        if (activeCustomer && deliveryMethod === 'shipping') {
           upsertStoreCustomerProfile({
             phone: customerInfo.phone.trim(),
             fullName: customerInfo.name.trim(),
@@ -293,6 +274,18 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
             gpsLat: shippingAddress.coordinates.lat,
             gpsLng: shippingAddress.coordinates.lng,
           }).catch(console.warn);
+        } else if (!activeCustomer) {
+          // Reset guest form inputs for next checkout
+          setCustomerInfo({ name: '', phone: '', email: '' });
+          setShippingAddress({
+            tag: 'Home',
+            street: '',
+            city: 'Habra',
+            state: 'West Bengal',
+            postalCode: '743263',
+            notes: '',
+            coordinates: { lat: 22.8291, lng: 88.6148 }
+          });
         }
 
         // 4. Trigger celebration confetti
