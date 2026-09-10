@@ -100,7 +100,7 @@ class AdminInventoryService {
       updated_at: new Date().toISOString()
     });
 
-    // 1. Try Supabase Insert
+    // 1. Try Supabase Insert with exact table schema columns
     try {
       const { data, error } = await supabase
         .from('products')
@@ -109,33 +109,36 @@ class AdminInventoryService {
           name: newProd.title,
           title: newProd.title,
           category: newProd.category,
-          sub_category: newProd.sub_category,
-          description: newProd.description,
+          sub_category: newProd.sub_category || null,
+          description: newProd.description || '',
           price: newProd.selling_price,
           selling_price: newProd.selling_price,
           original_price: newProd.mrp,
           mrp: newProd.mrp,
-          in_stock: newProd.in_stock,
+          cost_price: 0,
           stock: newProd.in_stock ? 999 : 0,
           stock_quantity: newProd.in_stock ? 999 : 0,
-          status: newProd.status,
+          low_stock_threshold: 5,
+          status: newProd.status || 'active',
           image_url: newProd.image_url,
           image: newProd.image_url,
           sku: newProd.sku,
           unit: newProd.unit,
-          brand: newProd.brand,
-          variants: newProd.variants
+          brand: newProd.brand || 'Ganapati Stores',
+          variants: newProd.variants || []
         }])
         .select();
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        console.error('Supabase product insert error:', error);
+      } else if (data && data.length > 0) {
         const created = normalizeProduct(data[0]);
         this.updateLocalList(created, 'add');
         inventoryApi.fetchCatalog();
         return created;
       }
     } catch (err) {
-      console.warn('Supabase insert failed, maintaining local sync', err);
+      console.error('Supabase insert exception:', err);
     }
 
     // Fallback local update
@@ -145,7 +148,7 @@ class AdminInventoryService {
   }
 
   /**
-   * Update an existing product
+   * Update an existing product in Supabase & Store
    */
   async updateProduct(id, updates) {
     const currentList = this.getCachedProducts();
@@ -156,7 +159,9 @@ class AdminInventoryService {
       updated_at: new Date().toISOString()
     });
 
-    // 1. Try Supabase Update
+    const isStockOn = updated.in_stock !== false;
+
+    // 1. Try Supabase Update with exact schema columns
     try {
       const { data, error } = await supabase
         .from('products')
@@ -164,35 +169,36 @@ class AdminInventoryService {
           name: updated.title,
           title: updated.title,
           category: updated.category,
-          sub_category: updated.sub_category,
-          description: updated.description,
+          sub_category: updated.sub_category || null,
+          description: updated.description || '',
           price: updated.selling_price,
           selling_price: updated.selling_price,
           original_price: updated.mrp,
           mrp: updated.mrp,
-          in_stock: updated.in_stock,
-          stock: updated.in_stock ? 999 : 0,
-          stock_quantity: updated.in_stock ? 999 : 0,
-          status: updated.status,
+          stock: isStockOn ? 999 : 0,
+          stock_quantity: isStockOn ? 999 : 0,
+          status: updated.status || 'active',
           image_url: updated.image_url,
           image: updated.image_url,
           sku: updated.sku,
           unit: updated.unit,
-          brand: updated.brand,
-          variants: updated.variants,
+          brand: updated.brand || 'Ganapati Stores',
+          variants: updated.variants || [],
           updated_at: updated.updated_at
         })
         .eq('id', id)
         .select();
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        console.error('Supabase product update error:', error);
+      } else if (data && data.length > 0) {
         const saved = normalizeProduct(data[0]);
         this.updateLocalList(saved, 'update');
         inventoryApi.fetchCatalog();
         return saved;
       }
     } catch (err) {
-      console.warn('Supabase update failed, maintaining local sync', err);
+      console.error('Supabase update exception:', err);
     }
 
     // Fallback local update
@@ -218,38 +224,16 @@ class AdminInventoryService {
   }
 
   /**
-   * Quick update stock quantity (kept for backward compatibility)
-   */
-  async updateStock(id, newStock) {
-    const cleanStock = Math.max(0, parseInt(newStock, 10) || 0);
-    const inStock = cleanStock > 0;
-    return this.updateProduct(id, { 
-      in_stock: inStock,
-      stock_quantity: cleanStock, 
-      stock: cleanStock 
-    });
-  }
-
-  /**
-   * Toggle status between active and draft
-   */
-  async toggleStatus(id) {
-    const currentList = this.getCachedProducts();
-    const prod = currentList.find(p => p.id === id);
-    if (!prod) return null;
-
-    const nextStatus = prod.status === 'draft' ? 'active' : 'draft';
-    return this.updateProduct(id, { status: nextStatus });
-  }
-
-  /**
-   * Delete product
+   * Delete product from Supabase & Store
    */
   async deleteProduct(id) {
     try {
-      await supabase.from('products').delete().eq('id', id);
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) {
+        console.error('Supabase delete error:', error);
+      }
     } catch (err) {
-      console.warn('Supabase delete error', err);
+      console.error('Supabase delete exception:', err);
     }
 
     const currentList = this.getCachedProducts().filter(p => p.id !== id);
