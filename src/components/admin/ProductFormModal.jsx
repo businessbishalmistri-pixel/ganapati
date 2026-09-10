@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, 
-  Sparkles, 
-  Check, 
-  AlertCircle, 
   Package, 
-  DollarSign, 
   Tag, 
   Image as ImageIcon,
   Save,
-  CheckCircle2,
-  XCircle
+  Check
 } from 'lucide-react';
 
 const PRESET_IMAGES = [
@@ -119,36 +114,43 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
-      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Backdrop */}
+      <div className="fixed inset-0" onClick={onClose} />
+
+      {/* Sheet / Modal Container */}
+      <div className="relative bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
+        
+        {/* Mobile Drag Indicator Pill */}
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden" />
+
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Package className="w-5 h-5" />
+        <div className="px-5 sm:px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 font-bold">
+              <Package className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-base font-bold text-slate-900 leading-tight">
                 {isEditing ? 'Edit Product' : 'Add New Product'}
               </h2>
-              <p className="text-xs text-slate-500">
-                Instantly published to Ganapati Stores storefront
-              </p>
+              <span className="text-[11px] text-slate-400">Save & publish immediately</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-6 space-y-5">
+        {/* Modal Scrollable Body */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-5 sm:p-6 space-y-4">
+          
           {/* Product Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-slate-700 mb-1">
               Product Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -157,7 +159,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               placeholder="e.g. Fortune Sunlite Sunflower Oil 1L"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${
+              className={`w-full px-3.5 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${
                 errors.title ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/20'
               }`}
             />
@@ -165,15 +167,15 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
           </div>
 
           {/* Category & Unit */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Category <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>
@@ -183,23 +185,23 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Pack Size / Unit
               </label>
               <input
                 type="text"
-                placeholder="e.g. 1 kg, 500g, 1 Litre, 1 Pack"
+                placeholder="e.g. 1 kg, 500g, 1 Litre"
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* Pricing */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Price (₹) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -211,16 +213,15 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   placeholder="150"
                   value={formData.selling_price}
                   onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-8 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
               {errors.selling_price && <p className="text-xs text-red-500 mt-1">{errors.selling_price}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                <span>MRP / Original Price (₹)</span>
-                <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                MRP (₹) <span className="text-[10px] text-slate-400 font-normal">Optional</span>
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold text-sm">₹</span>
@@ -230,69 +231,62 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   placeholder="180"
                   value={formData.mrp}
                   onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
-                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-8 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
-              {discountPercent > 0 && (
-                <span className="text-[10px] font-bold text-emerald-600 mt-1 inline-block">
-                  {discountPercent}% OFF badge shown on storefront
-                </span>
-              )}
             </div>
           </div>
 
-          {/* STOCK STATUS TOGGLE (PROMINENT) */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-4">
+          {/* 📱 Prominent Stock Status Toggle Pill Switch */}
+          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900">Stock Availability</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-900">Stock Availability</span>
                 {formData.in_stock ? (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                     In Stock
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
                     Out of Stock
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {formData.in_stock 
-                  ? 'Customers can add this product to their cart and place orders.' 
-                  : 'Product will show "Out of Stock" badge and cannot be ordered.'}
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {formData.in_stock ? 'Visible and ready to order' : 'Shows Out of Stock badge'}
               </p>
             </div>
 
-            {/* Toggle Switch */}
+            {/* Toggle Button */}
             <button
               type="button"
               onClick={() => setFormData({ ...formData, in_stock: !formData.in_stock })}
-              className={`relative inline-flex h-7 w-13 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                 formData.in_stock ? 'bg-emerald-600' : 'bg-slate-300'
               }`}
             >
               <span
                 className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                  formData.in_stock ? 'translate-x-6' : 'translate-x-0'
+                  formData.in_stock ? 'translate-x-5' : 'translate-x-0'
                 }`}
               />
             </button>
           </div>
 
-          {/* Image URL & Presets */}
+          {/* Image URL & Quick Presets */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-bold text-slate-700">
               Product Image URL
             </label>
-            <div className="flex gap-3 items-start">
+            <div className="flex gap-2.5 items-center">
               <input
                 type="url"
                 placeholder="https://images.unsplash.com/..."
                 value={formData.image_url}
                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
-              <div className="w-12 h-12 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {formData.image_url ? (
                   <img
                     src={formData.image_url}
@@ -308,57 +302,53 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               </div>
             </div>
 
-            {/* Presets */}
-            <div className="pt-1">
-              <span className="text-[11px] text-slate-400 font-medium block mb-1.5">Quick sample images:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESET_IMAGES.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, image_url: preset.url })}
-                    className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all ${
-                      formData.image_url === preset.url
-                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-semibold'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
+            {/* Quick Sample Presets */}
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {PRESET_IMAGES.map((preset, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, image_url: preset.url })}
+                  className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${
+                    formData.image_url === preset.url
+                      ? 'bg-blue-50 border-blue-300 text-blue-700 font-bold'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
-              <span>Description</span>
-              <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Description <span className="text-[10px] text-slate-400 font-normal">Optional</span>
             </label>
             <textarea
               rows={2}
-              placeholder="Product details, features, or brand notes..."
+              placeholder="Short description..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
             />
           </div>
         </form>
 
-        {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3">
+        {/* Modal Sticky Bottom Actions (Thumb Optimized) */}
+        <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-2.5">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+            className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors text-center cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-blue-500/25 transition-all flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+            className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
           >
             {isSaving ? (
               <>

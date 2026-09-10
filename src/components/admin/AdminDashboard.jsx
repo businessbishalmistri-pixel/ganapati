@@ -1,22 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Package, 
-  AlertTriangle, 
-  Clock, 
-  FileText, 
   FolderTree, 
   LogOut, 
   ExternalLink, 
   ShoppingBag, 
-  DollarSign, 
-  TrendingUp, 
   ShieldCheck, 
-  Menu, 
-  X,
-  Layers,
-  Sparkles,
-  ArrowUpRight,
-  Plus
+  Plus, 
+  AlertTriangle,
+  RefreshCw,
+  Home
 } from 'lucide-react';
 import { adminInventoryService } from '../../services/adminInventoryService';
 import { ProductInventoryTable } from './ProductInventoryTable';
@@ -29,7 +22,6 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -56,7 +48,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     loadData();
   }, []);
 
-  // Compute clean metrics for top cards
+  // Compute clean metrics for summary
   const totalProductsCount = products.length;
   const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
   const outOfStockCount = totalProductsCount - inStockCount;
@@ -112,274 +104,201 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     setIsFormModalOpen(true);
   };
 
-  const navItems = [
-    { id: 'all', label: 'All Products', icon: Package, badge: totalProductsCount, color: 'text-blue-600 bg-blue-50' },
-    { id: 'categories', label: 'Categories', icon: FolderTree, badge: categories.length, color: 'text-indigo-600 bg-indigo-50' },
-  ];
-
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-sans antialiased text-slate-900 selection:bg-blue-500 selection:text-white">
-      {/* Mobile Menu Backdrop */}
-      {mobileMenuOpen && (
-        <div 
-          onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
-        />
-      )}
-
-      {/* Left Sidebar */}
-      <aside className={`
-        fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-300 ease-in-out
-        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        {/* Brand & Store Switcher */}
-        <div>
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 font-bold">
-                <ShoppingBag className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="font-bold text-sm text-slate-900 leading-tight">Ganapati Stores</h2>
-                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/60 inline-flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Live Admin
-                </span>
-              </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans antialiased text-slate-900 pb-20 md:pb-6">
+      
+      {/* 📱 Mobile & Tablet Top App Bar */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/20 font-bold">
+            <ShoppingBag className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-bold text-sm text-slate-900 leading-tight">Ganapati Admin</h1>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             </div>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 lg:hidden"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <span className="text-[10px] text-slate-400 font-medium">Live Manager</span>
           </div>
-
-          {/* Quick Add Product Button */}
-          <div className="p-3">
-            <button
-              onClick={handleOpenAddModal}
-              className="w-full py-2.5 px-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Product</span>
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5 block">
-              Inventory Views
-            </span>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-blue-50/80 text-blue-700 shadow-sm border border-blue-100'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${item.color}`}>
-                    {item.badge}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
         </div>
 
-        {/* Bottom Actions & User Profile */}
-        <div className="p-4 border-t border-slate-100 space-y-3">
-          {/* Visit Store Button */}
+        {/* Top Right Actions */}
+        <div className="flex items-center gap-2">
+          {/* Quick Refresh */}
           <button
-            onClick={onVisitStore}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors group cursor-pointer"
+            onClick={loadData}
+            disabled={isRefreshing}
+            className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
+            title="Refresh database"
           >
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-slate-500" />
-              <span>Visit Storefront</span>
-            </div>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
           </button>
 
-          {/* Admin User Badge & Logout */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
-                A
-              </div>
-              <div className="min-w-0">
-                <span className="text-xs font-bold text-slate-900 block truncate">Administrator</span>
-                <span className="text-[10px] text-slate-400 block truncate">admin@ganapati</span>
-              </div>
-            </div>
+          {/* Visit Storefront */}
+          <button
+            onClick={onVisitStore}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200/60 transition-colors"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Store</span>
+          </button>
 
-            <button
-              onClick={onLogout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-              title="Log out of admin session"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+          {/* Logout */}
+          <button
+            onClick={onLogout}
+            className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition-colors"
+            title="Log out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="flex-1 max-w-5xl w-full mx-auto p-3.5 sm:p-6 space-y-4">
+        
+        {/* Quick Summary Pill Banner (Mobile Touch Friendly) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          {/* Total Products */}
+          <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/70 shadow-xs text-center">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block">
+              Total
+            </span>
+            <div className="text-lg sm:text-2xl font-black text-slate-900 mt-0.5">
+              {totalProductsCount}
+            </div>
+            <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">Items</span>
+          </div>
+
+          {/* In Stock */}
+          <div className="bg-emerald-50/60 p-3 sm:p-4 rounded-2xl border border-emerald-200/60 shadow-xs text-center">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-700 block">
+              In Stock
+            </span>
+            <div className="text-lg sm:text-2xl font-black text-emerald-600 mt-0.5">
+              {inStockCount}
+            </div>
+            <span className="text-[10px] text-emerald-600 font-medium hidden sm:inline">Live on store</span>
+          </div>
+
+          {/* Out of Stock */}
+          <div className="bg-rose-50/60 p-3 sm:p-4 rounded-2xl border border-rose-200/60 shadow-xs text-center">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-rose-700 block">
+              Out of Stock
+            </span>
+            <div className="text-lg sm:text-2xl font-black text-rose-600 mt-0.5">
+              {outOfStockCount}
+            </div>
+            <span className="text-[10px] text-rose-500 font-medium hidden sm:inline">Unavailable</span>
           </div>
         </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Top Navbar */}
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        {/* Tab Selector (Tablet & Desktop Top Bar, or accessible pills) */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+          <div className="flex gap-1.5">
             <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 lg:hidden"
+              onClick={() => setActiveTab('all')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
             >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div>
-              <span className="text-xs font-medium text-slate-500">Dashboard /</span>
-              <h1 className="text-sm font-bold text-slate-900 capitalize">
-                {activeTab === 'all' ? 'All Products' : activeTab.replace('-', ' ')}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onVisitStore}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-blue-600 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-colors"
-            >
-              <span>View Store: ganapatistores.com</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <Package className="w-3.5 h-3.5" />
+              <span>Products ({totalProductsCount})</span>
             </button>
 
             <button
-              onClick={handleOpenAddModal}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-all"
+              onClick={() => setActiveTab('categories')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'categories'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Product</span>
+              <FolderTree className="w-3.5 h-3.5" />
+              <span>Categories ({categories.length})</span>
             </button>
           </div>
-        </header>
 
-        {/* Dashboard Body */}
-        <div className="p-4 sm:p-8 space-y-6 flex-1">
-          {/* Top Summary Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-            {/* Card 1: Total Products */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Total Products
-                </span>
-                <div className="text-2xl font-bold text-slate-900 mt-1">
-                  {totalProductsCount}
-                </div>
-                <span className="text-[11px] text-slate-500 font-medium mt-0.5 inline-block">
-                  Catalog Items
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <Package className="w-5 h-5" />
-              </div>
-            </div>
-
-            {/* Card 2: In Stock */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  In Stock
-                </span>
-                <div className="text-2xl font-bold text-emerald-600 mt-1">
-                  {inStockCount}
-                </div>
-                <span className="text-[11px] text-emerald-600 font-semibold mt-0.5 inline-block">
-                  Available on Store
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-            </div>
-
-            {/* Card 3: Out of Stock */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Out of Stock
-                </span>
-                <div className="text-2xl font-bold text-rose-600 mt-1">
-                  {outOfStockCount}
-                </div>
-                <span className="text-[11px] text-rose-500 font-semibold mt-0.5 inline-block">
-                  {outOfStockCount > 0 ? 'Unavailable to buy' : 'All available'}
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-            </div>
-
-            {/* Card 4: Categories */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Categories
-                </span>
-                <div className="text-2xl font-bold text-slate-900 mt-1">
-                  {categories.length}
-                </div>
-                <span className="text-[11px] text-slate-500 font-medium mt-0.5 inline-block">
-                  Store Sections
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <FolderTree className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Active View Router */}
-          {activeTab === 'categories' ? (
-            <CategoryManager
-              categories={categories}
-              products={products}
-              onAddCategory={handleAddCategory}
-              onUpdateCategory={handleUpdateCategory}
-              onDeleteCategory={handleDeleteCategory}
-            />
-          ) : (
-            <ProductInventoryTable
-              products={products}
-              categories={categories}
-              onEditProduct={handleOpenEditModal}
-              onAddProduct={handleOpenAddModal}
-              onDeleteProduct={handleDeleteProduct}
-              onToggleInStock={handleToggleInStock}
-              onToggleStatus={handleToggleStatus}
-              onRefresh={loadData}
-              isRefreshing={isRefreshing}
-            />
-          )}
-
+          {/* Add Product Button (Desktop/Tablet Top) */}
+          <button
+            onClick={handleOpenAddModal}
+            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Product</span>
+          </button>
         </div>
+
+        {/* Main View Router */}
+        {activeTab === 'categories' ? (
+          <CategoryManager
+            categories={categories}
+            products={products}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+          />
+        ) : (
+          <ProductInventoryTable
+            products={products}
+            categories={categories}
+            onEditProduct={handleOpenEditModal}
+            onAddProduct={handleOpenAddModal}
+            onDeleteProduct={handleDeleteProduct}
+            onToggleInStock={handleToggleInStock}
+            onToggleStatus={handleToggleStatus}
+            onRefresh={loadData}
+            isRefreshing={isRefreshing}
+          />
+        )}
       </main>
 
-      {/* Product Form Modal (Add & Edit) */}
+      {/* 📱 Mobile Bottom Navigation Bar (Thumb Friendly on Phones & Tablets) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-1.5 px-4 flex items-center justify-around shadow-lg sm:hidden">
+        {/* Products Tab */}
+        <button
+          onClick={() => setActiveTab('all')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all ${
+            activeTab === 'all' ? 'text-blue-600 font-bold' : 'text-slate-500 font-medium'
+          }`}
+        >
+          <Package className="w-5 h-5" />
+          <span className="text-[10px]">Products</span>
+        </button>
+
+        {/* Center Floating Plus Action Button */}
+        <button
+          onClick={handleOpenAddModal}
+          className="w-12 h-12 -mt-5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-600/30 border-2 border-white transition-all cursor-pointer"
+          title="Add New Product"
+        >
+          <Plus className="w-6 h-6 stroke-[2.5]" />
+        </button>
+
+        {/* Categories Tab */}
+        <button
+          onClick={() => setActiveTab('categories')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all ${
+            activeTab === 'categories' ? 'text-blue-600 font-bold' : 'text-slate-500 font-medium'
+          }`}
+        >
+          <FolderTree className="w-5 h-5" />
+          <span className="text-[10px]">Categories</span>
+        </button>
+
+        {/* Visit Store */}
+        <button
+          onClick={onVisitStore}
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition-all"
+        >
+          <ExternalLink className="w-5 h-5" />
+          <span className="text-[10px]">Store</span>
+        </button>
+      </nav>
+
+      {/* Product Form Modal (Mobile Bottom Sheet / Dialog) */}
       <ProductFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
