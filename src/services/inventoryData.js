@@ -258,6 +258,9 @@ export function normalizeProduct(p) {
   }
 
   const status = p.status === 'draft' ? 'draft' : 'active';
+  const effectiveStock = parseInt(p.stock_quantity ?? p.stock ?? (inStock ? 50 : 0), 10);
+  const costPrice = parseFloat(p.cost_price || 0) || 0;
+  const lowStockThreshold = parseInt(p.low_stock_threshold ?? 5, 10);
 
   return {
     id: p.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -270,13 +273,15 @@ export function normalizeProduct(p) {
     price: sellingPrice,
     mrp: mrp,
     original_price: mrp,
-    in_stock: inStock,
-    stock: inStock ? 999 : 0,
-    stock_quantity: inStock ? 999 : 0,
+    cost_price: costPrice,
+    in_stock: inStock && effectiveStock > 0,
+    stock: effectiveStock,
+    stock_quantity: effectiveStock,
+    low_stock_threshold: lowStockThreshold,
     status: status, // 'active' | 'draft'
     image_url: primaryImage,
     image: primaryImage,
-    images: Array.isArray(p.images) ? p.images : (primaryImage ? [primaryImage] : []),
+    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (primaryImage ? [primaryImage] : []),
     sku: p.sku || `GP-${String(Math.floor(100000 + Math.random() * 900000))}`,
     unit: p.unit || p.weight || '1 unit',
     brand: p.brand || 'Ganapati Stores',

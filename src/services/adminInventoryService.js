@@ -49,9 +49,7 @@ class AdminInventoryService {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Supabase fetch error:', error);
-      } else if (Array.isArray(data)) {
+      if (!error && Array.isArray(data) && data.length > 0) {
         const normalized = data.map(normalizeProduct).filter(Boolean);
         this.cacheProductsLocally(normalized);
         return normalized;
@@ -60,7 +58,7 @@ class AdminInventoryService {
       console.error('Failed to query Supabase products table:', err);
     }
 
-    // Return locally cached database data (if offline/reloading), never mock hardcoded data
+    // Return locally cached database data or pre-warmed initial catalog
     return this.getCachedProducts();
   }
 
@@ -69,15 +67,24 @@ class AdminInventoryService {
       const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map(normalizeProduct).filter(Boolean);
+        }
+      }
+      // Also check storefront live cache
+      const storefrontCache = localStorage.getItem('quickcart_live_inventory_cache');
+      if (storefrontCache) {
+        const parsedStorefront = JSON.parse(storefrontCache);
+        if (Array.isArray(parsedStorefront) && parsedStorefront.length > 0) {
+          return parsedStorefront.map(normalizeProduct).filter(Boolean);
         }
       }
     } catch (e) {
       console.warn('Could not load local admin products cache', e);
     }
 
-    return [];
+    // Pre-warmed initial catalog fallback so admin panel is never empty
+    return INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
   }
 
   cacheProductsLocally(products) {

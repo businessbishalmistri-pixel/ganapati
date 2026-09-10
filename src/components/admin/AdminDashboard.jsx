@@ -17,9 +17,9 @@ import { ProductFormModal } from './ProductFormModal';
 
 export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'categories'
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState(() => adminInventoryService.getCachedProducts() || []);
+  const [categories, setCategories] = useState(() => adminInventoryService.getCategories() || []);
+  const [isLoading, setIsLoading] = useState(() => (!adminInventoryService.getCachedProducts() || adminInventoryService.getCachedProducts().length === 0));
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Modal State
