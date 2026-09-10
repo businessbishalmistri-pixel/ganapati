@@ -53,8 +53,31 @@ export const SettingsProvider = ({ children }) => {
     }
   }, [settings]);
 
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const updateSettings = (newValues) => {
-    setSettings((prev) => ({ ...prev, ...newValues }));
+    setSettings((prev) => {
+      const updated = { ...prev, ...newValues };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
   };
 
   const resetSettings = () => {

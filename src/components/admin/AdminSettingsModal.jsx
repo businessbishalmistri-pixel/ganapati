@@ -146,23 +146,6 @@ export function AdminSettingsModal({ isOpen, onClose }) {
               onChange={(e) => setBannerImageUrl(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
             />
-            {/* Live Banner Preview */}
-            {bannerImageUrl && (
-              <div className="pt-1">
-                <span className="text-[10px] font-bold text-slate-400 block mb-1">Banner Preview:</span>
-                <div className="w-full aspect-[21/9] sm:aspect-[4/1] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
-                  <img
-                    src={bannerImageUrl}
-                    alt="Banner preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png';
-                    }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* 3. Delivery Charges & Free Delivery Threshold */}

@@ -63,7 +63,7 @@ export const CartDrawer = () => {
       .join('\n');
 
     const message = 
-`*New Order - Ganapati Stores*
+`*New Order - ${settings?.storeName || 'Ganapati Store'}*
 
 *Customer Details:*
 • *Name:* ${customer.name}

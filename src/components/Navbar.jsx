@@ -28,7 +28,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
       {/* Top micro banner */}
       <div className="bg-emerald-50 border-b border-emerald-100 text-emerald-950 text-[10px] sm:text-xs py-1 px-3 text-center font-medium flex items-center justify-center gap-1.5">
         <span className="text-emerald-800 font-bold">
-          Free delivery on orders over {settings.currency}{settings.freeShippingThreshold} &bull; Cash on Delivery
+          Free delivery on orders over ₹{settings?.freeShippingThreshold || 200} &bull; Cash on Delivery
         </span>
       </div>
 
@@ -41,7 +41,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
             className="cursor-pointer group flex-shrink-0 py-0.5"
           >
             <h1 className="font-black text-base sm:text-xl tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">
-              Ganapati Store
+              {settings?.storeName || 'Ganapati Store'}
             </h1>
           </div>
 
