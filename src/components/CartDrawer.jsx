@@ -154,93 +154,98 @@ Please confirm my order and deliver to the above address. Thank you!`;
                 </button>
               </div>
             ) : (
-              cartItems.map((item) => {
-                const itemKey = item.cartKey || item.cartItemId || item.id;
-                const isMax = item.quantity >= (item.stockQuantity || item.stock || 999);
-                return (
-                  <div
-                    key={itemKey}
-                    className="py-3.5 sm:py-4 flex gap-3.5 items-center transition-all"
-                  >
-                    {/* Thumbnail */}
-                    <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden bg-[#F4F5F7] flex items-center justify-center flex-shrink-0">
-                      {item.image_url || item.image ? (
-                        <img
-                          src={item.image_url || item.image}
-                          alt={item.title || item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Package className="w-7 h-7 text-slate-400" />
-                      )}
-                    </div>
+              <div className="space-y-3 py-3">
+                {cartItems.map((item) => {
+                  const itemKey = item.cartKey || item.cartItemId || item.id;
+                  const isMax = item.quantity >= (item.stockQuantity || item.stock || 999);
+                  const price = item.selling_price || item.price || 0;
 
-                    {/* Info */}
-                    <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
-                      <div>
+                  return (
+                    <div
+                      key={itemKey}
+                      className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-200/70 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex gap-3.5 items-center transition-all"
+                    >
+                      {/* Left: Thumbnail */}
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60 flex items-center justify-center flex-shrink-0">
+                        {item.image_url || item.image ? (
+                          <img
+                            src={item.image_url || item.image}
+                            alt={item.title || item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Package className="w-8 h-8 text-slate-400" />
+                        )}
+                      </div>
+
+                      {/* Right: Content Block */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 space-y-1.5">
+                        {/* Top: Title & Price */}
                         <div className="flex items-start justify-between gap-2">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate">
                             {item.title || item.name}
                           </h4>
+                          {price > 0 && (
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 font-mono flex-shrink-0">
+                              ₹{price.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Description / Subtitle */}
+                        <p className="text-xs text-slate-400 leading-tight truncate">
+                          {item.unit ? `${item.unit}` : 'Standard Pack'} {item.category ? `• ${item.category}` : ''}
+                        </p>
+
+                        {/* Bottom: Black Pill Quantity Stepper & Red Trash Can */}
+                        <div className="flex items-center justify-between pt-1">
+                          {/* Sleek Black Quantity Stepper Pill (Matching Reference Design) */}
+                          <div className="inline-flex items-center bg-black text-white rounded-full px-1.5 py-1 gap-1.5 shadow-xs">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(itemKey, item.quantity - 1)}
+                              className="w-6 h-6 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-white transition-colors cursor-pointer"
+                              title="Decrease"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            
+                            <span className="px-1.5 text-xs font-bold font-mono min-w-[16px] text-center">
+                              {item.quantity}
+                            </span>
+                            
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(itemKey, item.quantity + 1)}
+                              disabled={isMax}
+                              className="w-6 h-6 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-white disabled:opacity-30 transition-colors cursor-pointer"
+                              title="Increase"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {/* Red Outline Trash Can Icon */}
                           <button
                             type="button"
                             onClick={() => removeFromCart(itemKey)}
-                            className="text-slate-400 hover:text-rose-600 transition-colors p-1 flex-shrink-0 cursor-pointer"
+                            className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                             title="Remove item"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {item.unit && (
-                            <span className="text-[11px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.2 rounded">
-                              {item.unit}
-                            </span>
-                          )}
-                          <span className="text-[11px] text-slate-400">
-                            Qty: {item.quantity}
-                          </span>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center justify-between mt-2.5">
-                        {/* Quantity Counter */}
-                        <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50/60 p-0.5">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(itemKey, item.quantity - 1)}
-                            className="p-1 text-slate-600 hover:text-slate-900 cursor-pointer"
-                            title="Decrease quantity"
-                          >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          
-                          <span className="px-2.5 text-xs font-bold text-slate-900 font-mono">
-                            {item.quantity}
-                          </span>
-                          
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(itemKey, item.quantity + 1)}
-                            disabled={isMax}
-                            className="p-1 text-slate-600 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                            title="Increase quantity"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        {isMax && (
+                          <p className="text-[10px] text-amber-700 flex items-center gap-1 mt-0.5 font-medium">
+                            <AlertCircle className="w-3 h-3" /> Max inventory reached
+                          </p>
+                        )}
                       </div>
-
-                      {isMax && (
-                        <p className="text-[10px] text-amber-700 flex items-center gap-1 mt-1 font-medium">
-                          <AlertCircle className="w-3 h-3" /> Max available inventory reached
-                        </p>
-                      )}
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
 

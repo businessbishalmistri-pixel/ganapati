@@ -195,11 +195,11 @@ export function ProductInventoryTable({
         </div>
       </div>
 
-      {/* 📱 MOBILE WIDGET CARDS VIEW (Clean reference widget design) */}
-      <div className="space-y-3 md:hidden">
+      {/* 📱 MOBILE WIDGET CARDS VIEW (Polished to exact reference UI) */}
+      <div className="space-y-3.5 md:hidden">
         {/* List Header */}
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Products List ({filteredProducts.length})
           </span>
           <button
@@ -208,16 +208,16 @@ export function ProductInventoryTable({
               setSelectedCategory('All');
               setStockFilter('all');
             }}
-            className="text-xs text-blue-600 font-semibold hover:underline"
+            className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
           >
-            Reset
+            Reset Filters
           </button>
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-8 text-center text-slate-400">
-            <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-            <p className="font-semibold text-slate-700 text-sm">No products found</p>
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 text-center text-slate-400 shadow-xs">
+            <Package className="w-9 h-9 mx-auto mb-2 text-slate-300" />
+            <p className="font-bold text-slate-700 text-sm">No products found</p>
             <p className="text-xs text-slate-400 mt-0.5">Try a different search or clear filters.</p>
           </div>
         ) : (
@@ -229,94 +229,95 @@ export function ProductInventoryTable({
             return (
               <div 
                 key={product.id}
-                className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3.5 transition-all"
+                className="bg-white p-4 rounded-3xl border border-slate-200/70 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex gap-4 items-center transition-all"
               >
                 {/* 1. Left: Square Product Thumbnail */}
-                <div className="w-16 h-16 rounded-2xl bg-slate-900/90 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-xs">
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-slate-100 border border-slate-200/60 overflow-hidden flex-shrink-0 flex items-center justify-center relative">
                   {product.image_url || product.image ? (
                     <img
                       src={product.image_url || product.image}
                       alt={product.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=160&q=80';
                       }}
                     />
                   ) : (
-                    <Package className="w-7 h-7 text-slate-300" />
+                    <Package className="w-8 h-8 text-slate-300" />
                   )}
                 </div>
 
-                {/* 2. Middle: Title, QTY/Pack, Price, Stock status text */}
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <h3 className="font-bold text-sm text-slate-900 leading-snug truncate" title={product.title}>
-                    {product.title}
-                  </h3>
-                  
-                  <p className="text-xs text-slate-500 font-medium">
-                    QTY: {product.unit || '1 Pack'}
+                {/* 2. Right: Content Block */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 space-y-2">
+                  {/* Top Row: Title on Left, Price on Right */}
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-base text-slate-900 leading-snug truncate" title={product.title}>
+                      {product.title}
+                    </h3>
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-base font-extrabold text-slate-900 font-mono block">
+                        ₹{selling.toLocaleString('en-IN')}
+                      </span>
+                      {mrp > selling && (
+                        <span className="text-[11px] text-slate-400 line-through font-mono block">
+                          ₹{mrp.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Subtitle: Pack/Unit & Category */}
+                  <p className="text-xs text-slate-400 leading-tight truncate">
+                    {product.unit ? `QTY: ${product.unit}` : 'Standard Pack'} {product.category ? `• ${product.category}` : ''}
                   </p>
 
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1.5 pt-0.5">
-                    <span className="text-base font-extrabold text-slate-900 font-mono">
-                      ₹{selling.toLocaleString('en-IN')}
-                    </span>
-                    {mrp > selling && (
-                      <span className="text-xs text-slate-400 line-through font-mono">
-                        ₹{mrp.toLocaleString('en-IN')}
+                  {/* Bottom Row: Stock Toggle Pill + Edit on Left, Red Trash Icon on Right */}
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <div className="flex items-center gap-2">
+                      {/* Interactive Stock Toggle Switch */}
+                      <button
+                        type="button"
+                        onClick={() => onToggleInStock(product.id)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
+                          isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
+                        }`}
+                        title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            isInStock ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+
+                      {/* Stock Label */}
+                      <span className={`text-[11px] font-bold ${
+                        isInStock ? 'text-emerald-700' : 'text-slate-400'
+                      }`}>
+                        {isInStock ? 'In stock' : 'Out'}
                       </span>
-                    )}
-                  </div>
 
-                  {/* Stock Status Text */}
-                  <div className="pt-0.5">
-                    <span className={`text-[11px] font-semibold ${
-                      isInStock ? 'text-emerald-700' : 'text-rose-600'
-                    }`}>
-                      {isInStock ? 'In stock' : 'Out of stock'}
-                    </span>
-                  </div>
-                </div>
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => onEditProduct(product)}
+                        className="ml-1 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-0.5 transition-colors cursor-pointer"
+                      >
+                        <span>Edit</span>
+                        <ChevronRight className="w-3 h-3 text-slate-400" />
+                      </button>
+                    </div>
 
-                {/* 3. Right: Stock Toggle Switch & Details / Edit button */}
-                <div className="flex flex-col items-end justify-between gap-2.5 flex-shrink-0">
-                  {/* Clean Toggle Switch (ON = In Stock, OFF = Out of Stock) */}
-                  <button
-                    type="button"
-                    onClick={() => onToggleInStock(product.id)}
-                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
-                      isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
-                    }`}
-                    title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                        isInStock ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-
-                  {/* Details / Edit Button */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => onEditProduct(product)}
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-0.5 transition-colors cursor-pointer"
-                    >
-                      <span>Edit</span>
-                      <ChevronRight className="w-3 h-3 text-slate-400" />
-                    </button>
-
+                    {/* Red Outline Trash Button (Matching reference design) */}
                     <button
                       onClick={() => {
                         if (window.confirm(`Delete "${product.title}"?`)) {
                           onDeleteProduct(product.id);
                         }
                       }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Delete"
+                      className="p-2 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Delete Product"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
