@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Package, 
   FolderTree, 
@@ -24,6 +24,30 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const [categories, setCategories] = useState(() => adminInventoryService.getCategories() || []);
   const [isLoading, setIsLoading] = useState(() => (!adminInventoryService.getCachedProducts() || adminInventoryService.getCachedProducts().length === 0));
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const carouselRef = useRef(null);
+
+  const handleCarouselScroll = (e) => {
+    const el = e.currentTarget;
+    if (!el) return;
+    const cardWidth = el.scrollWidth / 3;
+    const scrollPos = el.scrollLeft + (el.clientWidth / 2);
+    const newIndex = Math.min(2, Math.max(0, Math.floor(scrollPos / cardWidth)));
+    if (newIndex !== activeCardIndex) {
+      setActiveCardIndex(newIndex);
+    }
+  };
+
+  const scrollToCard = (index) => {
+    if (carouselRef.current) {
+      const container = carouselRef.current;
+      const cards = container.children;
+      if (cards[index]) {
+        cards[index].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+      setActiveCardIndex(index);
+    }
+  };
 
   // Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -215,111 +239,132 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           </p>
         </div>
 
-        {/* 🎨 Modern Abstract Geometric Hero Cards (3-Column Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
-          
-          {/* Card 1: Total Products (Dark Onyx & Cobalt Blue) */}
-          <div className="bg-[#181920] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[148px] group hover:shadow-xl transition-all">
-            {/* Concentric rings graphic overlay */}
-            <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
-              <circle cx="90%" cy="20%" r="80" stroke="white" strokeWidth="1" fill="none" />
-              <circle cx="90%" cy="20%" r="120" stroke="white" strokeWidth="1" fill="none" />
-            </svg>
-            {/* Top-right cobalt blue abstract disc */}
-            <div className="absolute -top-7 -right-7 w-32 h-32 rounded-full bg-[#2563eb] pointer-events-none" />
+        {/* 🎨 Modern Abstract Geometric Hero Cards (Mobile Carousel / Desktop 3-Column Grid) */}
+        <div className="relative">
+          <div 
+            ref={carouselRef}
+            onScroll={handleCarouselScroll}
+            className="flex md:grid md:grid-cols-3 gap-3 md:gap-4 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory no-scrollbar pb-1 -mx-3 px-3 sm:mx-0 sm:px-0"
+          >
+            {/* Card 1: Total Products (Dark Onyx & Cobalt Blue) */}
+            <div className="w-[86vw] sm:w-[75vw] md:w-auto flex-shrink-0 snap-center bg-[#181920] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[148px] group hover:shadow-xl transition-all">
+              {/* Concentric rings graphic overlay */}
+              <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
+                <circle cx="90%" cy="20%" r="80" stroke="white" strokeWidth="1" fill="none" />
+                <circle cx="90%" cy="20%" r="120" stroke="white" strokeWidth="1" fill="none" />
+              </svg>
+              {/* Top-right cobalt blue abstract disc */}
+              <div className="absolute -top-7 -right-7 w-32 h-32 rounded-full bg-[#2563eb] pointer-events-none" />
 
-            {/* Top Icon Badge */}
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-xs">
-                <Package className="w-5 h-5 text-white" />
+              {/* Top Icon Badge */}
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-xs">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+              </div>
+
+              {/* Content info */}
+              <div className="relative z-10 pt-4 space-y-1">
+                <span className="text-xs font-semibold text-slate-400 tracking-wide block">
+                  Total Products
+                </span>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                    {totalProductsCount} <span className="text-lg font-bold text-slate-400 font-sans">Items</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15">
+                    Live
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Content info */}
-            <div className="relative z-10 pt-4 space-y-1">
-              <span className="text-xs font-semibold text-slate-400 tracking-wide block">
-                Total Products
-              </span>
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                  {totalProductsCount} <span className="text-lg font-bold text-slate-400 font-sans">Items</span>
+            {/* Card 2: In-Stock / Available Products (Royal Purple & Sunburst Yellow) */}
+            <div className="w-[86vw] sm:w-[75vw] md:w-auto flex-shrink-0 snap-center bg-[#7c3aed] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-purple-600/60 min-h-[148px] group hover:shadow-xl transition-all">
+              {/* Concentric rings graphic overlay */}
+              <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="90%" cy="80%" r="40" stroke="white" strokeWidth="1" fill="none" />
+                <circle cx="90%" cy="80%" r="80" stroke="white" strokeWidth="1" fill="none" />
+                <circle cx="90%" cy="80%" r="120" stroke="white" strokeWidth="1" fill="none" />
+              </svg>
+              {/* Bottom-right sunburst yellow abstract cutout */}
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-[#fbbf24] pointer-events-none" />
+
+              {/* Top Icon Badge */}
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs">
+                  <ShoppingCart className="w-5 h-5 text-white" />
+                </div>
+              </div>
+
+              {/* Content info */}
+              <div className="relative z-10 pt-4 space-y-1">
+                <span className="text-xs font-semibold text-purple-200 tracking-wide block">
+                  Available in Store
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15">
-                  Live
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                    {inStockCount} <span className="text-lg font-bold text-purple-200 font-sans">In Stock</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
+                    {outOfStockCount > 0 ? `${outOfStockCount} Out` : 'All Active'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Active Categories (Azure Electric Blue & Emerald Mint) */}
+            <div className="w-[86vw] sm:w-[75vw] md:w-auto flex-shrink-0 snap-center bg-[#2563eb] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-blue-500/60 min-h-[148px] group hover:shadow-xl transition-all">
+              {/* Concentric rings graphic overlay */}
+              <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
+                <circle cx="90%" cy="20%" r="80" stroke="white" strokeWidth="1" fill="none" />
+                <circle cx="90%" cy="20%" r="120" stroke="white" strokeWidth="1" fill="none" />
+              </svg>
+              {/* Top-right emerald mint abstract cutout */}
+              <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-[#10b981] pointer-events-none" />
+
+              {/* Top Icon Badge */}
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs">
+                  <FolderTree className="w-5 h-5 text-white" />
+                </div>
+              </div>
+
+              {/* Content info */}
+              <div className="relative z-10 pt-4 space-y-1">
+                <span className="text-xs font-semibold text-blue-200 tracking-wide block">
+                  Active Categories
                 </span>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                    {categories.length} <span className="text-lg font-bold text-blue-200 font-sans">Sections</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
+                    Organized
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Card 2: In-Stock / Available Products (Royal Purple & Sunburst Yellow) */}
-          <div className="bg-[#7c3aed] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-purple-600/60 min-h-[148px] group hover:shadow-xl transition-all">
-            {/* Concentric rings graphic overlay */}
-            <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="90%" cy="80%" r="40" stroke="white" strokeWidth="1" fill="none" />
-              <circle cx="90%" cy="80%" r="80" stroke="white" strokeWidth="1" fill="none" />
-              <circle cx="90%" cy="80%" r="120" stroke="white" strokeWidth="1" fill="none" />
-            </svg>
-            {/* Bottom-right sunburst yellow abstract cutout */}
-            <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-[#fbbf24] pointer-events-none" />
-
-            {/* Top Icon Badge */}
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs">
-                <ShoppingCart className="w-5 h-5 text-white" />
-              </div>
-            </div>
-
-            {/* Content info */}
-            <div className="relative z-10 pt-4 space-y-1">
-              <span className="text-xs font-semibold text-purple-200 tracking-wide block">
-                Available in Store
-              </span>
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                  {inStockCount} <span className="text-lg font-bold text-purple-200 font-sans">In Stock</span>
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
-                  {outOfStockCount > 0 ? `${outOfStockCount} Out` : 'All Active'}
-                </span>
-              </div>
-            </div>
+          {/* 🔘 Mobile Carousel Pagination Dots */}
+          <div className="flex md:hidden items-center justify-center gap-1.5 pt-2 pb-0.5">
+            {[0, 1, 2].map((idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => scrollToCard(idx)}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  activeCardIndex === idx 
+                    ? 'w-6 bg-slate-900' 
+                    : 'w-1.5 bg-slate-300 hover:bg-slate-400'
+                }`}
+                aria-label={`Go to card ${idx + 1}`}
+              />
+            ))}
           </div>
-
-          {/* Card 3: Active Categories (Azure Electric Blue & Emerald Mint) */}
-          <div className="bg-[#2563eb] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-blue-500/60 min-h-[148px] group hover:shadow-xl transition-all">
-            {/* Concentric rings graphic overlay */}
-            <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
-              <circle cx="90%" cy="20%" r="80" stroke="white" strokeWidth="1" fill="none" />
-              <circle cx="90%" cy="20%" r="120" stroke="white" strokeWidth="1" fill="none" />
-            </svg>
-            {/* Top-right emerald mint abstract cutout */}
-            <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-[#10b981] pointer-events-none" />
-
-            {/* Top Icon Badge */}
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs">
-                <FolderTree className="w-5 h-5 text-white" />
-              </div>
-            </div>
-
-            {/* Content info */}
-            <div className="relative z-10 pt-4 space-y-1">
-              <span className="text-xs font-semibold text-blue-200 tracking-wide block">
-                Active Categories
-              </span>
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                  {categories.length} <span className="text-lg font-bold text-blue-200 font-sans">Sections</span>
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
-                  Organized
-                </span>
-              </div>
-            </div>
-          </div>
-
         </div>
 
         {/* Tab Navigation (Products vs Categories) */}
