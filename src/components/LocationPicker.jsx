@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, AlertCircle } from 'lucide-react';
-import L from 'leaflet';
+import * as LModule from 'leaflet';
 
-// Fix Leaflet's default icon paths in bundled environments
-const customIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const L = LModule.default || LModule;
+
+const getCustomIcon = () => {
+  try {
+    if (typeof L !== 'undefined' && L.icon) {
+      return L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+    }
+  } catch (e) {
+    console.warn('Leaflet icon creation warning', e);
+  }
+  return undefined;
+};
 
 export const LocationPicker = ({ coordinates, onChange, addressHint = '', label = 'GPS Map Delivery Pin' }) => {
   const mapContainerRef = useRef(null);
@@ -20,89 +30,69 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
   const [isLocating, setIsLocating] = useState(false);
   const [geoError, setGeoError] = useState(null);
 
-  // Default coordinate (e.g. New Delhi / India or user location)
+  // Default coordinate (e.g. West Bengal / India or user location)
   const defaultPos = coordinates?.lat && coordinates?.lng 
     ? [coordinates.lat, coordinates.lng] 
-    : [28.6139, 77.2090];
+    : [22.8291, 88.6148];
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center: defaultPos,
-        zoom: 14,
-        zoomControl: true,
-      });
+    try {
+      if (!mapInstanceRef.current && typeof L !== 'undefined' && L.map) {
+        const map = L.map(mapContainerRef.current, {
+          center: defaultPos,
+          zoom: 14,
+          zoomControl: true,
+        });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap',
+          maxZoom: 19,
+        }).addTo(map);
 
-      const marker = L.marker(defaultPos, {
-        draggable: true,
-        icon: customIcon,
-      }).addTo(map);
+        const icon = getCustomIcon();
+        const markerOptions = { draggable: true };
+        if (icon) markerOptions.icon = icon;
 
-      marker.on('dragend', (e) => {
-        const { lat, lng } = e.target.getLatLng();
-        onChange({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
-      });
+        const marker = L.marker(defaultPos, markerOptions).addTo(map);
 
-      map.on('click', (e) => {
-        const { lat, lng } = e.latlng;
-        marker.setLatLng([lat, lng]);
-        onChange({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
-      });
+        marker.on('dragend', (e) => {
+          const { lat, lng } = e.target.getLatLng();
+          onChange({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
+        });
 
-      mapInstanceRef.current = map;
-      markerRef.current = marker;
-    } else {
-      if (coordinates?.lat && coordinates?.lng) {
+        map.on('click', (e) => {
+          const { lat, lng } = e.latlng;
+          marker.setLatLng([lat, lng]);
+          onChange({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
+        });
+
+        mapInstanceRef.current = map;
+        markerRef.current = marker;
+      } else if (mapInstanceRef.current && coordinates?.lat && coordinates?.lng) {
         markerRef.current?.setLatLng([coordinates.lat, coordinates.lng]);
         mapInstanceRef.current?.setView([coordinates.lat, coordinates.lng], mapInstanceRef.current.getZoom());
       }
+    } catch (err) {
+      console.warn('Map initialization notice:', err);
     }
   }, [coordinates?.lat, coordinates?.lng]);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      try {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+      } catch (e) {}
     };
   }, []);
 
-  // Automatically request browser GPS location on mount
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = Number(position.coords.latitude.toFixed(6));
-        const lng = Number(position.coords.longitude.toFixed(6));
-
-        if (mapInstanceRef.current && markerRef.current) {
-          mapInstanceRef.current.setView([lat, lng], 16);
-          markerRef.current.setLatLng([lat, lng]);
-        }
-
-        onChange({ lat, lng });
-        setIsLocating(false);
-      },
-      () => {
-        setIsLocating(false);
-      },
-      { timeout: 8000, enableHighAccuracy: true }
-    );
-  }, []);
-
   const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
       setGeoError('Geolocation is not supported by your browser.');
       return;
     }
@@ -115,10 +105,12 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
         const lat = Number(position.coords.latitude.toFixed(6));
         const lng = Number(position.coords.longitude.toFixed(6));
 
-        if (mapInstanceRef.current && markerRef.current) {
-          mapInstanceRef.current.setView([lat, lng], 16);
-          markerRef.current.setLatLng([lat, lng]);
-        }
+        try {
+          if (mapInstanceRef.current && markerRef.current) {
+            mapInstanceRef.current.setView([lat, lng], 16);
+            markerRef.current.setLatLng([lat, lng]);
+          }
+        } catch (e) {}
 
         onChange({ lat, lng });
         setIsLocating(false);
@@ -158,7 +150,7 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
         <div ref={mapContainerRef} className="w-full h-full" />
         
         <div className="absolute bottom-2 left-2 right-2 z-20 pointer-events-none">
-          <div className="bg-white/60 backdrop-blur-md text-slate-900 border border-white/60 px-3 py-1.5 rounded-lg text-xs flex items-center justify-between shadow-xs">
+          <div className="bg-white/70 backdrop-blur-md text-slate-900 border border-white/60 px-3 py-1.5 rounded-lg text-xs flex items-center justify-between shadow-xs">
             <span className="truncate flex items-center gap-1.5 text-slate-900 font-bold">
               <MapPin className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
               {coordinates?.lat && coordinates?.lng
@@ -179,7 +171,7 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
         </div>
       )}
       <p className="text-[11px] text-slate-500">
-        Drag the blue pin or click the map to mark the delivery gate or door.
+        Drag the pin or click the map to mark the delivery gate or door.
       </p>
     </div>
   );
