@@ -40,7 +40,7 @@ class AdminInventoryService {
   }
 
   /**
-   * Fetch all products from Supabase database or local fallback
+   * Fetch all products directly from Supabase database
    */
   async getAllProducts() {
     try {
@@ -49,23 +49,19 @@ class AdminInventoryService {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (error) {
+        console.error('Supabase fetch error:', error);
+      } else if (Array.isArray(data)) {
         const normalized = data.map(normalizeProduct).filter(Boolean);
         this.cacheProductsLocally(normalized);
         return normalized;
       }
     } catch (err) {
-      console.warn('Supabase fetch failed or table empty, loading cached inventory', err);
+      console.error('Failed to query Supabase products table:', err);
     }
 
-    // Return cached / memory inventory
-    const cached = this.getCachedProducts();
-    if (cached.length > 0) return cached;
-
-    // If nothing exists yet, seed with initial default catalog
-    const seeded = INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
-    this.cacheProductsLocally(seeded);
-    return seeded;
+    // Return locally cached database data (if offline/reloading), never mock hardcoded data
+    return this.getCachedProducts();
   }
 
   getCachedProducts() {
@@ -73,25 +69,22 @@ class AdminInventoryService {
       const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed.map(normalizeProduct).filter(Boolean);
         }
       }
     } catch (e) {
-      console.warn('Could not load local admin products', e);
+      console.warn('Could not load local admin products cache', e);
     }
 
-    // Default seed
-    const defaultList = INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
-    this.cacheProductsLocally(defaultList);
-    return defaultList;
+    return [];
   }
 
   cacheProductsLocally(products) {
     try {
-      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(products));
+      localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(products || []));
       // Also sync to storefront cache
-      localStorage.setItem('quickcart_live_inventory_cache', JSON.stringify(products.filter(p => p.status === 'active')));
+      localStorage.setItem('quickcart_live_inventory_cache', JSON.stringify((products || []).filter(p => p.status === 'active')));
     } catch (e) {
       console.warn('Error caching products', e);
     }

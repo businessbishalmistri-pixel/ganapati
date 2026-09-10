@@ -42,7 +42,7 @@ export async function fetchLiveProductsFromBackend() {
       .order('created_at', { ascending: false });
 
     let productsList = [];
-    if (!error && Array.isArray(data) && data.length > 0) {
+    if (!error && Array.isArray(data)) {
       productsList = data;
     } else {
       // Check admin products cache
@@ -50,7 +50,7 @@ export async function fetchLiveProductsFromBackend() {
         const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
         if (cachedAdmin) {
           const parsed = JSON.parse(cachedAdmin);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             productsList = parsed;
           }
         }
@@ -59,12 +59,8 @@ export async function fetchLiveProductsFromBackend() {
       }
     }
 
-    if (productsList.length === 0) {
-      productsList = INITIAL_DEFAULT_PRODUCTS;
-    }
-
     // Filter out draft products from storefront
-    const visibleProducts = productsList.filter(p => p.status !== 'draft' && !p.is_draft);
+    const visibleProducts = productsList.filter(p => p && p.status !== 'draft' && !p.is_draft);
 
     return visibleProducts.map((p) => {
       const rawPrice = parseFloat(p.price ?? p.selling_price ?? p.unit_price ?? 0);
