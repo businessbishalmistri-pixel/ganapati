@@ -244,7 +244,8 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           <div 
             ref={carouselRef}
             onScroll={handleCarouselScroll}
-            className="flex md:grid md:grid-cols-3 gap-3 md:gap-4 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory no-scrollbar pb-1 -mx-3 px-3 sm:mx-0 sm:px-0"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex md:grid md:grid-cols-3 gap-3 md:gap-4 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory no-scrollbar pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {/* Card 1: Total Products (Dark Onyx & Cobalt Blue) */}
             <div className="w-[86vw] sm:w-[75vw] md:w-auto flex-shrink-0 snap-center bg-[#181920] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[148px] group hover:shadow-xl transition-all">
