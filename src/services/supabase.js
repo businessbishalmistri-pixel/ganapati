@@ -5,8 +5,26 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://ftiivdzbimggyxbbkaji.supabase.co';
-const SUPABASE_ANON_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0aWl2ZHpiaW1nZ3l4YmJrYWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzQ2MDksImV4cCI6MjEwNDYxMDYwOX0.ybjdQubcyaathpa4fXhv5nr2otanhyvEbDpbLxeIqXI';
+function sanitizeSupabaseUrl(rawUrl) {
+  const fallback = 'https://ftiivdzbimggyxbbkaji.supabase.co';
+  if (!rawUrl || typeof rawUrl !== 'string') return fallback;
+  const trimmed = rawUrl.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (!trimmed.includes('.')) return `https://${trimmed}.supabase.co`;
+  return `https://${trimmed}`;
+}
+
+function sanitizeSupabaseKey(rawKey) {
+  const fallback = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0aWl2ZHpiaW1nZ3l4YmJrYWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzQ2MDksImV4cCI6MjEwNDYxMDYwOX0.ybjdQubcyaathpa4fXhv5nr2otanhyvEbDpbLxeIqXI';
+  if (!rawKey || typeof rawKey !== 'string') return fallback;
+  const trimmed = rawKey.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
+  return trimmed;
+}
+
+const SUPABASE_URL = sanitizeSupabaseUrl(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_URL : '');
+const SUPABASE_ANON_KEY = sanitizeSupabaseKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_ANON_KEY : '');
 
 export const STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
 export const DEFAULT_STORE_API_KEY = STORE_API_KEY;
