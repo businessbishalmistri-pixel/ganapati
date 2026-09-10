@@ -60,9 +60,6 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             Back to Ganapati Storefront
           </button>
-          <span className="text-xs font-mono font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/60">
-            v2.0 Live
-          </span>
         </div>
 
         {/* Login Card */}

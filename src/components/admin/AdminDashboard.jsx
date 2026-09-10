@@ -153,10 +153,6 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
         <div>
           <div className="flex items-center gap-1.5">
             <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live
-            </span>
           </div>
           <span className="text-[11px] text-slate-400 font-medium">Store & Product Management</span>
         </div>
