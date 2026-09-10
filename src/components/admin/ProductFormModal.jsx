@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Package, 
+  Box,
   Tag, 
   Image as ImageIcon,
   Save,
@@ -9,6 +10,7 @@ import {
   Scale,
   Shirt,
   Sliders,
+  SlidersHorizontal,
   Plus,
   Trash2,
   Sparkles,
