@@ -26,11 +26,13 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
       {/* Top micro banner */}
-      <div className="bg-emerald-50 border-b border-emerald-100 text-emerald-950 text-[10px] sm:text-xs py-1 px-3 text-center font-medium flex items-center justify-center gap-1.5">
-        <span className="text-emerald-800 font-bold">
-          Free delivery on orders over ₹{settings?.freeShippingThreshold || 200} &bull; Cash on Delivery
-        </span>
-      </div>
+      {(settings?.announcementText === undefined || settings?.announcementText?.trim() !== '') && (
+        <div className="bg-emerald-50 border-b border-emerald-100 text-emerald-950 text-[10px] sm:text-xs py-1 px-3 text-center font-medium flex items-center justify-center gap-1.5">
+          <span className="text-emerald-800 font-bold">
+            {settings?.announcementText || `Free delivery on orders over ₹${settings?.freeShippingThreshold || 200} • Cash on Delivery`}
+          </span>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-[10px]">
         <div className="flex items-center justify-between gap-2.5">

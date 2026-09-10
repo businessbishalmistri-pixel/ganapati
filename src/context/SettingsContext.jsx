@@ -7,6 +7,7 @@ import { fetchStoreInfoFromBackend } from '../services/supabaseStore';
 const DEFAULT_SETTINGS = {
   storeName: 'Ganapati Store',
   tagline: '',
+  announcementText: 'Free delivery on orders over ₹200 • Cash on Delivery',
   whatsappNumber: '+91 9147364980',
   currency: '₹',
   storeAddress: 'Main Store Hub',
