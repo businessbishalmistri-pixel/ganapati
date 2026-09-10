@@ -25,9 +25,9 @@ export function ProductInventoryTable({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('updated_at'); // 'name' | 'price' | 'updated_at'
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
   const [stockFilter, setStockFilter] = useState('all'); // 'all' | 'in-stock' | 'out-of-stock'
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const searchInputRef = React.useRef(null);
 
   // Counts calculation
   const categoryProducts = useMemo(() => {
@@ -43,7 +43,7 @@ export function ProductInventoryTable({
     return categoryProducts.filter(p => p.in_stock === false || p.stock === 0).length;
   }, [categoryProducts]);
 
-  // Filter and Sort Pipeline with Smart Search
+  // Filter Pipeline with Smart Search
   const filteredProducts = useMemo(() => {
     // 1. Filter by Category & Stock status first
     const baseFiltered = products.filter((p) => {
@@ -64,62 +64,31 @@ export function ProductInventoryTable({
       ? smartSearchProducts(baseFiltered, searchQuery)
       : baseFiltered;
 
-    // 3. Sort (preserve relevance order if default sort, otherwise sort explicitly)
+    // 3. Default sort by latest updated
     return [...searched].sort((a, b) => {
-      let comparison = 0;
-      if (sortBy === 'name') {
-        comparison = (a.title || a.name || '').localeCompare(b.title || b.name || '');
-      } else if (sortBy === 'price') {
-        comparison = (a.selling_price || 0) - (b.selling_price || 0);
-      } else {
-        const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
-        const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
-        comparison = dateA - dateB;
-      }
-      return sortOrder === 'desc' ? -comparison : comparison;
+      const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+      return dateB - dateA;
     });
-  }, [products, searchQuery, selectedCategory, stockFilter, sortBy, sortOrder]);
-
-  // Export CSV Helper
-  const handleExportCSV = () => {
-    if (filteredProducts.length === 0) return;
-    const headers = ['ID', 'Product Name', 'Category', 'Pack/Unit', 'Selling Price (₹)', 'MRP (₹)', 'In Stock'];
-    const rows = filteredProducts.map(p => [
-      p.id,
-      `"${(p.title || '').replace(/"/g, '""')}"`,
-      `"${(p.category || '').replace(/"/g, '""')}"`,
-      p.unit || '',
-      p.selling_price,
-      p.mrp || p.selling_price,
-      p.in_stock !== false ? 'Yes' : 'No'
-    ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ganapati_products_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  }, [products, searchQuery, selectedCategory, stockFilter]);
 
   return (
     <div className="space-y-3 font-sans">
       
-      {/* 🌟 SLIM TOOLBAR */}
-      <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)] space-y-2.5">
+      {/* 🌟 SLIM INVENTORY TOOLBAR */}
+      <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
         
-        {/* Search Input Row + Sort & Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-          {/* Smart Search Bar */}
-          <div className="relative flex-1">
+        {/* 📱 MOBILE VIEW: Top Search -> Middle Category -> Bottom Tabs */}
+        <div className="sm:hidden space-y-2">
+          {/* 1. Top Search */}
+          <div className="relative w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search products (smart search)..."
+              placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
             />
             {searchQuery && (
               <button
@@ -132,88 +101,150 @@ export function ProductInventoryTable({
             )}
           </div>
 
-          {/* Quick Action Buttons & Sorting */}
-          <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0">
-            {/* Sort Dropdown & Toggle */}
-            <div className="flex items-center gap-1">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none"
-              >
-                <option value="updated_at">Latest</option>
-                <option value="name">Name</option>
-                <option value="price">Price</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer"
-                title={`Sort: ${sortOrder.toUpperCase()}`}
-              >
-                <ArrowUpDown className="w-4 h-4" />
-              </button>
-            </div>
+          {/* 2. Middle Category */}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+          >
+            <option value="All">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>{c.name}</option>
+            ))}
+          </select>
 
-            {/* Export CSV Button */}
+          {/* 3. Bottom Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs no-scrollbar">
             <button
               type="button"
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer"
-              title="Export CSV"
+              onClick={() => setStockFilter('all')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer text-xs ${
+                stockFilter === 'all'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
             >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export</span>
+              All ({categoryProducts.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStockFilter('in-stock')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+                stockFilter === 'in-stock'
+                  ? 'bg-[#005f56] text-white shadow-xs'
+                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>In Stock ({inStockCount})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStockFilter('out-of-stock')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+                stockFilter === 'out-of-stock'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+              <span>Out of Stock ({outOfStockCount})</span>
             </button>
           </div>
         </div>
 
-        {/* Scrollable Filter Chips (All, In Stock, Out of Stock, Category) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setStockFilter('all')}
-            className={`px-2.5 py-1 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer text-xs ${
-              stockFilter === 'all'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            All ({categoryProducts.length})
-          </button>
+        {/* 🖥️ DESKTOP & TABLET VIEW: Single Sleek Row */}
+        <div className="hidden sm:flex items-center justify-between gap-3">
+          
+          {/* Left: Filter Tab Options */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setStockFilter('all')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer text-xs ${
+                stockFilter === 'all'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              All ({categoryProducts.length})
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setStockFilter('in-stock')}
-            className={`px-2.5 py-1 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
-              stockFilter === 'in-stock'
-                ? 'bg-[#005f56] text-white shadow-xs'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>In Stock ({inStockCount})</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setStockFilter('in-stock')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+                stockFilter === 'in-stock'
+                  ? 'bg-[#005f56] text-white shadow-xs'
+                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>In Stock ({inStockCount})</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setStockFilter('out-of-stock')}
-            className={`px-2.5 py-1 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
-              stockFilter === 'out-of-stock'
-                ? 'bg-rose-600 text-white shadow-xs'
-                : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-            <span>Out of Stock ({outOfStockCount})</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setStockFilter('out-of-stock')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+                stockFilter === 'out-of-stock'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+              <span>Out of Stock ({outOfStockCount})</span>
+            </button>
+          </div>
 
-          {/* Category Dropdown */}
-          <div className="ml-auto pl-1 flex-shrink-0">
+          {/* Right: Expandable Search Icon & Category Dropdown */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Search as icon button -> expands to search bar when clicked */}
+            {isSearchExpanded || searchQuery ? (
+              <div className="relative flex items-center animate-fadeIn">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  autoFocus
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-48 sm:w-60 pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all shadow-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchExpanded(false);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                  title="Close search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchExpanded(true);
+                  setTimeout(() => searchInputRef.current?.focus(), 50);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                title="Search products"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Category Dropdown */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-2 py-1 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
               <option value="All">All Categories</option>
               {categories.map((c) => (
@@ -221,7 +252,9 @@ export function ProductInventoryTable({
               ))}
             </select>
           </div>
+
         </div>
+
       </div>
 
       {/* 📱 MOBILE WIDGET CARDS VIEW (Polished & Compact) */}
