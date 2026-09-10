@@ -325,16 +325,6 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
             <p>
               {product.description || 'Our produce is handpicked directly from certified local farms and organic growers to ensure peak freshness, rich flavor, and maximum nutritional value.'}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="font-bold text-slate-900 mb-1">🌿 100% Farm Fresh</p>
-                <p className="text-xs text-slate-500">Sourced daily with strict quality and hygiene inspection.</p>
-              </div>
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="font-bold text-slate-900 mb-1">🚚 Same-Day Dispatch</p>
-                <p className="text-xs text-slate-500">Packed securely and dispatched quickly for Cash on Delivery.</p>
-              </div>
-            </div>
           </div>
         </div>
 
