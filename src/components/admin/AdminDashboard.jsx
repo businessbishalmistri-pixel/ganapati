@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Banknote,
   ShoppingCart,
-  Users
+  Users,
+  Nut
 } from 'lucide-react';
 import { adminInventoryService } from '../../services/adminInventoryService';
 import { ProductInventoryTable } from './ProductInventoryTable';
@@ -168,7 +169,16 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
 
         {/* Header Right Actions */}
         <div className="flex items-center gap-2">
-          {/* Refresh */}
+          {/* Settings / Nut Icon Button */}
+          <button
+            type="button"
+            className="p-1.5 sm:px-2 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors flex items-center justify-center text-xs font-semibold cursor-pointer shadow-2xs"
+            title="Settings"
+          >
+            <Nut className="w-3.5 h-3.5 text-slate-600" />
+          </button>
+
+          {/* Refresh / Sync */}
           <button
             onClick={loadData}
             disabled={isRefreshing}
