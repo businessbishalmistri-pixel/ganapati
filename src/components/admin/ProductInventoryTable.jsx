@@ -9,6 +9,7 @@ import {
   RefreshCw, 
   Package
 } from 'lucide-react';
+import { smartSearchProducts } from '../../utils/smartSearch';
 
 export function ProductInventoryTable({
   products = [],
@@ -26,31 +27,29 @@ export function ProductInventoryTable({
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
   const [stockFilter, setStockFilter] = useState('all'); // 'all' | 'in-stock' | 'out-of-stock'
 
-  // Filter and Sort Pipeline
+  // Filter and Sort Pipeline with Smart Search
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    // 1. Filter by Category & Stock status first
+    const baseFiltered = products.filter((p) => {
       const isInStock = p.in_stock !== false && (p.stock > 0 || p.stock === undefined);
 
-      // 1. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = (p.title || p.name || '').toLowerCase().includes(q);
-        const matchCategory = (p.category || '').toLowerCase().includes(q);
-        const matchBrand = (p.brand || '').toLowerCase().includes(q);
-        if (!matchTitle && !matchCategory && !matchBrand) return false;
-      }
-
-      // 2. Category Filter
       if (selectedCategory !== 'All' && p.category !== selectedCategory) {
         return false;
       }
 
-      // 3. Stock Level Filter
       if (stockFilter === 'in-stock' && !isInStock) return false;
       if (stockFilter === 'out-of-stock' && isInStock) return false;
 
       return true;
-    }).sort((a, b) => {
+    });
+
+    // 2. Apply Smart Typo-Tolerant & Phonetic Search
+    const searched = searchQuery.trim()
+      ? smartSearchProducts(baseFiltered, searchQuery)
+      : baseFiltered;
+
+    // 3. Sort (preserve relevance order if default sort, otherwise sort explicitly)
+    return [...searched].sort((a, b) => {
       let comparison = 0;
       if (sortBy === 'name') {
         comparison = (a.title || a.name || '').localeCompare(b.title || b.name || '');
@@ -64,6 +63,7 @@ export function ProductInventoryTable({
       return sortOrder === 'desc' ? -comparison : comparison;
     });
   }, [products, searchQuery, selectedCategory, stockFilter, sortBy, sortOrder]);
+
 
   // Export CSV Helper
   const handleExportCSV = () => {
