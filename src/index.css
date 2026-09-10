@@ -9,6 +9,9 @@
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
+  input, select, textarea {
+    border-radius: 6px;
+  }
 }
 
 /* Custom scrollbar for sleek design */
