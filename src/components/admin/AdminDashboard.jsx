@@ -79,19 +79,26 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
   const outOfStockCount = totalProductsCount - inStockCount;
 
-  // Product CRUD Handlers
+  // Product CRUD Handlers (0ms Optimistic UI)
   const handleSaveProduct = async (productData) => {
     if (productData.id) {
-      await adminInventoryService.updateProduct(productData.id, productData);
+      setProducts(prev => prev.map(p => p.id === productData.id ? { ...p, ...productData } : p));
+      adminInventoryService.updateProduct(productData.id, productData).catch(console.error);
     } else {
-      await adminInventoryService.addProduct(productData);
+      const tempId = productData.id || `prod_${Date.now()}`;
+      const optimisticProd = { ...productData, id: tempId };
+      setProducts(prev => [optimisticProd, ...prev]);
+      adminInventoryService.addProduct(productData).then(created => {
+        if (created) {
+          setProducts(prev => prev.map(p => p.id === tempId ? created : p));
+        }
+      }).catch(console.error);
     }
-    await loadData();
   };
 
   const handleDeleteProduct = async (id) => {
-    await adminInventoryService.deleteProduct(id);
-    await loadData();
+    setProducts(prev => prev.filter(p => p.id !== id));
+    adminInventoryService.deleteProduct(id).catch(console.error);
   };
 
   const handleToggleInStock = async (id) => {

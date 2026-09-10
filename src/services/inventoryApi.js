@@ -53,31 +53,43 @@ class InventoryService {
   }
 
   /**
-   * Fetch real products directly from backend
+   * Fetch real products directly from backend (Deduplicated)
    */
   async fetchCatalog() {
-    try {
-      const liveProducts = await fetchLiveProductsFromBackend();
-      if (Array.isArray(liveProducts)) {
-        this.products = liveProducts;
-        this.notify();
-        return liveProducts;
-      }
-    } catch (err) {
-      console.error('Failed to fetch catalog from backend:', err);
+    if (this._inFlightFetch) {
+      return this._inFlightFetch;
     }
-    return [...this.products];
+    this._inFlightFetch = (async () => {
+      try {
+        const liveProducts = await fetchLiveProductsFromBackend();
+        if (Array.isArray(liveProducts)) {
+          this.products = liveProducts;
+          this.notify();
+          return liveProducts;
+        }
+      } catch (err) {
+        console.error('Failed to fetch catalog from backend:', err);
+      } finally {
+        this._inFlightFetch = null;
+      }
+      return [...this.products];
+    })();
+    return this._inFlightFetch;
   }
 
   /**
-   * Listen to real-time PostgreSQL changes in Supabase
+   * Listen to real-time PostgreSQL changes in Supabase (Debounced)
    */
   setupRealtimeSubscription() {
     try {
+      let debounceTimer = null;
       supabase
         .channel('public:products')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-          this.fetchCatalog();
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            this.fetchCatalog();
+          }, 300);
         })
         .subscribe();
     } catch (e) {
