@@ -29,6 +29,20 @@ export function ProductInventoryTable({
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
   const [stockFilter, setStockFilter] = useState('all'); // 'all' | 'in-stock' | 'out-of-stock'
 
+  // Counts calculation
+  const categoryProducts = useMemo(() => {
+    if (selectedCategory === 'All') return products;
+    return products.filter(p => p.category === selectedCategory);
+  }, [products, selectedCategory]);
+
+  const inStockCount = useMemo(() => {
+    return categoryProducts.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
+  }, [categoryProducts]);
+
+  const outOfStockCount = useMemo(() => {
+    return categoryProducts.filter(p => p.in_stock === false || p.stock === 0).length;
+  }, [categoryProducts]);
+
   // Filter and Sort Pipeline with Smart Search
   const filteredProducts = useMemo(() => {
     // 1. Filter by Category & Stock status first
@@ -90,53 +104,67 @@ export function ProductInventoryTable({
   };
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3 font-sans">
       
-      {/* 🔍 Search & Filter Toolbar */}
-      <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          {/* Search Input */}
+      {/* 🌟 SLIM TOOLBAR */}
+      <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)] space-y-2.5">
+        
+        {/* Search Input Row + Sort & Controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+          {/* Smart Search Bar */}
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search products (smart search)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              className="w-full pl-9 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* Export & Sort (Tablet/Desktop) */}
-          <div className="hidden sm:flex items-center gap-1.5">
-            <button
-              onClick={handleExportCSV}
-              className="h-8 inline-flex items-center gap-1.5 px-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all cursor-pointer"
-              title="Download CSV"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export</span>
-            </button>
-
-            <div className="flex items-center gap-1.5">
+          {/* Quick Action Buttons & Sorting */}
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0">
+            {/* Sort Dropdown & Toggle */}
+            <div className="flex items-center gap-1">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="h-8 px-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                className="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none"
               >
                 <option value="updated_at">Latest</option>
-                <option value="name">Name (A-Z)</option>
+                <option value="name">Name</option>
                 <option value="price">Price</option>
               </select>
               <button
                 type="button"
                 onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="h-8 w-8 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer"
                 title={`Sort: ${sortOrder.toUpperCase()}`}
               >
-                <ArrowUpDown className="w-3.5 h-3.5 text-slate-600" />
+                <ArrowUpDown className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer"
+              title="Export CSV"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
           </div>
         </div>
 
@@ -151,7 +179,7 @@ export function ProductInventoryTable({
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            All ({products.length})
+            All ({categoryProducts.length})
           </button>
 
           <button
@@ -164,7 +192,7 @@ export function ProductInventoryTable({
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>In Stock</span>
+            <span>In Stock ({inStockCount})</span>
           </button>
 
           <button
@@ -177,7 +205,7 @@ export function ProductInventoryTable({
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-            <span>Out of Stock</span>
+            <span>Out of Stock ({outOfStockCount})</span>
           </button>
 
           {/* Category Dropdown */}
