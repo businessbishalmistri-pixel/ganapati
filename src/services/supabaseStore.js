@@ -63,9 +63,9 @@ export async function fetchLiveProductsFromBackend() {
     const visibleProducts = productsList.filter(p => p && p.status !== 'draft' && !p.is_draft);
 
     return visibleProducts.map((p) => {
-      const rawPrice = parseFloat(p.price ?? p.selling_price ?? p.unit_price ?? 0);
-      const originalPrice = p.original_price ? parseFloat(p.original_price) : (p.mrp ? parseFloat(p.mrp) : null);
-      const rawStock = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
+      const rawPrice = parseFloat(p.selling_price || p.price || p.unit_price || 0);
+      const originalPrice = p.mrp ? parseFloat(p.mrp) : (p.original_price ? parseFloat(p.original_price) : null);
+      const rawStock = parseInt(p.stock_quantity ?? p.stock ?? 999, 10);
       
       // Parse and clean real variants array from XYVOT / Supabase
       let cleanVariants = [];

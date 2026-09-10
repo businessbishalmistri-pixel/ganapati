@@ -7,14 +7,16 @@ export const ProductCard = ({ product, onSelectProduct }) => {
   const { addToCart, updateQuantity, cartItems } = useCart();
   const { settings } = useSettings();
 
+  const priceVal = parseFloat(product.selling_price || product.price || 0) || 0;
+  const mrpVal = parseFloat(product.mrp || product.originalPrice || product.original_price || 0) || 0;
   const hasVariants = Boolean((product.has_variants || product.hasVariants) && Array.isArray(product.variants) && product.variants.length > 0);
   const minPrice = hasVariants
-    ? Math.min(...product.variants.map((v) => parseFloat(v.selling_price ?? v.price ?? product.price ?? 0)))
-    : parseFloat(product.selling_price ?? product.price ?? 0);
+    ? Math.min(...product.variants.map((v) => parseFloat(v.selling_price || v.price || priceVal)))
+    : priceVal;
 
   const cartItem = cartItems.find((i) => (i.id === product.id || i.cartKey === product.id));
   const qtyInCart = cartItem ? cartItem.quantity : 0;
-  const isOutOfStock = product.in_stock === false || product.stock <= 0;
+  const isOutOfStock = product.in_stock === false || (product.stock !== undefined && product.stock <= 0);
   const isMaxInCart = false;
 
   return (
@@ -91,11 +93,11 @@ export const ProductCard = ({ product, onSelectProduct }) => {
           <div className="min-w-0">
             <div className="flex items-baseline gap-1">
               <span className="text-xs sm:text-sm font-black text-slate-900 truncate">
-                {hasVariants ? `From ${settings.currency}${minPrice.toFixed(0)}` : `${settings.currency}${product.price.toFixed(0)}`}
+                {hasVariants ? `From ${settings.currency}${minPrice.toFixed(0)}` : `${settings.currency}${priceVal.toFixed(0)}`}
               </span>
-              {product.originalPrice && (
+              {mrpVal > priceVal && (
                 <span className="text-[10px] text-slate-400 line-through">
-                  {settings.currency}{product.originalPrice.toFixed(0)}
+                  {settings.currency}{mrpVal.toFixed(0)}
                 </span>
               )}
             </div>
