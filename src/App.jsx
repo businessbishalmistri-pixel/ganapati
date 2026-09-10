@@ -480,13 +480,6 @@ export function App() {
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>Direct WhatsApp Quick Dispatch</span>
-            <span>&bull;</span>
-            <button
-              onClick={handleNavigateToAdmin}
-              className="text-slate-500 hover:text-blue-600 font-medium transition-colors cursor-pointer"
-            >
-              Admin Inventory
-            </button>
           </div>
         </div>
       </footer>
