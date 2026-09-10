@@ -9,7 +9,7 @@
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
-  input, select, textarea {
+  input, select, textarea, button, img {
     border-radius: 6px;
   }
 }

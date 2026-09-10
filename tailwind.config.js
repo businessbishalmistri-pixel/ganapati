@@ -5,6 +5,18 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    borderRadius: {
+      none: '0px',
+      xs: '6px',
+      sm: '6px',
+      DEFAULT: '6px',
+      md: '6px',
+      lg: '6px',
+      xl: '6px',
+      '2xl': '6px',
+      '3xl': '6px',
+      full: '9999px',
+    },
     extend: {
       colors: {
         brand: {
@@ -25,18 +37,6 @@ export default {
           dark: '#075E54',
           surface: '#E5DDD5'
         }
-      },
-      borderRadius: {
-        'none': '0px',
-        'xs': '4px',
-        'sm': '6px',
-        DEFAULT: '6px',
-        'md': '6px',
-        'lg': '6px',
-        'xl': '6px',
-        '2xl': '6px',
-        '3xl': '6px',
-        'full': '9999px',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
