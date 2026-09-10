@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bolt, Check, Phone, ExternalLink, MessageCircle, Store } from 'lucide-react';
+import { X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -9,14 +9,18 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
   const [whatsappNumber, setWhatsappNumber] = useState(settings?.whatsappNumber || '+91 9147364980');
   const [storeName, setStoreName] = useState(settings?.storeName || 'Ganapati Store');
-  const [currency, setCurrency] = useState(settings?.currency || '₹');
+  const [bannerImageUrl, setBannerImageUrl] = useState(settings?.bannerImageUrl || 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png');
+  const [flatShippingFee, setFlatShippingFee] = useState(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setWhatsappNumber(settings?.whatsappNumber || '+91 9147364980');
       setStoreName(settings?.storeName || 'Ganapati Store');
-      setCurrency(settings?.currency || '₹');
+      setBannerImageUrl(settings?.bannerImageUrl || 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png');
+      setFlatShippingFee(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
+      setFreeShippingThreshold(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
     }
   }, [isOpen, settings]);
 
@@ -47,7 +51,9 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       ...settings,
       whatsappNumber: whatsappNumber.trim(),
       storeName: storeName.trim(),
-      currency: currency.trim()
+      bannerImageUrl: bannerImageUrl.trim(),
+      flatShippingFee: Number(flatShippingFee) || 0,
+      freeShippingThreshold: Number(freeShippingThreshold) || 0,
     };
 
     updateSettings(updated);
@@ -61,7 +67,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
     setTimeout(() => {
       setIsSaving(false);
-      showToast('Store settings saved! Orders will now route to ' + whatsappNumber, 'success');
+      showToast('Store settings saved successfully!', 'success');
       onClose();
     }, 150);
   };
@@ -100,91 +106,120 @@ export function AdminSettingsModal({ isOpen, onClose }) {
         {/* Form Body */}
         <form onSubmit={handleSave} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-4">
           
-          {/* 🟢 WhatsApp Order Number Hero Section */}
-          <div className="p-3.5 sm:p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-3">
+          {/* 1. Minimal WhatsApp Order Number (Icon + Input) */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                  <MessageCircle className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 block leading-tight">
-                    WhatsApp Order Receiving Number
-                  </span>
-                  <span className="text-[11px] text-emerald-700 font-medium">Direct customer order destination</span>
-                </div>
-              </div>
-
-              {/* Test link button */}
+              <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp Order Number</span>
+              </label>
               <button
                 type="button"
                 onClick={handleTestWhatsApp}
-                className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 hover:bg-emerald-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer flex-shrink-0"
+                className="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
                 title="Test sending message to this number"
               >
                 <span>Test Chat</span>
                 <ExternalLink className="w-3 h-3" />
               </button>
             </div>
+            <input
+              type="text"
+              required
+              placeholder="+91 9147364980"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs"
+            />
+          </div>
 
-            {/* Input Row */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-bold text-slate-700">
-                Phone Number (with Country Code)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Phone className="w-4 h-4 text-emerald-600" />
+          {/* 2. Storefront Banner Cloudinary Link */}
+          <div className="space-y-1.5 pt-1">
+            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Image className="w-4 h-4 text-blue-600" />
+              <span>Storefront Banner Image URL (Cloudinary Link)</span>
+            </label>
+            <input
+              type="url"
+              placeholder="https://res.cloudinary.com/.../banner.png"
+              value={bannerImageUrl}
+              onChange={(e) => setBannerImageUrl(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
+            />
+            {/* Live Banner Preview */}
+            {bannerImageUrl && (
+              <div className="pt-1">
+                <span className="text-[10px] font-bold text-slate-400 block mb-1">Banner Preview:</span>
+                <div className="w-full aspect-[21/9] sm:aspect-[4/1] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
+                  <img
+                    src={bannerImageUrl}
+                    alt="Banner preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png';
+                    }}
+                  />
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Delivery Charges & Free Delivery Threshold */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 pt-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <Truck className="w-4 h-4 text-amber-600" />
+              <span>Delivery Charges & Free Delivery</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Delivery Fee (₹)
+                </label>
                 <input
-                  type="text"
-                  required
-                  placeholder="+91 9147364980"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs"
+                  type="number"
+                  min="0"
+                  placeholder="30"
+                  value={flatShippingFee}
+                  onChange={(e) => setFlatShippingFee(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Free Delivery Above (₹)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="200"
+                  value={freeShippingThreshold}
+                  onChange={(e) => setFreeShippingThreshold(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-2xs"
                 />
               </div>
             </div>
 
-            {/* Info helper text */}
-            <p className="text-[11px] text-slate-600 leading-relaxed bg-white/80 p-2.5 rounded-xl border border-emerald-100">
-              💡 <strong>How it works:</strong> When a customer clicks <em>"Place Order via WhatsApp"</em> on the storefront, WhatsApp will instantly open on their phone addressed to this number with their full itemized cart and delivery address.
+            <p className="text-[11px] text-slate-500">
+              Orders <strong>₹{freeShippingThreshold || 200}</strong> and above will get <strong>Free Delivery (₹0)</strong>. Orders below will be charged <strong>₹{flatShippingFee || 30}</strong>.
             </p>
           </div>
 
-          {/* 🏪 General Store Details */}
-          <div className="space-y-3 pt-1">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Store Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Store className="w-3.5 h-3.5" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="e.g. Ganapati Store"
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Currency Symbol
-              </label>
-              <input
-                type="text"
-                placeholder="₹"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-bold"
-              />
-            </div>
+          {/* 4. Store Name */}
+          <div className="space-y-1 pt-1">
+            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Store className="w-4 h-4 text-slate-600" />
+              <span>Store Display Name</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Ganapati Store"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium shadow-2xs"
+            />
           </div>
 
           {/* Footer Actions */}

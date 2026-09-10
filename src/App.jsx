@@ -319,10 +319,14 @@ export function App() {
           <section className="w-full border-b border-slate-200/80">
             <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
               <img
-                src="https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png"
-                alt="Ganapati Store — Fresh Groceries & Daily Essentials"
-                className="w-full h-auto block rounded-xl"
+                src={settings?.bannerImageUrl || "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png"}
+                alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store — Fresh Groceries & Daily Essentials"}
+                className="w-full h-auto block rounded-xl shadow-xs"
                 loading="eager"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png";
+                }}
               />
             </div>
           </section>

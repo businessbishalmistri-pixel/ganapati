@@ -11,8 +11,9 @@ const DEFAULT_SETTINGS = {
   currency: '₹',
   storeAddress: 'Main Store Hub',
   storeHours: 'Mon - Sat: 9:00 AM - 8:00 PM',
-  freeShippingThreshold: 999,
-  flatShippingFee: 79.00,
+  freeShippingThreshold: 200,
+  flatShippingFee: 30.00,
+  bannerImageUrl: 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png',
   firebaseConfigured: false,
 };
 
