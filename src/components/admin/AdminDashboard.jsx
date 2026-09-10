@@ -163,7 +163,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           <div className="flex items-center gap-1.5">
             <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
           </div>
-          <span className="text-[11px] text-slate-400 font-medium">Store & Product Management</span>
+          <span className="text-[11px] text-slate-400 font-medium">Store Management</span>
         </div>
 
         {/* Header Right Actions */}
@@ -212,13 +212,10 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
       <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-4">
         
         {/* 👋 Welcome Greeting Header */}
-        <div className="pt-1 pb-1">
+        <div className="pt-1 pb-0.5">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Welcome Back, Admin
+            Welcome Back, Amit
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Store product catalog, availability controls, and categories.
-          </p>
         </div>
 
         {/* 🎨 Modern Abstract Geometric Hero Cards (3 Side-by-Side Widgets with 5px Gap on Mobile) */}
