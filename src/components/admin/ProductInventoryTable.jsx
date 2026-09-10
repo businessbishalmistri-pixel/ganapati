@@ -7,7 +7,9 @@ import {
   Trash2, 
   Download, 
   RefreshCw, 
-  Package
+  Package,
+  ChevronRight,
+  SlidersHorizontal
 } from 'lucide-react';
 import { smartSearchProducts } from '../../utils/smartSearch';
 
@@ -64,7 +66,6 @@ export function ProductInventoryTable({
     });
   }, [products, searchQuery, selectedCategory, stockFilter, sortBy, sortOrder]);
 
-
   // Export CSV Helper
   const handleExportCSV = () => {
     if (filteredProducts.length === 0) return;
@@ -89,36 +90,34 @@ export function ProductInventoryTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       
-      {/* 🔍 Tablet & Desktop Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          
+      {/* 🔍 Search & Filter Toolbar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div className="flex items-center justify-between gap-2.5">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by product name, category..."
+              placeholder="Search products (smart search)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
             />
           </div>
 
-          {/* Actions & Export */}
-          <div className="flex items-center gap-2">
+          {/* Export & Sort (Tablet/Desktop) */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={handleExportCSV}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
               title="Download CSV"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export</span>
+              <span>Export</span>
             </button>
 
-            {/* Sort Toggle */}
             <div className="flex items-center gap-1">
               <select
                 value={sortBy}
@@ -140,12 +139,8 @@ export function ProductInventoryTable({
           </div>
         </div>
 
-        {/* Stock Filter Chips & Category Pill Selector */}
-        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 overflow-x-auto pb-1 text-xs">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">
-            Filter:
-          </span>
-
+        {/* Scrollable Filter Chips (All, In Stock, Out of Stock, Category) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
           <button
             type="button"
             onClick={() => setStockFilter('all')}
@@ -163,7 +158,7 @@ export function ProductInventoryTable({
             onClick={() => setStockFilter('in-stock')}
             className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
               stockFilter === 'in-stock'
-                ? 'bg-emerald-600 text-white shadow-xs'
+                ? 'bg-[#005f56] text-white shadow-xs'
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
             }`}
           >
@@ -189,7 +184,7 @@ export function ProductInventoryTable({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="All">All Categories</option>
               {categories.map((c) => (
@@ -200,8 +195,139 @@ export function ProductInventoryTable({
         </div>
       </div>
 
-      {/* 🖥️ Tablet & Desktop Product Table Grid */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      {/* 📱 MOBILE WIDGET CARDS VIEW (Clean reference widget design) */}
+      <div className="space-y-3 md:hidden">
+        {/* List Header */}
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Products List ({filteredProducts.length})
+          </span>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setSelectedCategory('All');
+              setStockFilter('all');
+            }}
+            className="text-xs text-blue-600 font-semibold hover:underline"
+          >
+            Reset
+          </button>
+        </div>
+
+        {filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-8 text-center text-slate-400">
+            <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+            <p className="font-semibold text-slate-700 text-sm">No products found</p>
+            <p className="text-xs text-slate-400 mt-0.5">Try a different search or clear filters.</p>
+          </div>
+        ) : (
+          filteredProducts.map((product) => {
+            const isInStock = product.in_stock !== false && (product.stock > 0 || product.stock === undefined);
+            const selling = product.selling_price || 0;
+            const mrp = product.mrp || selling;
+
+            return (
+              <div 
+                key={product.id}
+                className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3.5 transition-all"
+              >
+                {/* 1. Left: Square Product Thumbnail */}
+                <div className="w-16 h-16 rounded-2xl bg-slate-900/90 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-xs">
+                  {product.image_url || product.image ? (
+                    <img
+                      src={product.image_url || product.image}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                      }}
+                    />
+                  ) : (
+                    <Package className="w-7 h-7 text-slate-300" />
+                  )}
+                </div>
+
+                {/* 2. Middle: Title, QTY/Pack, Price, Stock status text */}
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <h3 className="font-bold text-sm text-slate-900 leading-snug truncate" title={product.title}>
+                    {product.title}
+                  </h3>
+                  
+                  <p className="text-xs text-slate-500 font-medium">
+                    QTY: {product.unit || '1 Pack'}
+                  </p>
+
+                  {/* Price */}
+                  <div className="flex items-baseline gap-1.5 pt-0.5">
+                    <span className="text-base font-extrabold text-slate-900 font-mono">
+                      ₹{selling.toLocaleString('en-IN')}
+                    </span>
+                    {mrp > selling && (
+                      <span className="text-xs text-slate-400 line-through font-mono">
+                        ₹{mrp.toLocaleString('en-IN')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stock Status Text */}
+                  <div className="pt-0.5">
+                    <span className={`text-[11px] font-semibold ${
+                      isInStock ? 'text-emerald-700' : 'text-rose-600'
+                    }`}>
+                      {isInStock ? 'In stock' : 'Out of stock'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. Right: Stock Toggle Switch & Details / Edit button */}
+                <div className="flex flex-col items-end justify-between gap-2.5 flex-shrink-0">
+                  {/* Clean Toggle Switch (ON = In Stock, OFF = Out of Stock) */}
+                  <button
+                    type="button"
+                    onClick={() => onToggleInStock(product.id)}
+                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
+                    }`}
+                    title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        isInStock ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+
+                  {/* Details / Edit Button */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onEditProduct(product)}
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-0.5 transition-colors cursor-pointer"
+                    >
+                      <span>Edit</span>
+                      <ChevronRight className="w-3 h-3 text-slate-400" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Delete "${product.title}"?`)) {
+                          onDeleteProduct(product.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* 🖥️ TABLET & DESKTOP VIEW: Full Table Grid */}
+      <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left border-collapse">
             <thead>

@@ -169,72 +169,53 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
       {/* Main Tablet Layout Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-5">
         
-        {/* Tablet 4-Card Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          {/* Card 1: Total Products */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                Total Products
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-                {totalProductsCount}
-              </div>
-              <span className="text-[11px] text-slate-500 font-medium mt-0.5 inline-block">Catalog Items</span>
+        {/* 📱 Colorful Top Summary Widgets (Matching Reference Design) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+          {/* Card 1: Total Products (Light Sky Blue Card) */}
+          <div className="bg-[#E0F2FE] p-3.5 sm:p-4 rounded-2xl border border-sky-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-xs sm:text-sm font-bold text-sky-800 tracking-tight">
+              Products
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-sky-950 mt-1 font-mono">
+              {totalProductsCount}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Package className="w-5 h-5" />
-            </div>
+            <span className="text-[10px] text-sky-700 font-medium mt-0.5">Total Catalog</span>
           </div>
 
-          {/* Card 2: In Stock */}
-          <div className="bg-white p-4 rounded-2xl border border-emerald-200/60 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block">
-                In Stock
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
-                {inStockCount}
-              </div>
-              <span className="text-[11px] text-emerald-600 font-medium mt-0.5 inline-block">Live to Order</span>
+          {/* Card 2: In Stock (Warm Gold/Amber Card) */}
+          <div className="bg-[#FEF3C7] p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-xs sm:text-sm font-bold text-amber-800 tracking-tight">
+              In Stock
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1 font-mono">
+              {inStockCount}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
+            <span className="text-[10px] text-amber-700 font-medium mt-0.5">Available</span>
           </div>
 
-          {/* Card 3: Out of Stock */}
-          <div className="bg-white p-4 rounded-2xl border border-rose-200/60 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 block">
-                Out of Stock
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-rose-600 mt-1">
-                {outOfStockCount}
-              </div>
-              <span className="text-[11px] text-rose-500 font-medium mt-0.5 inline-block">Unavailable</span>
+          {/* Card 3: Out of Stock (Soft Teal/Rose Card) */}
+          <div className="bg-[#FFE4E6] p-3.5 sm:p-4 rounded-2xl border border-rose-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-xs sm:text-sm font-bold text-rose-800 tracking-tight">
+              Out of Stock
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-rose-950 mt-1 font-mono">
+              {outOfStockCount}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
+            <span className="text-[10px] text-rose-700 font-medium mt-0.5">Unavailable</span>
           </div>
 
-          {/* Card 4: Categories */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                Categories
-              </span>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-                {categories.length}
-              </div>
-              <span className="text-[11px] text-slate-500 font-medium mt-0.5 inline-block">Store Sections</span>
+          {/* Card 4: Categories (Soft Lavender/Indigo Card) */}
+          <div className="bg-[#EDE9FE] p-3.5 sm:p-4 rounded-2xl border border-indigo-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-xs sm:text-sm font-bold text-indigo-800 tracking-tight">
+              Categories
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-indigo-950 mt-1 font-mono">
+              {categories.length}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <FolderTree className="w-5 h-5" />
-            </div>
+            <span className="text-[10px] text-indigo-700 font-medium mt-0.5">Sections</span>
           </div>
         </div>
+
 
         {/* Tab Navigation (Products vs Categories) */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
