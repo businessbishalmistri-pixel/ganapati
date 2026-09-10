@@ -154,7 +154,7 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
               <select
                 value={newCatIcon}
                 onChange={(e) => setNewCatIcon(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full pl-3.5 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs"
               >
                 {ICON_OPTIONS.map((opt) => (
                   <option key={opt.name} value={opt.name}>{opt.label}</option>
@@ -307,7 +307,7 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
               <select
                 value={targetCategoryName}
                 onChange={(e) => setTargetCategoryName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                className="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs"
               >
                 <option value="">-- Select Destination Category --</option>
                 {categories

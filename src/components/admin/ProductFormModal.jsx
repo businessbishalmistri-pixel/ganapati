@@ -326,21 +326,20 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden" />
 
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
               <Box className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                {isEditing ? 'Edit Product' : 'Add New Product'}
-              </h2>
-              <span className="text-[11px] text-slate-400">Save & publish immediately</span>
-            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-none">
+              {isEditing ? 'Edit Product' : 'Add New Product'}
+            </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
+            title="Close modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -377,7 +376,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>

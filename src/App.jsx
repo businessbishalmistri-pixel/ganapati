@@ -366,12 +366,13 @@ export function App() {
                     </div>
 
                     {/* Sorting dropdown */}
-                    <div className="flex items-center gap-1.5 self-end sm:self-auto bg-white border border-slate-200 rounded px-2 py-0.5 shadow-xs">
-                      <ArrowUpDown className="w-3 h-3 text-slate-500" />
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-xs">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="text-xs font-bold text-slate-700 bg-transparent outline-none cursor-pointer"
+                        className="text-xs font-semibold text-slate-700 bg-transparent outline-none cursor-pointer pr-4 pl-0.5 py-0.5"
+                        style={{ backgroundImage: 'none' }}
                       >
                         <option value="featured">Featured First</option>
                         <option value="price-low">Price: Low to High</option>
