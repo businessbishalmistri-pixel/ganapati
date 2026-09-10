@@ -160,10 +160,28 @@ export function ProductInventoryTable({
             return (
               <div 
                 key={product.id}
-                className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 transition-all active:scale-[0.99]"
+                className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 transition-all active:scale-[0.99]"
               >
-                {/* Product Thumbnail */}
-                <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center relative">
+                {/* 1. FRONT: Stock Toggle Switch */}
+                <div className="flex-shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => onToggleInStock(product.id)}
+                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
+                    }`}
+                    title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        isInStock ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* 2. Product Thumbnail */}
+                <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center relative">
                   {product.image_url || product.image ? (
                     <img
                       src={product.image_url || product.image}
@@ -178,7 +196,7 @@ export function ProductInventoryTable({
                   )}
                 </div>
 
-                {/* Center Details */}
+                {/* 3. Center Details */}
                 <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug line-clamp-1">
                     {product.title}
@@ -196,7 +214,7 @@ export function ProductInventoryTable({
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-baseline gap-1.5 mt-1">
+                  <div className="flex items-baseline gap-1.5 mt-0.5">
                     <span className="text-sm font-black text-slate-900">
                       ₹{selling.toLocaleString('en-IN')}
                     </span>
@@ -208,63 +226,43 @@ export function ProductInventoryTable({
                   </div>
                 </div>
 
-                {/* Right Side: Stock Toggle Switch + Actions */}
-                <div className="flex items-center gap-2.5 flex-shrink-0">
-                  {/* Clean Toggle Switch (ON = In Stock, OFF = Out of Stock) */}
+                {/* 4. Action Icons (Edit / Delete) */}
+                <div className="flex items-center gap-0.5 flex-shrink-0">
                   <button
-                    type="button"
-                    onClick={() => onToggleInStock(product.id)}
-                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
-                      isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
-                    }`}
-                    title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
+                    onClick={() => onEditProduct(product)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                    title="Edit product"
                   >
-                    <span
-                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                        isInStock ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
+                    <Edit3 className="w-4 h-4" />
                   </button>
-
-                  {/* Action Icons */}
-                  <div className="flex items-center gap-0.5">
-                    <button
-                      onClick={() => onEditProduct(product)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                      title="Edit product"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Delete "${product.title}"?`)) {
-                          onDeleteProduct(product.id);
-                        }
-                      }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Delete product"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Delete "${product.title}"?`)) {
+                        onDeleteProduct(product.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                    title="Delete product"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );
-
           })
         )}
       </div>
 
-      {/* 🖥️ Tablet & Desktop View: Table Grid */}
+      {/* 🖥️ Tablet & Desktop View: Table Grid with Toggle as First Column */}
       <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <th className="py-3.5 px-4 font-semibold text-center w-24">Stock</th>
                 <th className="py-3.5 px-4 font-semibold">Product</th>
                 <th className="py-3.5 px-3 font-semibold">Category</th>
                 <th className="py-3.5 px-3 font-semibold text-right">Price</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Stock Status</th>
                 <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
@@ -287,7 +285,25 @@ export function ProductInventoryTable({
                       key={product.id}
                       className="hover:bg-slate-50/70 transition-colors group"
                     >
-                      {/* Product Thumbnail & Details */}
+                      {/* 1. FRONT: Stock Status Toggle Switch */}
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => onToggleInStock(product.id)}
+                          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
+                            isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
+                          }`}
+                          title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                              isInStock ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </td>
+
+                      {/* 2. Product Thumbnail & Details */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200/80 overflow-hidden flex-shrink-0 flex items-center justify-center">
@@ -317,14 +333,14 @@ export function ProductInventoryTable({
                         </div>
                       </td>
 
-                      {/* Category */}
+                      {/* 3. Category */}
                       <td className="py-3 px-3">
                         <span className="inline-block px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-700">
                           {product.category || 'General'}
                         </span>
                       </td>
 
-                      {/* Price */}
+                      {/* 4. Price */}
                       <td className="py-3 px-3 text-right">
                         <div className="font-bold text-slate-900 text-sm">
                           ₹{selling.toLocaleString('en-IN')}
@@ -336,26 +352,7 @@ export function ProductInventoryTable({
                         )}
                       </td>
 
-                      {/* Stock Status One-Click Toggle Switch */}
-                      <td className="py-3 px-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => onToggleInStock(product.id)}
-                          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
-                            isInStock ? 'bg-[#005f56]' : 'bg-[#94a3b8]'
-                          }`}
-                          title={isInStock ? 'In Stock (Click to turn off)' : 'Out of Stock (Click to turn on)'}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                              isInStock ? 'translate-x-5' : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
-                      </td>
-
-
-                      {/* Actions */}
+                      {/* 5. Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
@@ -387,6 +384,7 @@ export function ProductInventoryTable({
           </table>
         </div>
       </div>
+
     </div>
   );
 }
