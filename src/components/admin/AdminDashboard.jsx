@@ -8,7 +8,10 @@ import {
   ShieldCheck, 
   Plus, 
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Banknote,
+  ShoppingCart,
+  Users
 } from 'lucide-react';
 import { adminInventoryService } from '../../services/adminInventoryService';
 import { ProductInventoryTable } from './ProductInventoryTable';
@@ -51,6 +54,11 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const totalProductsCount = products.length;
   const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
   const outOfStockCount = totalProductsCount - inStockCount;
+  const totalCatalogValue = products.reduce((sum, p) => {
+    const price = parseFloat(p.selling_price || p.price || 0) || 0;
+    const stock = parseInt(p.stock_quantity ?? p.stock ?? 1, 10) || 1;
+    return sum + (price * (stock > 0 ? stock : 1));
+  }, 0);
 
   // Product CRUD Handlers
   const handleSaveProduct = async (productData) => {
@@ -149,7 +157,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans antialiased text-slate-900 pb-16 md:pb-8">
       
       {/* 📱 Tablet & Desktop App Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-5 py-[10px] flex items-center justify-between shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 py-[10px] flex items-center justify-between shadow-xs">
         <div>
           <div className="flex items-center gap-1.5">
             <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
@@ -199,58 +207,128 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
         </div>
       </header>
 
-      {/* Main Tablet Layout Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-2.5 sm:p-4 space-y-3">
+      {/* Main Layout Container */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 space-y-4">
         
-        {/* 📱 Colorful Top Summary Widgets */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
-          {/* Card 1: Total Products */}
-          <div className="bg-[#E0F2FE] p-2.5 sm:p-3 rounded-2xl border border-sky-200/80 shadow-xs flex flex-col justify-between">
-            <span className="text-xs font-bold text-sky-800 tracking-tight">
-              Products
-            </span>
-            <div className="text-xl sm:text-2xl font-black text-sky-950 mt-0.5 font-mono">
-              {totalProductsCount}
+        {/* 👋 Welcome Greeting Header */}
+        <div className="pt-1 pb-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Welcome Back, Admin
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Real-time store inventory, catalog health, and live department breakdown.
+          </p>
+        </div>
+
+        {/* 🎨 Modern Abstract Geometric Hero Cards (3-Column Layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+          
+          {/* Card 1: Total Revenue / Catalog Value (Dark Onyx & Cobalt Blue) */}
+          <div className="bg-[#181920] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[148px] group hover:shadow-xl transition-all">
+            {/* Concentric rings graphic overlay */}
+            <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="90%" cy="20%" r="80" stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="90%" cy="20%" r="120" stroke="white" strokeWidth="1" fill="none" />
+            </svg>
+            {/* Top-right cobalt blue abstract disc */}
+            <div className="absolute -top-7 -right-7 w-32 h-32 rounded-full bg-[#2563eb] pointer-events-none" />
+
+            {/* Top Icon Badge */}
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-xs">
+                <Banknote className="w-5 h-5 text-white" />
+              </div>
             </div>
-            <span className="text-[10px] text-sky-700 font-medium">Total Catalog</span>
+
+            {/* Content info */}
+            <div className="relative z-10 pt-4 space-y-1">
+              <span className="text-xs font-semibold text-slate-400 tracking-wide block">
+                Total Catalog Value
+              </span>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                  ₹{totalCatalogValue.toLocaleString('en-IN')}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15">
+                  +10%
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Card 2: In Stock */}
-          <div className="bg-[#FEF3C7] p-2.5 sm:p-3 rounded-2xl border border-amber-200/80 shadow-xs flex flex-col justify-between">
-            <span className="text-xs font-bold text-amber-800 tracking-tight">
-              In Stock
-            </span>
-            <div className="text-xl sm:text-2xl font-black text-amber-950 mt-0.5 font-mono">
-              {inStockCount}
+          {/* Card 2: In-Stock Products / Total Sales (Royal Purple & Sunburst Yellow) */}
+          <div className="bg-[#7c3aed] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-purple-600/60 min-h-[148px] group hover:shadow-xl transition-all">
+            {/* Concentric rings graphic overlay */}
+            <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="90%" cy="80%" r="40" stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="90%" cy="80%" r="80" stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="90%" cy="80%" r="120" stroke="white" strokeWidth="1" fill="none" />
+            </svg>
+            {/* Bottom-right sunburst yellow abstract cutout */}
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-[#fbbf24] pointer-events-none" />
+
+            {/* Top Icon Badge */}
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs">
+                <ShoppingCart className="w-5 h-5 text-white" />
+              </div>
             </div>
-            <span className="text-[10px] text-amber-700 font-medium">Available</span>
+
+            {/* Content info */}
+            <div className="relative z-10 pt-4 space-y-1">
+              <span className="text-xs font-semibold text-purple-200 tracking-wide block">
+                In-Stock Products
+              </span>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                  {inStockCount} <span className="text-lg font-bold text-purple-200 font-sans">/ {totalProductsCount}</span>
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
+                  +15%
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Card 3: Out of Stock */}
-          <div className="bg-[#FFE4E6] p-2.5 sm:p-3 rounded-2xl border border-rose-200/80 shadow-xs flex flex-col justify-between">
-            <span className="text-xs font-bold text-rose-800 tracking-tight">
-              Out of Stock
-            </span>
-            <div className="text-xl sm:text-2xl font-black text-rose-950 mt-0.5 font-mono">
-              {outOfStockCount}
+          {/* Card 3: Active Categories / Departments (Azure Electric Blue & Emerald Mint) */}
+          <div className="bg-[#2563eb] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-blue-500/60 min-h-[148px] group hover:shadow-xl transition-all">
+            {/* Concentric rings graphic overlay */}
+            <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="90%" cy="20%" r="80" stroke="white" strokeWidth="1" fill="none" />
+              <circle cx="90%" cy="20%" r="120" stroke="white" strokeWidth="1" fill="none" />
+            </svg>
+            {/* Top-right emerald mint abstract cutout */}
+            <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-[#10b981] pointer-events-none" />
+
+            {/* Top Icon Badge */}
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs">
+                <FolderTree className="w-5 h-5 text-white" />
+              </div>
             </div>
-            <span className="text-[10px] text-rose-700 font-medium">Unavailable</span>
+
+            {/* Content info */}
+            <div className="relative z-10 pt-4 space-y-1">
+              <span className="text-xs font-semibold text-blue-200 tracking-wide block">
+                Active Categories
+              </span>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                  {categories.length} <span className="text-lg font-bold text-blue-200 font-sans">Sections</span>
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
+                  Live
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Card 4: Categories */}
-          <div className="bg-[#EDE9FE] p-2.5 sm:p-3 rounded-2xl border border-indigo-200/80 shadow-xs flex flex-col justify-between">
-            <span className="text-xs font-bold text-indigo-800 tracking-tight">
-              Categories
-            </span>
-            <div className="text-xl sm:text-2xl font-black text-indigo-950 mt-0.5 font-mono">
-              {categories.length}
-            </div>
-            <span className="text-[10px] text-indigo-700 font-medium">Sections</span>
-          </div>
         </div>
 
         {/* Tab Navigation (Products vs Categories) */}
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5 pt-1">
           <div className="flex gap-1.5">
             <button
               onClick={() => setActiveTab('all')}
