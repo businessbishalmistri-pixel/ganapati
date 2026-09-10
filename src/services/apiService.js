@@ -2,10 +2,10 @@
  * apiService.js
  * Unified API Service for WhatsApp OTP Auth, Live Products, COD Checkout & Invoices
  */
-import { supabase, STORE_ORGANIZATION_ID, submitStoreApiOrder } from './supabase';
+import { supabase, STORE_ORGANIZATION_ID, STORE_API_KEY as DEFAULT_API_KEY, submitStoreApiOrder } from './supabase';
 import { saveOrder, getSavedOrders } from './orderService';
 
-export const STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
+export const STORE_API_KEY = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_STORE_API_KEY : '') || DEFAULT_API_KEY || '';
 
 // 1. Send OTP (Calls Supabase backend, NEVER calls Facebook)
 export const sendWhatsAppOtp = async (phoneNumber) => {

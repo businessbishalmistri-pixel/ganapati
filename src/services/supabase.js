@@ -26,9 +26,9 @@ function sanitizeSupabaseKey(rawKey) {
 const SUPABASE_URL = sanitizeSupabaseUrl(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_URL : '');
 const SUPABASE_ANON_KEY = sanitizeSupabaseKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_ANON_KEY : '');
 
-export const STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
+export const STORE_API_KEY = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_STORE_API_KEY : '') || '';
 export const DEFAULT_STORE_API_KEY = STORE_API_KEY;
-export const STORE_ORGANIZATION_ID = '139a19c6-4542-4aa9-86c9-c3d8aaddcc0d';
+export const STORE_ORGANIZATION_ID = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_STORE_ORGANIZATION_ID : '') || '139a19c6-4542-4aa9-86c9-c3d8aaddcc0d';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

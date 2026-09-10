@@ -284,14 +284,18 @@ export const SettingsModal = ({ onCatalogReset }) => {
                   <input
                     type="text"
                     readOnly
-                    value={STORE_API_KEY}
+                    value={STORE_API_KEY || 'Direct Supabase Database Connected'}
                     className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 bg-slate-50 text-slate-700 select-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(STORE_API_KEY);
-                      showToast('API Key copied to clipboard!', 'success');
+                      if (STORE_API_KEY) {
+                        navigator.clipboard.writeText(STORE_API_KEY);
+                        showToast('API Key copied to clipboard!', 'success');
+                      } else {
+                        showToast('Direct Supabase connection active', 'info');
+                      }
                     }}
                     className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
                   >

@@ -27,7 +27,7 @@ const SUPABASE_ANON_KEY = sanitizeSupabaseKey(typeof import.meta !== 'undefined'
 
 import { INITIAL_DEFAULT_PRODUCTS, normalizeProduct } from './inventoryData';
 
-export const DEFAULT_STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
+export const DEFAULT_STORE_API_KEY = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_STORE_API_KEY : '') || '';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
