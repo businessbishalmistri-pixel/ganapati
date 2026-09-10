@@ -70,26 +70,22 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
           {/* Actions: User Profile Icon & Shopping Cart Icon */}
           <div className="flex items-center gap-3 sm:gap-4">
             
-            {/* 1. Profile State: User (Logged Out) or UserCheck (Logged In) */}
-            {customer ? (
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen(true)}
-                title={`Profile: ${customer.name || customer.fullName || 'Customer'}`}
-                className="relative p-2 rounded-full hover:bg-slate-100 text-slate-900 transition-all flex items-center justify-center active:scale-95 cursor-pointer"
-              >
-                <UserCheck className="w-6 h-6 stroke-[1.8] text-slate-900" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsAuthOpen(true)}
-                title="WhatsApp Quick Login"
-                className="relative p-2 rounded-full hover:bg-slate-100 text-slate-900 transition-all flex items-center justify-center active:scale-95 cursor-pointer"
-              >
-                <User className="w-6 h-6 stroke-[1.8] text-slate-900" />
-              </button>
-            )}
+            {/* 1. Customer Details Avatar (Opens delivery info modal) */}
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(true)}
+              title={customer?.name ? `Delivery details: ${customer.name}` : 'Enter your delivery details'}
+              className="relative p-2 rounded-full hover:bg-slate-100 text-slate-900 transition-all flex items-center justify-center active:scale-95 cursor-pointer"
+            >
+              {customer?.name ? (
+                <>
+                  <UserCheck className="w-6 h-6 stroke-[1.8] text-emerald-700" />
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
+                </>
+              ) : (
+                <User className="w-6 h-6 stroke-[1.8] text-slate-700" />
+              )}
+            </button>
 
 
             {/* 2. Cart State: ShoppingCart (Empty) or ShoppingCart with Black Badge (Active) */}

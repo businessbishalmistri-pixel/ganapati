@@ -4,8 +4,8 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://qirpufadoruqvgubpqzx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpcnB1ZmFkb3J1cXZndWJwcXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjgwODUsImV4cCI6MjEwMzk0NDA4NX0.WBzX3E401higTSSrjYMx5LQEcOptiiaU_4Id5j_X8PI';
+const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://ftiivdzbimggyxbbkaji.supabase.co';
+const SUPABASE_ANON_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0aWl2ZHpiaW1nZ3l4YmJrYWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzQ2MDksImV4cCI6MjEwNDYxMDYwOX0.ybjdQubcyaathpa4fXhv5nr2otanhyvEbDpbLxeIqXI';
 
 export const DEFAULT_STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
 
@@ -21,85 +21,110 @@ export async function fetchLiveProductsFromBackend() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && Array.isArray(data)) {
-      return data.map((p) => {
-        const rawPrice = parseFloat(p.price ?? p.selling_price ?? p.unit_price ?? 0);
-        const originalPrice = p.original_price ? parseFloat(p.original_price) : (p.mrp ? parseFloat(p.mrp) : null);
-        const rawStock = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
-        
-        // Parse and clean real variants array from XYVOT / Supabase
-        let cleanVariants = [];
-        try {
-          const rawVariants = Array.isArray(p.variants) 
-            ? p.variants 
-            : (typeof p.variants === 'string' ? JSON.parse(p.variants || '[]') : []);
-          
-          if (Array.isArray(rawVariants)) {
-            cleanVariants = rawVariants.map((v, idx) => ({
-              id: v.id || `var_${p.id}_${idx}`,
-              name: v.name || v.size || `Option ${idx + 1}`,
-              size: v.size || v.name || '',
-              sku: v.sku || `${p.sku || 'SKU'}-${idx + 1}`,
-              selling_price: parseFloat(v.selling_price ?? v.price ?? rawPrice),
-              cost_price: parseFloat(v.cost_price ?? 0),
-              stock_quantity: parseInt(v.stock_quantity ?? v.stock ?? 0, 10),
-              low_stock_threshold: parseInt(v.low_stock_threshold ?? 3, 10)
-            }));
-          }
-        } catch (e) {
-          console.warn('Error parsing variants for product', p.id, e);
+    let productsList = [];
+    if (!error && Array.isArray(data) && data.length > 0) {
+      productsList = data;
+    } else {
+      // Check admin products cache
+      try {
+        const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
+        if (cachedAdmin) {
+          productsList = JSON.parse(cachedAdmin);
         }
-
-        const hasVariants = Boolean(p.has_variants) && cleanVariants.length > 0;
-        
-        // If hasVariants, compute base price and total stock dynamically
-        const minVariantPrice = hasVariants 
-          ? Math.min(...cleanVariants.map(v => v.selling_price)) 
-          : rawPrice;
-        const totalVariantStock = hasVariants
-          ? cleanVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)
-          : rawStock;
-
-        const effectivePrice = isNaN(minVariantPrice) ? 0 : minVariantPrice;
-        const effectiveStock = isNaN(totalVariantStock) ? 0 : totalVariantStock;
-
-        // Pure database image without any fake fallback URLs
-        const primaryImage = p.image_url || p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
-        const imageList = Array.isArray(p.images) && p.images.length > 0 
-          ? p.images 
-          : (primaryImage ? [primaryImage] : []);
-
-        return {
-          id: p.id,
-          name: p.name || p.title || 'Product Item',
-          title: p.name || p.title || 'Product Item',
-          category: p.category || 'General',
-          price: effectivePrice,
-          selling_price: effectivePrice,
-          originalPrice: originalPrice && !isNaN(originalPrice) ? originalPrice : null,
-          rating: parseFloat(p.rating) || 4.9,
-          reviewsCount: parseInt(p.reviews_count ?? 48, 10),
-          stock: effectiveStock,
-          stock_quantity: effectiveStock,
-          badge: effectiveStock <= 3 && effectiveStock > 0 ? 'Low Stock' : (p.badge || (p.featured ? 'Featured' : null)),
-          image: primaryImage,
-          image_url: primaryImage,
-          images: imageList,
-          description: p.description || `${p.name || 'Product'} - Real-time verified item from inventory.`,
-          features: Array.isArray(p.features) && p.features.length > 0 
-            ? p.features 
-            : ['Verified Inventory Item', 'Direct WhatsApp Dispatch'],
-          // Real XYVOT Variant Fields
-          has_variants: hasVariants,
-          hasVariants: hasVariants,
-          variants: cleanVariants,
-          unit: p.unit || p.weight || '',
-          sku: p.sku || ''
-        };
-      });
+      } catch (e) {
+        console.warn('Could not read admin products cache', e);
+      }
     }
+
+    // Filter out draft products from storefront
+    const visibleProducts = productsList.filter(p => p.status !== 'draft' && !p.is_draft);
+
+    return visibleProducts.map((p) => {
+      const rawPrice = parseFloat(p.price ?? p.selling_price ?? p.unit_price ?? 0);
+      const originalPrice = p.original_price ? parseFloat(p.original_price) : (p.mrp ? parseFloat(p.mrp) : null);
+      const rawStock = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
+      
+      // Parse and clean real variants array from XYVOT / Supabase
+      let cleanVariants = [];
+      try {
+        const rawVariants = Array.isArray(p.variants) 
+          ? p.variants 
+          : (typeof p.variants === 'string' ? JSON.parse(p.variants || '[]') : []);
+        
+        if (Array.isArray(rawVariants)) {
+          cleanVariants = rawVariants.map((v, idx) => ({
+            id: v.id || `var_${p.id}_${idx}`,
+            name: v.name || v.size || `Option ${idx + 1}`,
+            size: v.size || v.name || '',
+            sku: v.sku || `${p.sku || 'SKU'}-${idx + 1}`,
+            selling_price: parseFloat(v.selling_price ?? v.price ?? rawPrice),
+            cost_price: parseFloat(v.cost_price ?? 0),
+            stock_quantity: parseInt(v.stock_quantity ?? v.stock ?? 0, 10),
+            low_stock_threshold: parseInt(v.low_stock_threshold ?? 3, 10)
+          }));
+        }
+      } catch (e) {
+        console.warn('Error parsing variants for product', p.id, e);
+      }
+
+      const hasVariants = Boolean(p.has_variants) && cleanVariants.length > 0;
+      
+      // If hasVariants, compute base price and total stock dynamically
+      const minVariantPrice = hasVariants 
+        ? Math.min(...cleanVariants.map(v => v.selling_price)) 
+        : rawPrice;
+      const totalVariantStock = hasVariants
+        ? cleanVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)
+        : rawStock;
+
+      const effectivePrice = isNaN(minVariantPrice) ? 0 : minVariantPrice;
+      const effectiveStock = isNaN(totalVariantStock) ? 0 : totalVariantStock;
+
+      // Pure database image
+      const primaryImage = p.image_url || p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
+      const imageList = Array.isArray(p.images) && p.images.length > 0 
+        ? p.images 
+        : (primaryImage ? [primaryImage] : []);
+
+      return {
+        id: p.id,
+        name: p.title || p.name || 'Product Item',
+        title: p.title || p.name || 'Product Item',
+        category: p.category || 'General',
+        price: effectivePrice,
+        selling_price: effectivePrice,
+        originalPrice: originalPrice && !isNaN(originalPrice) ? originalPrice : null,
+        mrp: originalPrice && !isNaN(originalPrice) ? originalPrice : effectivePrice,
+        rating: parseFloat(p.rating) || 4.9,
+        reviewsCount: parseInt(p.reviews_count ?? 48, 10),
+        stock: effectiveStock,
+        stock_quantity: effectiveStock,
+        low_stock_threshold: parseInt(p.low_stock_threshold ?? 5, 10),
+        badge: effectiveStock <= (p.low_stock_threshold || 5) && effectiveStock > 0 ? 'Low Stock' : (p.badge || (p.featured ? 'Featured' : null)),
+        image: primaryImage,
+        image_url: primaryImage,
+        images: imageList,
+        description: p.description || `${p.title || p.name || 'Product'} - Verified inventory item from Ganapati Stores.`,
+        features: Array.isArray(p.features) && p.features.length > 0 
+          ? p.features 
+          : ['Verified Inventory Item', 'Direct WhatsApp Dispatch'],
+        has_variants: hasVariants,
+        hasVariants: hasVariants,
+        variants: cleanVariants,
+        unit: p.unit || p.weight || '',
+        sku: p.sku || '',
+        brand: p.brand || 'Ganapati Stores',
+        status: p.status || 'active'
+      };
+    });
   } catch (err) {
-    console.error('Error fetching live products from Supabase:', err);
+    console.error('Error fetching live products:', err);
+    try {
+      const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
+      if (cachedAdmin) {
+        return JSON.parse(cachedAdmin).filter(p => p.status !== 'draft');
+      }
+    } catch (e) {}
   }
   return [];
 }

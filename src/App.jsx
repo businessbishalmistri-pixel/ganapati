@@ -12,10 +12,10 @@ import { useCart } from './context/CartContext';
 import { useToast } from './context/ToastContext';
 import { useAuth } from './context/AuthContext';
 import { supabase } from './services/supabase';
-import { 
-  SlidersHorizontal, 
-  ArrowUpDown, 
-  Package, 
+import {
+  SlidersHorizontal,
+  ArrowUpDown,
+  Package,
   Search,
   RefreshCw,
   ShoppingBag,
@@ -24,11 +24,11 @@ import {
 import { smartSearchProducts } from './utils/searchHelper';
 import { CategorySidebar } from './components/CategorySidebar';
 import { CategoryShelf } from './components/CategoryShelf';
-import { WhatsAppLoginModal } from './components/WhatsAppLoginModal';
 import { MyOrdersModal } from './components/MyOrdersModal';
 import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { fetchSingleProductById } from './services/supabaseStore';
 import { WelcomeConfetti } from './components/WelcomeConfetti';
+import { AdminApp } from './components/admin/AdminApp';
 
 export function App() {
   const { settings } = useSettings();
@@ -36,6 +36,16 @@ export function App() {
   const { showToast } = useToast();
   const { customer, currentCustomer } = useAuth();
   const activeCustomer = currentCustomer || customer;
+
+  // Admin Route Detection
+  const checkIsAdmin = () => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    return path === '/admin' || path.startsWith('/admin/') || hash === '#/admin' || hash === '#admin';
+  };
+
+  const [isAdminView, setIsAdminView] = useState(checkIsAdmin);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +114,14 @@ export function App() {
   // Handle Browser Back / Forward buttons (popstate)
   useEffect(() => {
     const handlePopState = () => {
+      const isNowAdmin = checkIsAdmin();
+      setIsAdminView(isNowAdmin);
+
+      if (isNowAdmin) {
+        document.title = 'Ganapati Stores — Admin Dashboard';
+        return;
+      }
+
       const urlProductId = getProductIdFromUrl();
       if (urlProductId) {
         const found = products.find((p) => String(p.id).toLowerCase() === String(urlProductId).toLowerCase());
@@ -130,6 +148,23 @@ export function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [products]);
+
+  // Navigate to Admin
+  const handleNavigateToAdmin = () => {
+    window.history.pushState({ view: 'admin' }, '', '/admin');
+    setIsAdminView(true);
+    document.title = 'Ganapati Stores — Admin Dashboard';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Navigate to Storefront
+  const handleNavigateToStore = () => {
+    window.history.pushState({ view: 'store' }, '', '/');
+    setIsAdminView(false);
+    setSelectedProduct(null);
+    document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Handle selecting a product with clean URL update
   const handleSelectProduct = (prod) => {
@@ -245,6 +280,16 @@ export function App() {
 
   const inStockCount = products.filter((p) => p.stock > 0).length;
 
+  // Render Admin View if on /admin
+  if (isAdminView) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <ToastContainer />
+        <AdminApp onNavigateToStore={handleNavigateToStore} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-emerald-500 selection:text-white">
       {/* Gentle Welcome Confetti on Screen Load */}
@@ -284,9 +329,9 @@ export function App() {
 
           {/* Catalog Main 2-Column Split Layout Area (Mobile & Desktop) */}
           <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6">
-            
+
             <div className="flex flex-row gap-2 sm:gap-4 lg:gap-6 items-start">
-              
+
               {/* Left Column: Blinkit-Style Vertical Category Rail */}
               <CategorySidebar
                 categories={dynamicCategories}
@@ -300,7 +345,7 @@ export function App() {
 
               {/* Right Column: High-Density Product Catalog */}
               <div className="flex-1 min-w-0 space-y-4">
-                
+
                 {/* Department Header & Sort Bar (Clean & Transparent) */}
                 {(selectedCategory !== 'All Products' || searchQuery.trim()) && (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-200/80">
@@ -435,6 +480,13 @@ export function App() {
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>Direct WhatsApp Quick Dispatch</span>
+            <span>&bull;</span>
+            <button
+              onClick={handleNavigateToAdmin}
+              className="text-slate-500 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
+              Admin Inventory
+            </button>
           </div>
         </div>
       </footer>
@@ -450,8 +502,6 @@ export function App() {
         orderDetails={latestOrderInfo}
         onClose={() => setLatestOrderInfo(null)}
       />
-
-      <WhatsAppLoginModal />
 
       <MyOrdersModal />
 

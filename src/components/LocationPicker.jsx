@@ -145,8 +145,12 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
           disabled={isLocating}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-black text-white text-[11px] font-semibold transition-all active:scale-95 cursor-pointer shadow-xs ml-auto flex-shrink-0"
         >
-          <Navigation className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
-          <span>{isLocating ? 'Locating...' : '📍 Use Current GPS'}</span>
+          {isLocating ? (
+            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <span>📍</span>
+          )}
+          <span>{isLocating ? 'Locating...' : 'Use Current GPS'}</span>
         </button>
       </div>
 

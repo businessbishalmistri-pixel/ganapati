@@ -456,7 +456,7 @@ export const WhatsAppLoginModal = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Bishal Mistri"
+                      placeholder="e.g. Amit Roy"
                       value={onboardingData.fullName}
                       onChange={(e) => setOnboardingData({ ...onboardingData, fullName: e.target.value })}
                       className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border border-transparent focus:border-slate-400 focus:bg-white outline-none transition-all"
