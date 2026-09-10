@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Trash2, 
@@ -11,7 +11,7 @@ import {
   MessageCircle,
   MapPin,
   User,
-  Phone
+  Store
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -33,6 +33,9 @@ export const CartDrawer = () => {
   const { settings } = useSettings();
   const { showToast } = useToast();
 
+  // Delivery Method: 'shipping' (Home Delivery) | 'pickup' (Store Pickup)
+  const [deliveryMethod, setDeliveryMethod] = useState('shipping');
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isCartOpen) setIsCartOpen(false);
@@ -43,38 +46,87 @@ export const CartDrawer = () => {
 
   if (!isCartOpen) return null;
 
+  // Subtotal & Delivery Calculation
+  const subtotal = cartItems.reduce((acc, item) => {
+    const price = item.selling_price || item.price || 0;
+    return acc + (price * item.quantity);
+  }, 0);
+
+  const freeThreshold = settings?.freeShippingThreshold !== undefined ? Number(settings.freeShippingThreshold) : 200;
+  const flatFee = settings?.flatShippingFee !== undefined ? Number(settings.flatShippingFee) : 30;
+  
+  const isFreeDelivery = deliveryMethod === 'pickup' || (subtotal >= freeThreshold);
+  const deliveryFee = deliveryMethod === 'pickup' ? 0 : (isFreeDelivery ? 0 : flatFee);
+  const totalAmount = subtotal + deliveryFee;
+
   const handleProceedToWhatsApp = () => {
-    // 1. Check if customer details are saved in localStorage
-    if (!customer || !customer.name || !customer.phone || !customer.address) {
+    // 1. If shipping and customer details missing, prompt to fill
+    if (deliveryMethod === 'shipping' && (!customer || !customer.name || !customer.phone || !customer.address)) {
       openProfileModal('checkout');
       return;
     }
 
-    // 2. Format WhatsApp message containing ONLY customer details and product names (NO PRICES, NO TOTALS)
-    const storePhone = (settings?.whatsappNumber || '919876543210').replace(/\D/g, '');
+    // 2. If pickup and customer name/phone missing, prompt
+    if (deliveryMethod === 'pickup' && (!customer || !customer.name || !customer.phone)) {
+      openProfileModal('checkout');
+      return;
+    }
+
+    const storePhone = (settings?.whatsappNumber || '919147364980').replace(/\D/g, '');
     const cleanStorePhone = storePhone.length === 10 ? '91' + storePhone : storePhone;
 
-    const gpsLink = customer.gpsUrl 
-      ? customer.gpsUrl 
-      : (customer.lat && customer.lng ? `https://maps.google.com/?q=${customer.lat},${customer.lng}` : 'Not provided');
-
     const itemsList = cartItems
-      .map((item, idx) => `${idx + 1}. ${item.title || item.name}${item.unit ? ` (${item.unit})` : ''} - Qty: ${item.quantity}`)
+      .map((item, idx) => {
+        const itemPrice = (item.selling_price || item.price || 0) * item.quantity;
+        return `${idx + 1}. ${item.title || item.name}${item.unit ? ` (${item.unit})` : ''} - Qty: ${item.quantity} (₹${itemPrice.toFixed(2)})`;
+      })
       .join('\n');
 
-    const message = 
+    let message = '';
+    if (deliveryMethod === 'shipping') {
+      const gpsLink = customer.gpsUrl 
+        ? customer.gpsUrl 
+        : (customer.lat && customer.lng ? `https://maps.google.com/?q=${customer.lat},${customer.lng}` : 'Not provided');
+
+      message = 
 `*New Order - ${settings?.storeName || 'Ganapati Store'}*
+*Delivery Method:* Home Delivery (COD)
 
 *Customer Details:*
 • *Name:* ${customer.name}
 • *Phone:* ${customer.phone}
 • *Delivery Address:* ${customer.address}
-• *Live GPS Location:* ${gpsLink}
+• *Live GPS:* ${gpsLink}
 
 *Items Ordered:*
 ${itemsList}
 
-Please confirm my order and deliver to the above address. Thank you!`;
+*Bill Summary:*
+• Items Subtotal: ₹${subtotal.toFixed(2)}
+• Delivery Charges: ${deliveryFee === 0 ? 'FREE (₹0.00)' : `₹${deliveryFee.toFixed(2)}`}
+• *Total Payable (COD):* ₹${totalAmount.toFixed(2)}
+
+Please confirm and dispatch to my delivery address. Thank you!`;
+    } else {
+      message = 
+`*New Order - ${settings?.storeName || 'Ganapati Store'}*
+*Delivery Method:* Store Pickup (Pay at Store)
+
+*Customer Details:*
+• *Name:* ${customer?.name || 'Customer'}
+• *Phone:* ${customer?.phone || 'Not provided'}
+• *Store Pickup Hub:* ${settings?.storeAddress || 'Main Store Hub'}
+
+*Items Ordered:*
+${itemsList}
+
+*Bill Summary:*
+• Items Subtotal: ₹${subtotal.toFixed(2)}
+• Delivery Charges: ₹0.00 (Store Pickup)
+• *Total Payable on Pickup:* ₹${subtotal.toFixed(2)}
+
+Please keep my order ready for store pickup. Thank you!`;
+    }
 
     const encoded = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${cleanStorePhone}?text=${encoded}`;
@@ -183,7 +235,7 @@ Please confirm my order and deliver to the above address. Thank you!`;
                       </div>
 
                       {/* Right: Content Block */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.2 space-y-1">
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 space-y-1">
                         {/* Top: Title & Price */}
                         <div className="flex items-start justify-between gap-1.5">
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
@@ -253,54 +305,119 @@ Please confirm my order and deliver to the above address. Thank you!`;
             )}
           </div>
 
-          {/* Footer / Delivery Details Summary & WhatsApp Action */}
+          {/* Footer / Delivery Options, Address Box, Bill Summary & WhatsApp Action */}
           {cartItems.length > 0 && (
             <div className="p-3 sm:p-4 border-t border-slate-100 bg-white space-y-2.5">
-              {/* Delivery Details Status Card */}
-              {customer?.name && customer?.phone ? (
-                <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs space-y-0.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-emerald-900 flex items-center gap-1.5 text-[11px]">
-                      <User className="w-3 h-3 text-emerald-700" />
-                      Delivery to: {customer.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => openProfileModal()}
-                      className="text-[10px] font-semibold text-emerald-700 hover:underline cursor-pointer"
-                    >
-                      Change
-                    </button>
-                  </div>
-                  <p className="text-slate-600 text-[10px] truncate flex items-center gap-1">
-                    <MapPin className="w-2.5 h-2.5 text-slate-400 flex-shrink-0" />
-                    <span>{customer.address}</span>
-                  </p>
-                </div>
-              ) : (
-                <div 
-                  onClick={() => openProfileModal('checkout')}
-                  className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between cursor-pointer hover:bg-amber-100/70 transition-colors"
-                >
-                  <div className="flex items-center gap-1.5 text-[11px]">
-                    <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Click to set your delivery details</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-600" />
-                </div>
-              )}
+              
+              {/* 1. Delivery Option Radio Selector */}
+              <div className="flex items-center gap-6 text-xs font-semibold text-slate-800">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="radio"
+                    name="cartDeliveryMethod"
+                    value="shipping"
+                    checked={deliveryMethod === 'shipping'}
+                    onChange={() => setDeliveryMethod('shipping')}
+                    className="w-4 h-4 text-slate-900 focus:ring-slate-900 border-slate-300 cursor-pointer accent-slate-900"
+                  />
+                  <span className={deliveryMethod === 'shipping' ? 'font-bold text-slate-900' : 'text-slate-600'}>
+                    Home Delivery
+                  </span>
+                </label>
 
-              {/* Direct WhatsApp Order Button */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="radio"
+                    name="cartDeliveryMethod"
+                    value="pickup"
+                    checked={deliveryMethod === 'pickup'}
+                    onChange={() => setDeliveryMethod('pickup')}
+                    className="w-4 h-4 text-slate-900 focus:ring-slate-900 border-slate-300 cursor-pointer accent-slate-900"
+                  />
+                  <span className={deliveryMethod === 'pickup' ? 'font-bold text-slate-900' : 'text-slate-600'}>
+                    Store pickup
+                  </span>
+                </label>
+              </div>
+
+              {/* 2. Address / Location Box */}
+              <div className="p-3 bg-white border border-slate-800 rounded-xl text-xs">
+                {deliveryMethod === 'shipping' ? (
+                  customer?.address ? (
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="font-bold text-slate-900 text-xs truncate">
+                          {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                        </p>
+                        <p className="text-slate-600 text-[11px] leading-snug line-clamp-2">
+                          {customer.address}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openProfileModal()}
+                        className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => openProfileModal('checkout')}
+                      className="flex items-center justify-between cursor-pointer text-slate-700 hover:text-emerald-700 transition-colors py-0.5"
+                    >
+                      <span className="text-[11px] font-semibold text-slate-600">
+                        Click to enter home delivery address
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+                  )
+                ) : (
+                  <div className="space-y-0.5 py-0.5">
+                    <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                      <Store className="w-3.5 h-3.5 text-slate-700" />
+                      <span>{settings?.storeName || 'Ganapati Store'}</span>
+                    </p>
+                    <p className="text-slate-600 text-[11px] leading-snug">
+                      {settings?.storeAddress || 'Main Store Hub, Habra, West Bengal 743263'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Detailed Bill Breakdown Card */}
+              <div className="p-3 bg-slate-100/90 border border-slate-200/80 rounded-2xl space-y-1.5 text-xs text-slate-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Items Subtotal ({totalItemsCount})</span>
+                  <span className="font-mono font-medium text-slate-900">₹{subtotal.toFixed(2)}</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Delivery chnages</span>
+                  <span className="font-mono font-medium text-slate-900">
+                    {deliveryFee === 0 ? '0' : `₹${deliveryFee.toFixed(2)}`}
+                  </span>
+                </div>
+
+                <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                  <span className="font-bold text-slate-900 text-xs sm:text-sm">Subtotal Amount</span>
+                  <span className="font-bold text-slate-900 text-sm sm:text-base font-mono">
+                    ₹{totalAmount.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* 4. Direct WhatsApp Order Button */}
               <button
                 type="button"
                 onClick={handleProceedToWhatsApp}
-                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 bg-[#3F9368] hover:bg-[#347c57] active:bg-[#2b6748] text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition-all shadow-md shadow-emerald-700/20 cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Send Order via WhatsApp</span>
+                <span>SEND ORDER VIA WHATSAPP</span>
               </button>
 
-              <p className="text-[9px] text-center text-slate-400">
+              <p className="text-[10px] text-center text-slate-400">
                 Products and delivery info will be sent directly to our store WhatsApp.
               </p>
             </div>
