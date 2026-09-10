@@ -270,7 +270,7 @@ export const SettingsModal = ({ onCatalogReset }) => {
                   XYVOT Storefront API & Supabase Sync
                 </div>
                 <p>
-                  Connected to your custom XYVOT multi-tenant platform. Real-time product inventory and purchases are synced live.
+                  Connected to your custom XYVOT multi-tenant platform. Real-time products and purchases are synced live.
                 </p>
                 <div className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-md text-[11px]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />

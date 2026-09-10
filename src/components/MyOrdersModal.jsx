@@ -161,7 +161,7 @@ export const MyOrdersModal = () => {
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">No orders placed yet</h3>
                   <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
-                    Browse our inventory and place your first Cash on Delivery order with instant dispatch.
+                    Browse our store catalog and place your first Cash on Delivery order with instant dispatch.
                   </p>
                 </div>
               </div>

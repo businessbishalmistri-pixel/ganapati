@@ -54,11 +54,6 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const totalProductsCount = products.length;
   const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
   const outOfStockCount = totalProductsCount - inStockCount;
-  const totalCatalogValue = products.reduce((sum, p) => {
-    const price = parseFloat(p.selling_price || p.price || 0) || 0;
-    const stock = parseInt(p.stock_quantity ?? p.stock ?? 1, 10) || 1;
-    return sum + (price * (stock > 0 ? stock : 1));
-  }, 0);
 
   // Product CRUD Handlers
   const handleSaveProduct = async (productData) => {
@@ -216,14 +211,14 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
             Welcome Back, Admin
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Real-time store inventory, catalog health, and live department breakdown.
+            Store product catalog, availability controls, and categories.
           </p>
         </div>
 
         {/* 🎨 Modern Abstract Geometric Hero Cards (3-Column Layout) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
           
-          {/* Card 1: Total Revenue / Catalog Value (Dark Onyx & Cobalt Blue) */}
+          {/* Card 1: Total Products (Dark Onyx & Cobalt Blue) */}
           <div className="bg-[#181920] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[148px] group hover:shadow-xl transition-all">
             {/* Concentric rings graphic overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
@@ -237,27 +232,27 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
             {/* Top Icon Badge */}
             <div className="relative z-10 flex items-center justify-between">
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-xs">
-                <Banknote className="w-5 h-5 text-white" />
+                <Package className="w-5 h-5 text-white" />
               </div>
             </div>
 
             {/* Content info */}
             <div className="relative z-10 pt-4 space-y-1">
               <span className="text-xs font-semibold text-slate-400 tracking-wide block">
-                Total Catalog Value
+                Total Products
               </span>
               <div className="flex items-baseline gap-2.5">
                 <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                  ₹{totalCatalogValue.toLocaleString('en-IN')}
+                  {totalProductsCount} <span className="text-lg font-bold text-slate-400 font-sans">Items</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15">
-                  +10%
+                  Live
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Card 2: In-Stock Products / Total Sales (Royal Purple & Sunburst Yellow) */}
+          {/* Card 2: In-Stock / Available Products (Royal Purple & Sunburst Yellow) */}
           <div className="bg-[#7c3aed] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-purple-600/60 min-h-[148px] group hover:shadow-xl transition-all">
             {/* Concentric rings graphic overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
@@ -278,20 +273,20 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
             {/* Content info */}
             <div className="relative z-10 pt-4 space-y-1">
               <span className="text-xs font-semibold text-purple-200 tracking-wide block">
-                In-Stock Products
+                Available in Store
               </span>
               <div className="flex items-baseline gap-2.5">
                 <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                  {inStockCount} <span className="text-lg font-bold text-purple-200 font-sans">/ {totalProductsCount}</span>
+                  {inStockCount} <span className="text-lg font-bold text-purple-200 font-sans">In Stock</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
-                  +15%
+                  {outOfStockCount > 0 ? `${outOfStockCount} Out` : 'All Active'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Card 3: Active Categories / Departments (Azure Electric Blue & Emerald Mint) */}
+          {/* Card 3: Active Categories (Azure Electric Blue & Emerald Mint) */}
           <div className="bg-[#2563eb] text-white p-5 sm:p-6 rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-blue-500/60 min-h-[148px] group hover:shadow-xl transition-all">
             {/* Concentric rings graphic overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
@@ -319,7 +314,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
                   {categories.length} <span className="text-lg font-bold text-blue-200 font-sans">Sections</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
-                  Live
+                  Organized
                 </span>
               </div>
             </div>

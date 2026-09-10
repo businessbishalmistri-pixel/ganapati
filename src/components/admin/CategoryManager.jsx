@@ -278,7 +278,7 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Reassign Products & Delete</h3>
-                  <p className="text-xs text-slate-500">Category contains active inventory items</p>
+                  <p className="text-xs text-slate-500">Category contains active products</p>
                 </div>
               </div>
               <button

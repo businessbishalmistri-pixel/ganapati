@@ -238,7 +238,7 @@ Please confirm my order and deliver to the above address. Thank you!`;
 
                         {isMax && (
                           <p className="text-[10px] text-amber-700 flex items-center gap-1 mt-0.5 font-medium">
-                            <AlertCircle className="w-3 h-3" /> Max inventory reached
+                            <AlertCircle className="w-3 h-3" /> Max item limit reached
                           </p>
                         )}
                       </div>

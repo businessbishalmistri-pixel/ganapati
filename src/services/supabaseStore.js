@@ -131,10 +131,10 @@ export async function fetchLiveProductsFromBackend() {
         image: primaryImage,
         image_url: primaryImage,
         images: imageList,
-        description: p.description || `${p.title || p.name || 'Product'} - Verified inventory item from Ganapati Stores.`,
+        description: p.description || `${p.title || p.name || 'Product'} - Fresh & authentic grocery item from Ganapati Stores.`,
         features: Array.isArray(p.features) && p.features.length > 0 
           ? p.features 
-          : ['Verified Inventory Item', 'Direct WhatsApp Dispatch'],
+          : ['Authentic Quality Item', 'Direct WhatsApp Dispatch'],
         has_variants: hasVariants,
         hasVariants: hasVariants,
         variants: cleanVariants,
@@ -218,8 +218,8 @@ export async function fetchSingleProductById(productId) {
         image: primaryImage,
         image_url: primaryImage,
         images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (primaryImage ? [primaryImage] : []),
-        description: p.description || `${p.name || 'Product'} - Real-time verified item from inventory.`,
-        features: Array.isArray(p.features) && p.features.length > 0 ? p.features : ['Verified Inventory Item', 'Direct WhatsApp Dispatch'],
+        description: p.description || `${p.name || 'Product'} - Fresh & authentic grocery item from Ganapati Stores.`,
+        features: Array.isArray(p.features) && p.features.length > 0 ? p.features : ['Authentic Quality Item', 'Direct WhatsApp Dispatch'],
         has_variants: hasVariants,
         hasVariants: hasVariants,
         variants: cleanVariants,

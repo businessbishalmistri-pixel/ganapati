@@ -249,7 +249,7 @@ export function App() {
     setProducts(catalog);
     setTimeout(() => {
       setIsRefreshing(false);
-      showToast('Inventory stock synced in real-time!', 'info');
+      showToast('Products synced in real-time!', 'info');
     }, 400);
   };
 
