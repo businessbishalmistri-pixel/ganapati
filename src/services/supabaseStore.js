@@ -42,7 +42,7 @@ export async function fetchLiveProductsFromBackend() {
       .order('created_at', { ascending: false });
 
     let productsList = [];
-    if (!error && Array.isArray(data)) {
+    if (!error && Array.isArray(data) && data.length > 0) {
       productsList = data;
     } else {
       // Check admin products cache
@@ -50,13 +50,17 @@ export async function fetchLiveProductsFromBackend() {
         const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
         if (cachedAdmin) {
           const parsed = JSON.parse(cachedAdmin);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             productsList = parsed;
           }
         }
       } catch (e) {
         console.warn('Could not read admin products cache', e);
       }
+    }
+
+    if (!productsList || productsList.length === 0) {
+      productsList = INITIAL_DEFAULT_PRODUCTS;
     }
 
     // Filter out draft products from storefront

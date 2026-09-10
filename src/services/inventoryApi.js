@@ -1,8 +1,5 @@
-/**
- * inventoryApi.js
- * Pure Live Database & Real-Time Inventory Service
- */
 import { fetchLiveProductsFromBackend, supabase } from './supabaseStore';
+import { INITIAL_DEFAULT_PRODUCTS, normalizeProduct } from './inventoryData';
 
 const STORAGE_KEY = 'quickcart_live_inventory_cache';
 
@@ -18,12 +15,16 @@ class InventoryService {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizeProduct).filter(Boolean);
+        }
       }
     } catch (e) {
       console.warn('Could not read cached inventory', e);
     }
-    return [];
+    // Pre-warmed initial catalog for 0ms first-paint on any device
+    return INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
   }
 
   saveData() {

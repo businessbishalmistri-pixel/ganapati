@@ -47,8 +47,8 @@ export function App() {
 
   const [isAdminView, setIsAdminView] = useState(checkIsAdmin);
 
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(() => inventoryApi.products || []);
+  const [loading, setLoading] = useState(() => (!inventoryApi.products || inventoryApi.products.length === 0));
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filters & Sorting
