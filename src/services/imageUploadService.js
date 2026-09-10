@@ -1,84 +1,65 @@
-import { supabase } from './supabase';
-
 /**
  * imageUploadService.js
- * Handles direct uploading of compressed image files to Supabase Storage.
- * Auto-detects active buckets and returns the permanent Supabase public CDN URL.
+ * Uploads compressed image files directly to Supabase Storage.
+ * Generates and returns a permanent public Supabase CDN URL.
  */
-export async function uploadProductImageToSupabase(file) {
-  if (!file) throw new Error('No image file provided');
+import { supabase } from './supabase';
 
-  const ext = file.name.split('.').pop() || 'webp';
-  const cleanBase = (file.name.split('.')[0] || 'img')
-    .replace(/[^a-zA-Z0-9]/g, '_')
-    .substring(0, 15);
-  const fileName = `gp_${Date.now()}_${cleanBase}.${ext}`;
+const BUCKET_NAME = 'product-images';
+
+/**
+ * Uploads an image file/blob to Supabase Storage
+ * @param {File|Blob} fileOrBlob 
+ * @param {string} customFileName 
+ * @returns {Promise<string>} publicUrl
+ */
+export async function uploadImageToSupabase(fileOrBlob, customFileName = '') {
+  if (!fileOrBlob) throw new Error('No file provided for upload');
+
+  const fileExt = fileOrBlob.type === 'image/webp' ? 'webp' : (fileOrBlob.name?.split('.').pop() || 'jpg');
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 7);
+  const fileName = customFileName 
+    ? `${customFileName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${timestamp}.${fileExt}`
+    : `prod_${timestamp}_${randomStr}.${fileExt}`;
+  
   const filePath = `products/${fileName}`;
 
-  // Candidate public buckets in Supabase
-  const candidateBuckets = ['products', 'product-images', 'public', 'images', 'media', 'storefront'];
+  // 1. Try uploading to 'product-images' bucket
+  let uploadResult = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(filePath, fileOrBlob, {
+      cacheControl: '31536000',
+      upsert: true,
+      contentType: fileOrBlob.type || 'image/webp'
+    });
 
-  let publicUrl = null;
-  let lastError = null;
+  // 2. If bucket not found error, try fallback 'public' bucket
+  if (uploadResult.error) {
+    console.warn(`Upload to ${BUCKET_NAME} failed, trying fallback 'public' bucket:`, uploadResult.error);
+    
+    uploadResult = await supabase.storage
+      .from('public')
+      .upload(filePath, fileOrBlob, {
+        cacheControl: '31536000',
+        upsert: true,
+        contentType: fileOrBlob.type || 'image/webp'
+      });
 
-  for (const bucket of candidateBuckets) {
-    try {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, {
-          cacheControl: '31536000',
-          upsert: true,
-          contentType: file.type || 'image/webp'
-        });
-
-      if (!error && data) {
-        const { data: publicData } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(filePath);
-
-        if (publicData?.publicUrl) {
-          publicUrl = publicData.publicUrl;
-          break;
-        }
-      } else if (error) {
-        lastError = error;
-      }
-    } catch (err) {
-      lastError = err;
+    if (!uploadResult.error) {
+      const { data: publicUrlData } = supabase.storage.from('public').getPublicUrl(filePath);
+      return publicUrlData.publicUrl;
     }
+
+    // If both failed, throw error with helpful details
+    throw new Error(uploadResult.error.message || 'Failed to upload image to Supabase Storage');
   }
 
-  if (!publicUrl) {
-    // If standard folder upload failed, try root of first available bucket
-    for (const bucket of candidateBuckets) {
-      try {
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, file, {
-            cacheControl: '31536000',
-            upsert: true,
-            contentType: file.type || 'image/webp'
-          });
-
-        if (!error && data) {
-          const { data: publicData } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(fileName);
-
-          if (publicData?.publicUrl) {
-            publicUrl = publicData.publicUrl;
-            break;
-          }
-        }
-      } catch (e) {
-        lastError = e;
-      }
-    }
+  // 3. Get Public URL
+  const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
+  if (!publicUrlData?.publicUrl) {
+    throw new Error('Could not retrieve public URL for uploaded image');
   }
 
-  if (!publicUrl) {
-    throw new Error(lastError?.message || 'Unable to upload to Supabase Storage. Please ensure public storage bucket is configured.');
-  }
-
-  return publicUrl;
+  return publicUrlData.publicUrl;
 }

@@ -1,34 +1,36 @@
 /**
  * imageCompressor.js
- * In-browser client-side image compression using HTML5 Canvas.
- * Compresses phone camera and high-res files to max 1080px and WebP/JPEG ~80-150KB.
+ * In-browser high-performance image compression using HTML5 Canvas.
+ * Resizes large camera photos down to 1080px max dimension and compresses to WebP / JPEG (~80-120KB).
  */
 export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, quality = 0.82 } = {}) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.type || !file.type.startsWith('image/')) {
-      return reject(new Error('Selected file is not an image'));
-    }
+  if (!file) return null;
 
-    // Preserve SVGs
-    if (file.type === 'image/svg+xml') {
-      return resolve({
-        file,
+  return new Promise((resolve, reject) => {
+    // If SVG or gif or already very small (< 30KB), return directly
+    if (file.type === 'image/svg+xml' || file.type === 'image/gif' || file.size < 30 * 1024) {
+      resolve({
         blob: file,
+        file: file,
         previewUrl: URL.createObjectURL(file),
+        width: 0,
+        height: 0,
         originalSize: file.size,
-        compressedSize: file.size
+        compressedSize: file.size,
       });
+      return;
     }
 
     const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
+    reader.onerror = reject;
+    reader.onload = (e) => {
       const img = new Image();
-      img.src = event.target.result;
+      img.onerror = reject;
       img.onload = () => {
         let width = img.width;
         let height = img.height;
 
+        // Calculate aspect ratio scaling
         if (width > height) {
           if (width > maxWidth) {
             height = Math.round((height * maxWidth) / width);
@@ -46,54 +48,46 @@ export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, q
         canvas.height = height;
 
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to WebP
+        // Compress to WebP
+        const outputType = 'image/webp';
         canvas.toBlob(
           (blob) => {
-            if (blob) {
-              const compressedName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-              const compressedFile = new File([blob], compressedName, {
-                type: 'image/webp',
-                lastModified: Date.now()
-              });
+            if (!blob) {
               resolve({
-                file: compressedFile,
-                blob,
-                previewUrl: URL.createObjectURL(blob),
+                blob: file,
+                file: file,
+                previewUrl: URL.createObjectURL(file),
+                width,
+                height,
                 originalSize: file.size,
-                compressedSize: compressedFile.size
+                compressedSize: file.size,
               });
-            } else {
-              // Fallback to JPEG
-              canvas.toBlob(
-                (jpegBlob) => {
-                  const jpegName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-                  const jpegFile = new File([jpegBlob], jpegName, {
-                    type: 'image/jpeg',
-                    lastModified: Date.now()
-                  });
-                  resolve({
-                    file: jpegFile,
-                    blob: jpegBlob,
-                    previewUrl: URL.createObjectURL(jpegBlob),
-                    originalSize: file.size,
-                    compressedSize: jpegFile.size
-                  });
-                },
-                'image/jpeg',
-                quality
-              );
+              return;
             }
+
+            const cleanFileName = file.name ? file.name.replace(/\.[^/.]+$/, '') + '.webp' : `img_${Date.now()}.webp`;
+            const compressedFile = new File([blob], cleanFileName, { type: 'image/webp' });
+
+            resolve({
+              blob,
+              file: compressedFile,
+              previewUrl: URL.createObjectURL(blob),
+              width,
+              height,
+              originalSize: file.size,
+              compressedSize: blob.size,
+            });
           },
-          'image/webp',
+          outputType,
           quality
         );
       };
-      img.onerror = (err) => reject(new Error('Failed to load image in browser for compression'));
+      img.src = e.target.result;
     };
-    reader.onerror = (err) => reject(new Error('Failed to read image file'));
+    reader.readAsDataURL(file);
   });
 }

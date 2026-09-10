@@ -6,18 +6,23 @@ import {
   Image as ImageIcon,
   Save,
   Check,
+  Scale,
+  Shirt,
+  Sliders,
   Plus,
   Trash2,
   Sparkles,
   Layers,
+  ArrowRight,
   UploadCloud,
   Loader2,
-  AlertCircle,
   CheckCircle2,
+  ImagePlus,
+  RefreshCw,
   ExternalLink
 } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadProductImageToSupabase } from '../../services/imageUploadService';
+import { uploadImageToSupabase } from '../../services/imageUploadService';
 
 const PRESET_IMAGES = [
   { label: 'Rice / Grains', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80' },
@@ -32,6 +37,7 @@ const PRESET_IMAGES = [
 
 export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categories = [] }) {
   const isEditing = Boolean(productToEdit && productToEdit.id);
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -47,16 +53,16 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   });
 
   const [variants, setVariants] = useState([]);
+  const [variantTab, setVariantTab] = useState('weight'); // 'weight' | 'packs' | 'sizes' | 'custom'
   const [customOptionText, setCustomOptionText] = useState('');
   const [customUnit, setCustomUnit] = useState('KG');
 
-  // Image upload state
+  // Image Upload & Compression State
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadStatusText, setUploadStatusText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadStats, setUploadStats] = useState(null); // { originalKB, compressedKB, savedPct }
-  const [uploadError, setUploadError] = useState(null);
-  const [showManualUrl, setShowManualUrl] = useState(false);
-  const fileInputRef = useRef(null);
+  const [compressionStats, setCompressionStats] = useState(null);
+  const [showUrlFallback, setShowUrlFallback] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -92,8 +98,6 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       setVariants([]);
     }
     setCustomOptionText('');
-    setUploadStats(null);
-    setUploadError(null);
     setErrors({});
   }, [productToEdit, isOpen, categories]);
 
@@ -102,65 +106,52 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   const sellingNum = parseFloat(formData.selling_price) || 0;
   const mrpNum = parseFloat(formData.mrp) || sellingNum;
 
-  // Handle image file selection (Compression + Supabase Storage upload)
-  const handleImageFileProcess = async (file) => {
+  // Handle Image File Selection, Client-Side Compression & Supabase Storage Upload
+  const handleImageFileSelect = async (file) => {
     if (!file) return;
-    setUploadError(null);
-    setIsUploadingImage(true);
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (PNG, JPG, WebP).');
+      return;
+    }
 
+    setIsUploadingImage(true);
+    setUploadStatusText('Compressing image on device...');
     try {
-      // 1. Client-Side Image Compression via Canvas
-      const { file: compressedFile, originalSize, compressedSize } = await compressImage(file, {
-        maxWidth: 1080,
-        maxHeight: 1080,
-        quality: 0.82
+      // 1. Client-side compression with canvas
+      const compressed = await compressImage(file, { maxWidth: 1080, maxHeight: 1080, quality: 0.82 });
+      
+      // 2. Immediate local preview (0ms lag)
+      setFormData(prev => ({ 
+        ...prev, 
+        image_url: compressed.previewUrl,
+        image: compressed.previewUrl 
+      }));
+
+      const origKb = Math.round(compressed.originalSize / 1024);
+      const compKb = Math.round(compressed.compressedSize / 1024);
+      setCompressionStats({
+        originalKb: origKb,
+        compressedKb: compKb,
+        savings: Math.max(0, Math.round((1 - compKb / (origKb || 1)) * 100))
       });
 
-      const origKB = Math.round(originalSize / 1024);
-      const compKB = Math.round(compressedSize / 1024);
-      const savedPct = Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100));
+      // 3. Upload to Supabase Storage Bucket
+      setUploadStatusText('Uploading to Supabase Storage...');
+      const publicUrl = await uploadImageToSupabase(compressed.file, formData.title || 'product');
 
-      setUploadStats({ originalKB: origKB, compressedKB: compKB, savedPct });
-
-      // 2. Direct Upload to Supabase Storage
-      const publicUrl = await uploadProductImageToSupabase(compressedFile);
-
-      // 3. Save Supabase URL to form data
-      setFormData((prev) => ({ ...prev, image_url: publicUrl }));
+      // 4. Set permanent public Supabase URL
+      setFormData(prev => ({
+        ...prev,
+        image_url: publicUrl,
+        image: publicUrl
+      }));
+      setUploadStatusText('Uploaded & Saved to Supabase Cloud!');
     } catch (err) {
-      console.error('Image compression/upload failed:', err);
-      setUploadError(err.message || 'Failed to upload image to Supabase Storage.');
+      console.error('Image compression / upload failed:', err);
+      // Keep local preview if upload had error, but inform user
+      alert('Upload to Supabase Storage notice: ' + (err.message || 'Check storage permissions'));
     } finally {
       setIsUploadingImage(false);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageFileProcess(file);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      handleImageFileProcess(file);
     }
   };
 
@@ -238,7 +229,6 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    if (isUploadingImage) return;
 
     setIsSaving(true);
     try {
@@ -298,7 +288,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         </div>
 
         {/* Modal Scrollable Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3">
           
           {/* Product Name */}
           <div>
@@ -327,7 +317,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>
@@ -425,91 +415,246 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             </button>
           </div>
 
-          {/* ⚡ STREAMLINED PRODUCT VARIANTS / CUSTOM BUILDER */}
-          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-blue-600" />
-                Product Variants ({variants.length})
-              </span>
-              {variants.length > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-blue-100 text-blue-800">
-                  Multi-Variant Active
+          {/* ⚡ PRODUCT VARIANTS / QUICK ADD BUILDER */}
+          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-3">
+            
+            {/* Header / Tabs Selector */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-blue-600" />
+                  Product Variants ({variants.length})
                 </span>
-              )}
+                {variants.length > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-blue-100 text-blue-800">
+                    Multi-Variant
+                  </span>
+                )}
+              </div>
+
+              {/* 4 Category Tabs */}
+              <div className="flex items-center bg-slate-200/70 p-0.5 rounded-xl text-xs">
+                <button
+                  type="button"
+                  onClick={() => setVariantTab('weight')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    variantTab === 'weight'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Scale className="w-3 h-3 text-slate-600" />
+                  <span>Weight (KG/g)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVariantTab('packs')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    variantTab === 'packs'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Package className="w-3 h-3 text-slate-600" />
+                  <span>Packs / Units</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVariantTab('sizes')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    variantTab === 'sizes'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Shirt className="w-3 h-3 text-slate-600" />
+                  <span>Sizes (S/M/L)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVariantTab('custom')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    variantTab === 'custom'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Sliders className="w-3 h-3 text-slate-600" />
+                  <span>Custom</span>
+                </button>
+              </div>
             </div>
 
-            {/* Custom Quick Add Toolbar */}
+            {/* Quick Add Sub-Toolbar matching screenshots */}
             <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                 <span className="font-bold text-slate-500 mr-1 text-[11px]">Quick Add:</span>
 
-                {/* 1-Click Standard Pack Bundle */}
-                <button
-                  type="button"
-                  onClick={() => handleAddVariantBundle(['500g', '1 KG', '2 KG', '5 KG'])}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Add standard 500g, 1KG, 2KG, 5KG bundle"
-                >
-                  <Sparkles className="w-3 h-3 text-indigo-600" />
-                  <span>Standard Pack (500g, 1KG, 2KG, 5KG)</span>
-                </button>
+                {/* 1. Weight Tab Options */}
+                {variantTab === 'weight' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleAddVariantBundle(['500g', '1 KG', '2 KG', '5 KG'])}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Add standard 500g, 1KG, 2KG, 5KG bundle"
+                    >
+                      <Sparkles className="w-3 h-3 text-indigo-600" />
+                      <span>Standard Pack (500g, 1KG, 2KG, 5KG)</span>
+                    </button>
 
-                {/* Quick Add Pills */}
-                {['100g', '250g', '500g', '1 KG', '2 KG', '5 KG', '10 KG'].map((wt) => (
-                  <button
-                    key={wt}
-                    type="button"
-                    onClick={() => handleAddVariant(wt)}
-                    className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
-                  >
-                    + {wt}
-                  </button>
-                ))}
+                    {['100g', '250g', '500g', '1 KG', '2 KG', '5 KG', '10 KG'].map((wt) => (
+                      <button
+                        key={wt}
+                        type="button"
+                        onClick={() => handleAddVariant(wt)}
+                        className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
+                      >
+                        + {wt}
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* 2. Packs / Units Tab Options */}
+                {variantTab === 'packs' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleAddVariantBundle(['1 Pc', 'Pack of 3', 'Pack of 6', 'Pack of 12'])}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Add standard bulk pack bundle"
+                    >
+                      <Sparkles className="w-3 h-3 text-indigo-600" />
+                      <span>Bulk Pack (1 Pc, 3 Pk, 6 Pk, 12 Pk)</span>
+                    </button>
+
+                    {['1 Pc', 'Pack of 2', 'Pack of 3', 'Pack of 6', 'Pack of 10', 'Pack of 12', 'Box (24 Pcs)'].map((pk) => (
+                      <button
+                        key={pk}
+                        type="button"
+                        onClick={() => handleAddVariant(pk)}
+                        className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
+                      >
+                        + {pk}
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* 3. Sizes (S/M/L) Tab Options */}
+                {variantTab === 'sizes' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleAddVariantBundle(['S', 'M', 'L', 'XL'])}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Add standard S, M, L, XL sizes"
+                    >
+                      <Sparkles className="w-3 h-3 text-indigo-600" />
+                      <span>S, M, L, XL</span>
+                    </button>
+
+                    {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'Free Size'].map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => handleAddVariant(sz)}
+                        className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
+                      >
+                        + {sz}
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* 4. Custom Tab Notice */}
+                {variantTab === 'custom' && (
+                  <span className="text-slate-400 italic text-[11px]">
+                    Type a custom option name below:
+                  </span>
+                )}
               </div>
 
-              {/* Custom Input on the Right */}
-              <div className="flex items-center gap-1 ml-auto">
-                <input
-                  type="text"
-                  placeholder="e.g. 750 or 1.5"
-                  value={customOptionText}
-                  onChange={(e) => setCustomOptionText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (customOptionText.trim()) {
-                        handleAddVariant(`${customOptionText.trim()} ${customUnit}`);
-                        setCustomOptionText('');
-                      }
-                    }
-                  }}
-                  className="h-8 w-28 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
-                />
-                <select
-                  value={customUnit}
-                  onChange={(e) => setCustomUnit(e.target.value)}
-                  className="h-8 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
-                >
-                  <option value="KG">KG</option>
-                  <option value="g">g</option>
-                  <option value="L">L</option>
-                  <option value="ml">ml</option>
-                  <option value="Pc">Pc</option>
-                  <option value="Pack">Pack</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (customOptionText.trim()) {
-                      handleAddVariant(`${customOptionText.trim()} ${customUnit}`);
-                      setCustomOptionText('');
-                    }
-                  }}
-                  className="h-8 px-3 bg-[#505488] hover:bg-[#434775] text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
-                >
-                  <span>+ Add</span>
-                </button>
+              {/* Right Custom Input & Add Button */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                {variantTab === 'weight' ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      placeholder="e.g. 750 or 1.5"
+                      value={customOptionText}
+                      onChange={(e) => setCustomOptionText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (customOptionText.trim()) {
+                            handleAddVariant(`${customOptionText.trim()} ${customUnit}`);
+                            setCustomOptionText('');
+                          }
+                        }
+                      }}
+                      className="h-8 w-28 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
+                    />
+                    <select
+                      value={customUnit}
+                      onChange={(e) => setCustomUnit(e.target.value)}
+                      className="h-8 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      <option value="KG">KG</option>
+                      <option value="g">g</option>
+                      <option value="L">L</option>
+                      <option value="ml">ml</option>
+                      <option value="Pc">Pc</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customOptionText.trim()) {
+                          handleAddVariant(`${customOptionText.trim()} ${customUnit}`);
+                          setCustomOptionText('');
+                        }
+                      }}
+                      className="h-8 px-3 bg-[#505488] hover:bg-[#434775] text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <span>+ Add</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      placeholder="Custom option name..."
+                      value={customOptionText}
+                      onChange={(e) => setCustomOptionText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (customOptionText.trim()) {
+                            handleAddVariant(customOptionText.trim());
+                            setCustomOptionText('');
+                          }
+                        }
+                      }}
+                      className="h-8 w-36 sm:w-44 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customOptionText.trim()) {
+                          handleAddVariant(customOptionText.trim());
+                          setCustomOptionText('');
+                        }
+                      }}
+                      className="h-8 px-3 bg-[#505488] hover:bg-[#434775] text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <span>+ Add</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -597,153 +742,158 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             )}
           </div>
 
-          {/* 📸 DIRECT SUPABASE IMAGE UPLOAD & DRAG/DROP DROPZONE */}
+          {/* 📸 IMAGE UPLOAD: Drag & Drop + Device Select + Client Compression + Supabase Storage */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-700">
-                Product Image (Upload to Supabase Storage)
+                Product Image
               </label>
               <button
                 type="button"
-                onClick={() => setShowManualUrl(!showManualUrl)}
-                className="text-[11px] text-blue-600 hover:underline font-medium cursor-pointer"
+                onClick={() => setShowUrlFallback(!showUrlFallback)}
+                className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
-                {showManualUrl ? 'Hide manual URL' : 'Enter URL / Preset'}
+                <span>{showUrlFallback ? 'Hide URL / Presets' : 'Use URL / Presets'}</span>
               </button>
             </div>
 
-            {/* Hidden File Input */}
+            {/* Hidden native file input */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={handleFileChange}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageFileSelect(file);
+              }}
             />
 
-            {/* Drag and Drop Zone */}
+            {/* 1. Drag & Dropzone Area */}
             <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer?.files?.[0];
+                if (file) handleImageFileSelect(file);
+              }}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center cursor-pointer transition-all ${
+              className={`relative border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center transition-all cursor-pointer select-none ${
                 isDragging
-                  ? 'border-blue-500 bg-blue-50/60 scale-[0.99]'
-                  : 'border-slate-300/90 hover:border-blue-500 bg-slate-50/60 hover:bg-blue-50/20'
+                  ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/20'
+                  : 'border-slate-300/90 bg-slate-50/60 hover:bg-slate-100/70 hover:border-slate-400'
               }`}
             >
               {isUploadingImage ? (
-                <div className="py-3 flex flex-col items-center justify-center space-y-2 text-blue-600 animate-fadeIn">
-                  <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
-                  <span className="text-xs font-bold">Compressing & Uploading to Supabase...</span>
-                  <span className="text-[11px] text-slate-500">Auto-compressing to WebP</span>
+                <div className="py-2 flex flex-col items-center justify-center space-y-2">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-800">{uploadStatusText}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Compressing on frontend & saving to Supabase Storage</p>
+                  </div>
                 </div>
               ) : formData.image_url ? (
-                <div className="flex items-center justify-between gap-3 text-left">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-14 h-14 rounded-xl border border-slate-200 bg-white overflow-hidden flex-shrink-0 flex items-center justify-center shadow-xs">
-                      <img
-                        src={formData.image_url}
-                        alt="Product Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
-                        }}
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-900 block truncate">
-                        Image Attached & Ready
-                      </span>
-                      {uploadStats ? (
-                        <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          Compressed {uploadStats.originalKB}KB &rarr; {uploadStats.compressedKB}KB (Saved {uploadStats.savedPct}%)
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 block truncate">
-                          Stored in Supabase Cloud
-                        </span>
-                      )}
-                    </div>
+                <div className="flex items-center gap-3 text-left">
+                  {/* Image Thumbnail Preview */}
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-white border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-xs">
+                    <img
+                      src={formData.image_url}
+                      alt="Product Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                      }}
+                    />
                   </div>
 
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      Change
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFormData(prev => ({ ...prev, image_url: '' }));
-                        setUploadStats(null);
-                      }}
-                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                      title="Remove image"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Info & Replace Action */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span className="truncate">Image Ready</span>
+                    </div>
+
+                    {compressionStats && (
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 font-bold">
+                        <span>Compressed: {compressionStats.originalKb}KB ➔ {compressionStats.compressedKb}KB ({compressionStats.savings}% saved)</span>
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-slate-400 truncate">
+                      Click or drag to replace image from device
+                    </p>
                   </div>
+
+                  {/* Change Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs flex items-center gap-1 flex-shrink-0 cursor-pointer"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Change</span>
+                  </button>
                 </div>
               ) : (
-                <div className="py-2 flex flex-col items-center justify-center space-y-1.5">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center space-y-1.5 py-1">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-xs">
                     <UploadCloud className="w-5 h-5" />
                   </div>
-                  <div className="space-y-0.5">
+                  <div>
                     <p className="text-xs font-bold text-slate-800">
-                      <span className="text-blue-600 underline">Click to upload</span> or drag and drop
+                      Drag & Drop image here, or <span className="text-blue-600 underline">Browse Device</span>
                     </p>
-                    <p className="text-[11px] text-slate-400">
-                      PNG, JPG, WebP (Auto-compressed & stored on Supabase)
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      JPG, PNG, WebP • Auto-compressed on frontend & saved directly to Supabase Storage
                     </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Upload Error Banner */}
-            {uploadError && (
-              <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500" />
-                <span>{uploadError}</span>
-              </div>
-            )}
-
-            {/* Optional Manual URL / Presets Input */}
-            {showManualUrl && (
+            {/* 2. Fallback: Manual Image URL & Quick Sample Presets */}
+            {showUrlFallback && (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 animate-fadeIn">
+                <label className="block text-[11px] font-bold text-slate-600">
+                  Or Paste External Image URL
+                </label>
                 <input
                   type="url"
-                  placeholder="Paste manual image URL: https://..."
+                  placeholder="https://images.unsplash.com/..."
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {PRESET_IMAGES.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, image_url: preset.url })}
-                      className={`text-[10px] px-2 py-1 rounded-lg border transition-all cursor-pointer ${
-                        formData.image_url === preset.url
-                          ? 'bg-blue-50 border-blue-300 text-blue-700 font-bold'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+
+                {/* Quick Sample Presets */}
+                <div className="pt-1">
+                  <span className="text-[10px] font-bold text-slate-400 block mb-1">Quick Presets:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PRESET_IMAGES.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, image_url: preset.url })}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
+                          formData.image_url === preset.url
+                            ? 'bg-blue-50 border-blue-300 text-blue-700 font-bold'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -756,7 +906,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             </label>
             <textarea
               rows={2}
-              placeholder="Short product description..."
+              placeholder="Short description..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
@@ -764,7 +914,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
           </div>
         </form>
 
-        {/* Modal Sticky Bottom Actions */}
+        {/* Modal Sticky Bottom Actions (Thumb Optimized) */}
         <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-2.5">
           <button
             type="button"
@@ -778,15 +928,10 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             disabled={isSaving || isUploadingImage}
             className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
           >
-            {isSaving ? (
+            {isSaving || isUploadingImage ? (
               <>
                 <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Saving...</span>
-              </>
-            ) : isUploadingImage ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Uploading Image...</span>
+                <span>{isUploadingImage ? 'Uploading Image...' : 'Saving...'}</span>
               </>
             ) : (
               <>
