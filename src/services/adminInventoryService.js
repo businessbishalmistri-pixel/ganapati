@@ -122,11 +122,9 @@ class AdminInventoryService {
           selling_price: newProd.selling_price,
           original_price: newProd.mrp,
           mrp: newProd.mrp,
-          cost_price: newProd.cost_price,
-          stock_quantity: newProd.stock_quantity,
-          stock: newProd.stock_quantity,
-          low_stock_threshold: newProd.low_stock_threshold,
-          expiry_date: newProd.expiry_date,
+          in_stock: newProd.in_stock,
+          stock: newProd.in_stock ? 999 : 0,
+          stock_quantity: newProd.in_stock ? 999 : 0,
           status: newProd.status,
           image_url: newProd.image_url,
           image: newProd.image_url,
@@ -179,11 +177,9 @@ class AdminInventoryService {
           selling_price: updated.selling_price,
           original_price: updated.mrp,
           mrp: updated.mrp,
-          cost_price: updated.cost_price,
-          stock_quantity: updated.stock_quantity,
-          stock: updated.stock_quantity,
-          low_stock_threshold: updated.low_stock_threshold,
-          expiry_date: updated.expiry_date,
+          in_stock: updated.in_stock,
+          stock: updated.in_stock ? 999 : 0,
+          stock_quantity: updated.in_stock ? 999 : 0,
           status: updated.status,
           image_url: updated.image_url,
           image: updated.image_url,
@@ -213,11 +209,32 @@ class AdminInventoryService {
   }
 
   /**
-   * Quick update stock quantity
+   * Toggle product in stock vs out of stock
+   */
+  async toggleInStock(id) {
+    const currentList = this.getCachedProducts();
+    const prod = currentList.find(p => p.id === id);
+    if (!prod) return null;
+
+    const nextInStock = !prod.in_stock;
+    return this.updateProduct(id, { 
+      in_stock: nextInStock, 
+      stock: nextInStock ? 999 : 0,
+      stock_quantity: nextInStock ? 999 : 0
+    });
+  }
+
+  /**
+   * Quick update stock quantity (kept for backward compatibility)
    */
   async updateStock(id, newStock) {
     const cleanStock = Math.max(0, parseInt(newStock, 10) || 0);
-    return this.updateProduct(id, { stock_quantity: cleanStock, stock: cleanStock });
+    const inStock = cleanStock > 0;
+    return this.updateProduct(id, { 
+      in_stock: inStock,
+      stock_quantity: cleanStock, 
+      stock: cleanStock 
+    });
   }
 
   /**
@@ -248,6 +265,7 @@ class AdminInventoryService {
     inventoryApi.notify();
     return true;
   }
+
 
   updateLocalList(product, action) {
     let list = this.getCachedProducts();

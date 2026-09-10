@@ -147,18 +147,14 @@ export const ProductModal = ({ product, onClose }) => {
                     <XCircle className="w-4 h-4 text-rose-600" />
                     Currently Out of Stock
                   </div>
-                ) : isLowStock ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 animate-pulse-subtle">
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    Hurry! Only {product.stock} items remaining in inventory
-                  </div>
                 ) : (
                   <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                     <Check className="w-4 h-4 text-emerald-600" />
-                    In Stock ({product.stock} units available)
+                    In Stock
                   </div>
                 )}
               </div>
+
 
               {/* Description */}
               <p className="text-slate-600 text-sm leading-relaxed">
@@ -206,12 +202,12 @@ export const ProductModal = ({ product, onClose }) => {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-                      disabled={quantity >= product.stock}
-                      className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-slate-700 hover:bg-slate-100 font-bold disabled:opacity-40"
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-slate-700 hover:bg-slate-100 font-bold"
                     >
                       +
                     </button>
+
                   </div>
                 </div>
               )}

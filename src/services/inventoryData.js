@@ -237,64 +237,43 @@ export const INITIAL_DEFAULT_PRODUCTS = [
 ];
 
 /**
- * Normalizes a product item to a standard schema
+ * Normalizes a product item to a standard simple schema
  */
 export function normalizeProduct(p) {
   if (!p) return null;
   const sellingPrice = parseFloat(p.selling_price ?? p.price ?? p.unit_price ?? 0) || 0;
   const mrp = parseFloat(p.mrp ?? p.original_price ?? sellingPrice) || sellingPrice;
-  const costPrice = parseFloat(p.cost_price ?? (sellingPrice > 0 ? (sellingPrice * 0.75).toFixed(2) : 0)) || 0;
-  const stock = parseInt(p.stock_quantity ?? p.stock ?? 0, 10) || 0;
-  const lowStockThreshold = parseInt(p.low_stock_threshold ?? 5, 10) || 5;
   const primaryImage = p.image_url || p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '');
 
-  // Determine Expiry Status
-  let expiryDate = p.expiry_date || p.expiry || '';
-  let isExpired = false;
-  let isExpiringSoon = false;
-  let daysUntilExpiry = null;
-
-  if (expiryDate) {
-    try {
-      const exp = new Date(expiryDate);
-      if (!isNaN(exp.getTime())) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diffMs = exp.getTime() - today.getTime();
-        daysUntilExpiry = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-        if (daysUntilExpiry < 0) {
-          isExpired = true;
-        } else if (daysUntilExpiry <= 30) {
-          isExpiringSoon = true;
-        }
-      }
-    } catch (e) {
-      console.warn('Invalid expiry date:', expiryDate);
-    }
+  // In Stock status: boolean
+  let inStock = true;
+  if (p.in_stock !== undefined && p.in_stock !== null) {
+    inStock = Boolean(p.in_stock);
+  } else if (p.stock !== undefined && p.stock !== null) {
+    inStock = Number(p.stock) > 0;
+  } else if (p.stock_quantity !== undefined && p.stock_quantity !== null) {
+    inStock = Number(p.stock_quantity) > 0;
+  } else if (p.status === 'out_of_stock') {
+    inStock = false;
   }
 
-  const status = p.status || (p.is_draft ? 'draft' : 'active');
+  const status = p.status === 'draft' ? 'draft' : 'active';
 
   return {
     id: p.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
     title: p.title || p.name || 'Untitled Product',
     name: p.title || p.name || 'Untitled Product',
-    category: p.category || 'General',
+    category: p.category || 'Groceries & Staples',
     sub_category: p.sub_category || '',
     description: p.description || '',
     selling_price: sellingPrice,
     price: sellingPrice,
     mrp: mrp,
     original_price: mrp,
-    cost_price: costPrice,
-    stock_quantity: stock,
-    stock: stock,
-    low_stock_threshold: lowStockThreshold,
-    expiry_date: expiryDate,
-    isExpired,
-    isExpiringSoon,
-    daysUntilExpiry,
-    status: status, // 'active' | 'draft' | 'archived'
+    in_stock: inStock,
+    stock: inStock ? 999 : 0,
+    stock_quantity: inStock ? 999 : 0,
+    status: status, // 'active' | 'draft'
     image_url: primaryImage,
     image: primaryImage,
     images: Array.isArray(p.images) ? p.images : (primaryImage ? [primaryImage] : []),
@@ -306,3 +285,4 @@ export function normalizeProduct(p) {
     variants: Array.isArray(p.variants) ? p.variants : []
   };
 }
+

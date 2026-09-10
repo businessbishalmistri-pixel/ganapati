@@ -24,7 +24,7 @@ import { CategoryManager } from './CategoryManager';
 import { ProductFormModal } from './ProductFormModal';
 
 export function AdminDashboard({ session, onLogout, onVisitStore }) {
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'low-stock' | 'expired' | 'draft' | 'categories'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'categories'
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,21 +56,10 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     loadData();
   }, []);
 
-  // Compute metrics for top cards & sidebar badges
+  // Compute clean metrics for top cards
   const totalProductsCount = products.length;
-  const lowStockCount = products.filter(p => p.stock <= (p.low_stock_threshold || 5) && p.stock > 0).length;
-  const outOfStockCount = products.filter(p => p.stock === 0).length;
-  const totalStockAlertCount = lowStockCount + outOfStockCount;
-  
-  const expiredCount = products.filter(p => p.isExpired).length;
-  const expiringSoonCount = products.filter(p => p.isExpiringSoon).length;
-  const totalExpiryAlertCount = expiredCount + expiringSoonCount;
-
-  const draftCount = products.filter(p => p.status === 'draft').length;
-  const activeProductsCount = products.filter(p => p.status === 'active').length;
-
-  const totalSellingValuation = products.reduce((sum, p) => sum + ((p.selling_price || 0) * (p.stock || 0)), 0);
-  const totalCostValuation = products.reduce((sum, p) => sum + ((p.cost_price || 0) * (p.stock || 0)), 0);
+  const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
+  const outOfStockCount = totalProductsCount - inStockCount;
 
   // Product CRUD Handlers
   const handleSaveProduct = async (productData) => {
@@ -87,8 +76,8 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     await loadData();
   };
 
-  const handleQuickStockChange = async (id, newStock) => {
-    await adminInventoryService.updateStock(id, newStock);
+  const handleToggleInStock = async (id) => {
+    await adminInventoryService.toggleInStock(id);
     await loadData();
   };
 
@@ -125,11 +114,9 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
 
   const navItems = [
     { id: 'all', label: 'All Products', icon: Package, badge: totalProductsCount, color: 'text-blue-600 bg-blue-50' },
-    { id: 'low-stock', label: 'Low Stock', icon: AlertTriangle, badge: totalStockAlertCount, color: totalStockAlertCount > 0 ? 'text-amber-700 bg-amber-100 font-bold' : 'text-slate-500 bg-slate-100' },
-    { id: 'expired', label: 'Expired', icon: Clock, badge: totalExpiryAlertCount, color: totalExpiryAlertCount > 0 ? 'text-red-700 bg-red-100 font-bold' : 'text-slate-500 bg-slate-100' },
-    { id: 'draft', label: 'Draft', icon: FileText, badge: draftCount, color: 'text-slate-700 bg-slate-100' },
     { id: 'categories', label: 'Categories', icon: FolderTree, badge: categories.length, color: 'text-indigo-600 bg-indigo-50' },
   ];
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-sans antialiased text-slate-900 selection:bg-blue-500 selection:text-white">
@@ -297,13 +284,13 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Total Catalog
+                  Total Products
                 </span>
                 <div className="text-2xl font-bold text-slate-900 mt-1">
                   {totalProductsCount}
                 </div>
-                <span className="text-[11px] text-emerald-600 font-semibold mt-0.5 inline-block">
-                  {activeProductsCount} Live on Store
+                <span className="text-[11px] text-slate-500 font-medium mt-0.5 inline-block">
+                  Catalog Items
                 </span>
               </div>
               <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -311,57 +298,57 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
               </div>
             </div>
 
-            {/* Card 2: Low Stock Alerts */}
+            {/* Card 2: In Stock */}
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Low Stock
+                  In Stock
                 </span>
-                <div className="text-2xl font-bold text-slate-900 mt-1">
-                  {totalStockAlertCount}
+                <div className="text-2xl font-bold text-emerald-600 mt-1">
+                  {inStockCount}
                 </div>
-                <span className="text-[11px] text-amber-600 font-semibold mt-0.5 inline-block">
-                  {outOfStockCount} Out of Stock
+                <span className="text-[11px] text-emerald-600 font-semibold mt-0.5 inline-block">
+                  Available on Store
                 </span>
               </div>
-              <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            {/* Card 3: Out of Stock */}
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Out of Stock
+                </span>
+                <div className="text-2xl font-bold text-rose-600 mt-1">
+                  {outOfStockCount}
+                </div>
+                <span className="text-[11px] text-rose-500 font-semibold mt-0.5 inline-block">
+                  {outOfStockCount > 0 ? 'Unavailable to buy' : 'All available'}
+                </span>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5" />
               </div>
             </div>
 
-            {/* Card 3: Expired / Expiring */}
+            {/* Card 4: Categories */}
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Expiry Alerts
+                  Categories
                 </span>
                 <div className="text-2xl font-bold text-slate-900 mt-1">
-                  {totalExpiryAlertCount}
-                </div>
-                <span className="text-[11px] text-red-600 font-semibold mt-0.5 inline-block">
-                  {expiredCount} Past Expiry Date
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-                <Clock className="w-5 h-5" />
-              </div>
-            </div>
-
-            {/* Card 4: Inventory Valuation */}
-            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Stock Valuation
-                </span>
-                <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 font-mono">
-                  ₹{Math.round(totalSellingValuation).toLocaleString('en-IN')}
+                  {categories.length}
                 </div>
                 <span className="text-[11px] text-slate-500 font-medium mt-0.5 inline-block">
-                  Cost: ₹{Math.round(totalCostValuation).toLocaleString('en-IN')}
+                  Store Sections
                 </span>
               </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5" />
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <FolderTree className="w-5 h-5" />
               </div>
             </div>
           </div>
@@ -378,17 +365,17 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           ) : (
             <ProductInventoryTable
               products={products}
-              viewFilter={activeTab}
               categories={categories}
               onEditProduct={handleOpenEditModal}
               onAddProduct={handleOpenAddModal}
               onDeleteProduct={handleDeleteProduct}
-              onQuickStockChange={handleQuickStockChange}
+              onToggleInStock={handleToggleInStock}
               onToggleStatus={handleToggleStatus}
               onRefresh={loadData}
               isRefreshing={isRefreshing}
             />
           )}
+
         </div>
       </main>
 

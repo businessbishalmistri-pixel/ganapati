@@ -169,16 +169,12 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
                 {product.title}
               </h1>
               {isOutOfStock ? (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                   Out of Stock
                 </span>
-              ) : isLowStock ? (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                  Only {currentStock} left
-                </span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {currentStock} In Stock
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  In Stock
                 </span>
               )}
             </div>

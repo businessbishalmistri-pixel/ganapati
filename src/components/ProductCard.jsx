@@ -14,14 +14,13 @@ export const ProductCard = ({ product, onSelectProduct }) => {
 
   const cartItem = cartItems.find((i) => (i.id === product.id || i.cartKey === product.id));
   const qtyInCart = cartItem ? cartItem.quantity : 0;
-  const isOutOfStock = product.stock <= 0;
-  const isLowStock = product.stock > 0 && product.stock <= 3;
-  const isMaxInCart = qtyInCart >= product.stock;
+  const isOutOfStock = product.in_stock === false || product.stock <= 0;
+  const isMaxInCart = false;
 
   return (
     <div className="group relative bg-white rounded border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
       
-      {/* Product Image Area (Full Area Fill) */}
+      {/* Product Image Area */}
       <div 
         className="relative aspect-square w-full bg-slate-100 overflow-hidden cursor-pointer"
         onClick={() => onSelectProduct(product)}
@@ -39,22 +38,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
           </div>
         )}
 
-        {/* Stock Quantity Badge */}
+        {/* Stock Badge (Shown only when Out of Stock or custom badge) */}
         <div className="absolute top-1.5 left-1.5 z-10 flex flex-col gap-1">
-          {isOutOfStock ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-900/90 text-rose-100 border border-rose-500/30 shadow-xs">
-              <XCircle className="w-2.5 h-2.5 text-rose-300" />
+          {isOutOfStock && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+              <XCircle className="w-2.5 h-2.5" />
               Out of Stock
-            </span>
-          ) : isLowStock ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-900/90 text-amber-100 border border-amber-500/30 shadow-xs">
-              <AlertTriangle className="w-2.5 h-2.5 text-amber-300" />
-              {product.stock} in stock
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900/85 text-white backdrop-blur-xs shadow-xs">
-              <Check className="w-2.5 h-2.5 text-emerald-400" />
-              {product.stock} in stock
             </span>
           )}
 
@@ -65,6 +54,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
           )}
         </div>
       </div>
+
 
       {/* Product Details Area (Compact Density) */}
       <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between space-y-2">
