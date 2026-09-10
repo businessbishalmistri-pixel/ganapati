@@ -476,7 +476,7 @@ export function App() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-800">{settings.storeName}</span>
             <span>&bull;</span>
-            <span>WhatsApp OTP & Cash on Delivery (COD) Storefront</span>
+            <span>Cash on Delivery (COD) Storefront</span>
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>Direct WhatsApp Quick Dispatch</span>
