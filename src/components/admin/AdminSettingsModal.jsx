@@ -106,8 +106,38 @@ export function AdminSettingsModal({ isOpen, onClose }) {
         {/* Form Body */}
         <form onSubmit={handleSave} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-4">
           
-          {/* 1. Minimal WhatsApp Order Number (Icon + Input) */}
-          <div className="space-y-1.5">
+          {/* 1. Store Name (Top) */}
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Store className="w-4 h-4 text-slate-600" />
+              <span>Store Display Name</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Ganapati Store"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium shadow-2xs"
+            />
+          </div>
+
+          {/* 2. Storefront Banner Cloudinary Link */}
+          <div className="space-y-1.5 pt-1">
+            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Image className="w-4 h-4 text-blue-600" />
+              <span>Storefront Banner Image URL (Cloudinary Link)</span>
+            </label>
+            <input
+              type="url"
+              placeholder="https://res.cloudinary.com/.../banner.png"
+              value={bannerImageUrl}
+              onChange={(e) => setBannerImageUrl(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
+            />
+          </div>
+
+          {/* 3. Minimal WhatsApp Order Number (Icon + Input) */}
+          <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <MessageCircle className="w-4 h-4 text-emerald-600" />
@@ -133,22 +163,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
             />
           </div>
 
-          {/* 2. Storefront Banner Cloudinary Link */}
-          <div className="space-y-1.5 pt-1">
-            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Image className="w-4 h-4 text-blue-600" />
-              <span>Storefront Banner Image URL (Cloudinary Link)</span>
-            </label>
-            <input
-              type="url"
-              placeholder="https://res.cloudinary.com/.../banner.png"
-              value={bannerImageUrl}
-              onChange={(e) => setBannerImageUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
-            />
-          </div>
-
-          {/* 3. Delivery Charges & Free Delivery Threshold */}
+          {/* 4. Delivery Charges & Free Delivery Threshold */}
           <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 pt-3">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
               <Truck className="w-4 h-4 text-amber-600" />
@@ -188,21 +203,6 @@ export function AdminSettingsModal({ isOpen, onClose }) {
             <p className="text-[11px] text-slate-500">
               Orders <strong>₹{freeShippingThreshold || 200}</strong> and above will get <strong>Free Delivery (₹0)</strong>. Orders below will be charged <strong>₹{flatShippingFee || 30}</strong>.
             </p>
-          </div>
-
-          {/* 4. Store Name */}
-          <div className="space-y-1 pt-1">
-            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Store className="w-4 h-4 text-slate-600" />
-              <span>Store Display Name</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Ganapati Store"
-              value={storeName}
-              onChange={(e) => setStoreName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium shadow-2xs"
-            />
           </div>
 
           {/* Footer Actions */}
