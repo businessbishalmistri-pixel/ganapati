@@ -328,9 +328,9 @@ export function App() {
           </section>
 
           {/* Catalog Main 2-Column Split Layout Area (Mobile & Desktop) */}
-          <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6">
+          <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-8 py-2.5 sm:py-4">
 
-            <div className="flex flex-row gap-2 sm:gap-4 lg:gap-6 items-start">
+            <div className="flex flex-row gap-2 sm:gap-3.5 lg:gap-5 items-start">
 
               {/* Left Column: Blinkit-Style Vertical Category Rail */}
               <CategorySidebar
@@ -344,11 +344,11 @@ export function App() {
               />
 
               {/* Right Column: High-Density Product Catalog */}
-              <div className="flex-1 min-w-0 space-y-4">
+              <div className="flex-1 min-w-0 space-y-3">
 
                 {/* Department Header & Sort Bar (Clean & Transparent) */}
                 {(selectedCategory !== 'All Products' || searchQuery.trim()) && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-200/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-emerald-600" />
                       <h1 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700">
@@ -366,8 +366,8 @@ export function App() {
                     </div>
 
                     {/* Sorting dropdown */}
-                    <div className="flex items-center gap-2 self-end sm:self-auto bg-white border border-slate-200 rounded px-2.5 py-1 shadow-xs">
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto bg-white border border-slate-200 rounded px-2 py-0.5 shadow-xs">
+                      <ArrowUpDown className="w-3 h-3 text-slate-500" />
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
@@ -385,7 +385,7 @@ export function App() {
 
                 {/* Products Grid */}
                 {loading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
                     {[...Array(10)].map((_, i) => (
                       <div key={i} className="bg-white rounded p-3 border border-slate-100 space-y-2 animate-pulse">
                         <div className="aspect-square bg-slate-200 rounded" />
@@ -396,13 +396,13 @@ export function App() {
                     ))}
                   </div>
                 ) : filteredProducts.length === 0 ? (
-                  <div className="bg-white rounded p-10 text-center border border-slate-200/90 space-y-3 max-w-md mx-auto my-6 shadow-xs">
-                    <div className="w-12 h-12 rounded bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                      <Search className="w-6 h-6" />
+                  <div className="bg-white rounded p-8 text-center border border-slate-200/90 space-y-2.5 max-w-md mx-auto my-4 shadow-xs">
+                    <div className="w-10 h-10 rounded bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                      <Search className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">No matching products found</h3>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900">No matching products found</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
                         Try searching with different keywords or switch department categories.
                       </p>
                     </div>
@@ -411,14 +411,14 @@ export function App() {
                         setSelectedCategory('All Products');
                         setSearchQuery('');
                       }}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded transition-colors shadow-xs"
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded transition-colors shadow-xs"
                     >
                       Reset Filters
                     </button>
                   </div>
                 ) : selectedCategory === 'All Products' && !searchQuery.trim() ? (
                   /* Multi-Category Shelves View within Split Layout */
-                  <div className="space-y-8">
+                  <div className="space-y-4">
                     {dynamicCategories
                       .filter((cat) => cat !== 'All Products')
                       .map((catName) => {

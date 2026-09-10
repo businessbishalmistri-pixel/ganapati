@@ -146,7 +146,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         </div>
 
         {/* Modal Scrollable Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-5 sm:p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3">
           
           {/* Product Name */}
           <div>
@@ -159,15 +159,15 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               placeholder="e.g. Fortune Sunlite Sunflower Oil 1L"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className={`w-full px-3.5 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all ${
+              className={`w-full px-3 py-2 rounded-xl border text-xs sm:text-sm focus:outline-none focus:ring-2 transition-all ${
                 errors.title ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/20'
               }`}
             />
-            {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+            {errors.title && <p className="text-xs text-red-500 mt-0.5">{errors.title}</p>}
           </div>
 
           {/* Category & Unit */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Category <span className="text-red-500">*</span>
@@ -175,7 +175,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>
@@ -193,19 +193,19 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                 placeholder="e.g. 1 kg, 500g, 1 Litre"
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* Pricing */}
-          <div className="grid grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-2 gap-2.5">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Price (₹) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold text-sm">₹</span>
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-xs">₹</span>
                 <input
                   type="number"
                   step="any"
@@ -213,10 +213,10 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   placeholder="150"
                   value={formData.selling_price}
                   onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-                  className="w-full pl-8 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
-              {errors.selling_price && <p className="text-xs text-red-500 mt-1">{errors.selling_price}</p>}
+              {errors.selling_price && <p className="text-xs text-red-500 mt-0.5">{errors.selling_price}</p>}
             </div>
 
             <div>
@@ -224,14 +224,14 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                 MRP (₹) <span className="text-[10px] text-slate-400 font-normal">Optional</span>
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold text-sm">₹</span>
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-xs">₹</span>
                 <input
                   type="number"
                   step="any"
                   placeholder="180"
                   value={formData.mrp}
                   onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
-                  className="w-full pl-8 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
             </div>
