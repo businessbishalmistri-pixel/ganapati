@@ -155,14 +155,17 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     if (variants.some(v => (v.name || v.unit || '').toLowerCase() === trimmed.toLowerCase())) {
       return;
     }
+    const prevPrice = variants.length > 0 ? (parseFloat(variants[variants.length - 1].selling_price || variants[variants.length - 1].price) || 100) : 100;
+    const prevMrp = variants.length > 0 ? (parseFloat(variants[variants.length - 1].mrp || variants[variants.length - 1].original_price) || Math.round(prevPrice * 1.2)) : 120;
+    
     const newVariant = {
       id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       name: trimmed,
       unit: trimmed,
-      selling_price: sellingNum > 0 ? sellingNum : 100,
-      price: sellingNum > 0 ? sellingNum : 100,
-      mrp: mrpNum > 0 ? mrpNum : 120,
-      original_price: mrpNum > 0 ? mrpNum : 120,
+      selling_price: prevPrice,
+      price: prevPrice,
+      mrp: prevMrp,
+      original_price: prevMrp,
       stock_quantity: 999,
       in_stock: true
     };
@@ -172,16 +175,19 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   // Add multiple variants at once (1-click bundle)
   const handleAddVariantBundle = (bundleArray) => {
     const newItems = [];
+    const prevPrice = variants.length > 0 ? (parseFloat(variants[variants.length - 1].selling_price || variants[variants.length - 1].price) || 100) : 100;
+    const prevMrp = variants.length > 0 ? (parseFloat(variants[variants.length - 1].mrp || variants[variants.length - 1].original_price) || Math.round(prevPrice * 1.2)) : 120;
+
     bundleArray.forEach(name => {
       if (!variants.some(v => (v.name || v.unit || '').toLowerCase() === name.toLowerCase())) {
         newItems.push({
           id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
           name: name,
           unit: name,
-          selling_price: sellingNum > 0 ? sellingNum : 100,
-          price: sellingNum > 0 ? sellingNum : 100,
-          mrp: mrpNum > 0 ? mrpNum : 120,
-          original_price: mrpNum > 0 ? mrpNum : 120,
+          selling_price: prevPrice,
+          price: prevPrice,
+          mrp: prevMrp,
+          original_price: prevMrp,
           stock_quantity: 999,
           in_stock: true
         });
@@ -214,7 +220,12 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     const errs = {};
     if (!formData.title.trim()) errs.title = 'Product name is required';
     if (!formData.category.trim()) errs.category = 'Category is required';
-    if (isNaN(sellingNum) || sellingNum <= 0) errs.selling_price = 'Please enter a valid price';
+    if (variants.length > 0) {
+      const invalidVariant = variants.find(v => isNaN(parseFloat(v.selling_price || v.price)) || parseFloat(v.selling_price || v.price) <= 0);
+      if (invalidVariant) {
+        errs.variants = `Please enter a valid price for "${invalidVariant.name || 'variant'}"`;
+      }
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -225,15 +236,21 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
 
     setIsSaving(true);
     try {
+      const firstVariantPrice = variants.length > 0 ? (parseFloat(variants[0].selling_price || variants[0].price) || 0) : 0;
+      const firstVariantMrp = variants.length > 0 ? (parseFloat(variants[0].mrp || variants[0].original_price) || firstVariantPrice) : 0;
+      const anyInStock = variants.length > 0 ? variants.some(v => v.in_stock !== false) : true;
+      const primaryUnit = variants.length > 0 ? (variants[0].name || variants[0].unit || '1 unit') : '1 unit';
+
       const payload = {
         ...formData,
-        selling_price: sellingNum,
-        price: sellingNum,
-        mrp: mrpNum,
-        original_price: mrpNum,
-        in_stock: formData.in_stock,
-        stock: formData.in_stock ? 999 : 0,
-        stock_quantity: formData.in_stock ? 999 : 0,
+        selling_price: firstVariantPrice,
+        price: firstVariantPrice,
+        mrp: firstVariantMrp,
+        original_price: firstVariantMrp,
+        unit: primaryUnit,
+        in_stock: anyInStock,
+        stock: anyInStock ? 999 : 0,
+        stock_quantity: anyInStock ? 999 : 0,
         has_variants: variants.length > 0,
         hasVariants: variants.length > 0,
         variants: variants,
@@ -260,13 +277,13 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden" />
 
         {/* Modal Header */}
-        <div className="px-5 sm:px-6 py-3.5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 font-bold">
-              <Package className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+              <Box className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 leading-tight">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                 {isEditing ? 'Edit Product' : 'Add New Product'}
               </h2>
               <span className="text-[11px] text-slate-400">Save & publish immediately</span>
@@ -281,29 +298,30 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         </div>
 
         {/* Modal Scrollable Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3.5">
           
-          {/* Product Name */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Product Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Fortune Sunlite Sunflower Oil 1L"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className={`w-full px-3 py-2 rounded-xl border text-xs sm:text-sm focus:outline-none focus:ring-2 transition-all ${
-                errors.title ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/20'
-              }`}
-            />
-            {errors.title && <p className="text-xs text-red-500 mt-0.5">{errors.title}</p>}
-          </div>
+          {/* Top Row: Product Name & Category */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            {/* Product Name (7 cols on desktop) */}
+            <div className="sm:col-span-7">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Product Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Fortune Sunlite Sunflower Oil"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className={`w-full px-3 py-2 rounded-xl border text-xs sm:text-sm focus:outline-none focus:ring-2 transition-all ${
+                  errors.title ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/20'
+                }`}
+              />
+              {errors.title && <p className="text-xs text-red-500 mt-0.5">{errors.title}</p>}
+            </div>
 
-          {/* Category & Unit */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
+            {/* Category (5 cols on desktop) */}
+            <div className="sm:col-span-5">
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Category <span className="text-red-500">*</span>
               </label>
@@ -318,94 +336,6 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                 <option value="Other">Other / General</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Pack Size / Unit
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. 1 kg, 500g, 1 Litre"
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* Pricing */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Price (₹) <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-xs">₹</span>
-                <input
-                  type="number"
-                  step="any"
-                  required
-                  placeholder="150"
-                  value={formData.selling_price}
-                  onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-                  className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              </div>
-              {errors.selling_price && <p className="text-xs text-red-500 mt-0.5">{errors.selling_price}</p>}
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                MRP (₹) <span className="text-[10px] text-slate-400 font-normal">Optional</span>
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-xs">₹</span>
-                <input
-                  type="number"
-                  step="any"
-                  placeholder="180"
-                  value={formData.mrp}
-                  onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
-                  className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 📱 Prominent Stock Status Toggle Pill Switch */}
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-900">Stock Availability</span>
-                {formData.in_stock ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    In Stock
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
-                    Out of Stock
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {formData.in_stock ? 'Visible and ready to order' : 'Shows Out of Stock badge'}
-              </p>
-            </div>
-
-            {/* Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, in_stock: !formData.in_stock })}
-              className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                formData.in_stock ? 'bg-emerald-600' : 'bg-slate-300'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                  formData.in_stock ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
           </div>
 
           {/* ⚡ PRODUCT VARIANTS / QUICK ADD BUILDER */}
@@ -462,7 +392,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Shirt className="w-3 h-3 text-slate-600" />
+                  <Sparkles className="w-3 h-3 text-slate-600" />
                   <span>Sizes (S/M/L)</span>
                 </button>
 
@@ -475,88 +405,80 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Sliders className="w-3 h-3 text-slate-600" />
+                  <SlidersHorizontal className="w-3 h-3 text-slate-600" />
                   <span>Custom</span>
                 </button>
               </div>
             </div>
 
-            {/* Quick Add Sub-Toolbar matching screenshots */}
-            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                <span className="font-bold text-slate-500 mr-1 text-[11px]">Quick Add:</span>
-
-                {/* 1. Weight Tab Options */}
+            {/* Quick Pill Chips Based on Tab */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200/80 space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-400 mr-1">Quick Add:</span>
+                
                 {variantTab === 'weight' && (
                   <>
                     <button
                       type="button"
                       onClick={() => handleAddVariantBundle(['500g', '1 KG', '2 KG', '5 KG'])}
-                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Add standard 500g, 1KG, 2KG, 5KG bundle"
+                      className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition-colors border border-blue-200/60 flex items-center gap-1 cursor-pointer"
                     >
-                      <Sparkles className="w-3 h-3 text-indigo-600" />
+                      <Sparkles className="w-3 h-3 text-blue-600" />
                       <span>Standard Pack (500g, 1KG, 2KG, 5KG)</span>
                     </button>
-
-                    {['100g', '250g', '500g', '1 KG', '2 KG', '5 KG', '10 KG'].map((wt) => (
+                    {['100g', '250g', '500g', '1 KG', '2 KG', '5 KG', '10 KG'].map((val) => (
                       <button
-                        key={wt}
+                        key={val}
                         type="button"
-                        onClick={() => handleAddVariant(wt)}
-                        className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
+                        onClick={() => handleAddVariant(val)}
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition-colors cursor-pointer"
                       >
-                        + {wt}
+                        + {val}
                       </button>
                     ))}
                   </>
                 )}
 
-                {/* 2. Packs / Units Tab Options */}
                 {variantTab === 'packs' && (
                   <>
                     <button
                       type="button"
-                      onClick={() => handleAddVariantBundle(['1 Pc', 'Pack of 3', 'Pack of 6', 'Pack of 12'])}
-                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Add standard bulk pack bundle"
+                      onClick={() => handleAddVariantBundle(['1 Pc', 'Pack of 2', 'Pack of 4', 'Pack of 6'])}
+                      className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition-colors border border-blue-200/60 flex items-center gap-1 cursor-pointer"
                     >
-                      <Sparkles className="w-3 h-3 text-indigo-600" />
-                      <span>Bulk Pack (1 Pc, 3 Pk, 6 Pk, 12 Pk)</span>
+                      <Sparkles className="w-3 h-3 text-blue-600" />
+                      <span>Standard Pack Bundle (1, 2, 4, 6 Pcs)</span>
                     </button>
-
-                    {['1 Pc', 'Pack of 2', 'Pack of 3', 'Pack of 6', 'Pack of 10', 'Pack of 12', 'Box (24 Pcs)'].map((pk) => (
+                    {['1 Pc', 'Pack of 2', 'Pack of 3', 'Pack of 4', 'Pack of 6', 'Pack of 12', '1 Litre Pouch', '2 Litre Bottle', '5 Litre Can'].map((val) => (
                       <button
-                        key={pk}
+                        key={val}
                         type="button"
-                        onClick={() => handleAddVariant(pk)}
-                        className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
+                        onClick={() => handleAddVariant(val)}
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition-colors cursor-pointer"
                       >
-                        + {pk}
+                        + {val}
                       </button>
                     ))}
                   </>
                 )}
 
-                {/* 3. Sizes (S/M/L) Tab Options */}
                 {variantTab === 'sizes' && (
                   <>
                     <button
                       type="button"
-                      onClick={() => handleAddVariantBundle(['S', 'M', 'L', 'XL'])}
-                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 transition-colors cursor-pointer"
-                      title="Add standard S, M, L, XL sizes"
+                      onClick={() => handleAddVariantBundle(['Small', 'Medium', 'Large'])}
+                      className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition-colors border border-blue-200/60 flex items-center gap-1 cursor-pointer"
                     >
-                      <Sparkles className="w-3 h-3 text-indigo-600" />
-                      <span>S, M, L, XL</span>
+                      <Sparkles className="w-3 h-3 text-blue-600" />
+                      <span>Standard Sizes (S, M, L)</span>
                     </button>
 
-                    {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'Free Size'].map((sz) => (
+                    {['Small', 'Medium', 'Large', 'XL', '2XL', 'Free Size'].map((sz) => (
                       <button
                         key={sz}
                         type="button"
                         onClick={() => handleAddVariant(sz)}
-                        className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 transition-colors cursor-pointer"
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition-colors cursor-pointer"
                       >
                         + {sz}
                       </button>
@@ -655,7 +577,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             {variants.length > 0 && (
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
                 <div className="p-2.5 bg-slate-50/90 border-b border-slate-200/80 flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700">Configured Variant Prices</span>
+                  <span className="font-bold text-slate-700">Configured Variant Prices ({variants.length})</span>
                   <button
                     type="button"
                     onClick={() => setVariants([])}
@@ -665,11 +587,20 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   </button>
                 </div>
 
-                <div className="overflow-x-auto max-h-48 divide-y divide-slate-100 text-xs">
+                {/* Table Column Headers */}
+                <div className="px-2.5 py-1.5 bg-slate-100/70 border-b border-slate-200/60 flex items-center justify-between gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <div className="flex-1 min-w-[100px]">Variant / Size</div>
+                  <div className="w-20 sm:w-24 text-center">Price (₹)</div>
+                  <div className="w-20 sm:w-24 text-center">MRP (₹)</div>
+                  <div className="w-12 text-center flex-shrink-0">Stock</div>
+                  <div className="w-6 text-center flex-shrink-0"></div>
+                </div>
+
+                <div className="overflow-x-auto max-h-52 divide-y divide-slate-100 text-xs">
                   {variants.map((v, idx) => (
-                    <div key={v.id || idx} className="p-2.5 flex items-center justify-between gap-3 hover:bg-slate-50/50">
+                    <div key={v.id || idx} className="p-2 sm:p-2.5 flex items-center justify-between gap-2 hover:bg-slate-50/50">
                       {/* Variant Name */}
-                      <div className="w-1/3 min-w-0">
+                      <div className="flex-1 min-w-[100px]">
                         <input
                           type="text"
                           value={v.name || v.unit || ''}
@@ -679,7 +610,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       </div>
 
                       {/* Selling Price */}
-                      <div className="w-24">
+                      <div className="w-20 sm:w-24 flex-shrink-0">
                         <div className="relative">
                           <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 font-bold text-[10px]">₹</span>
                           <input
@@ -693,7 +624,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       </div>
 
                       {/* MRP */}
-                      <div className="w-24">
+                      <div className="w-20 sm:w-24 flex-shrink-0">
                         <div className="relative">
                           <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 font-bold text-[10px]">₹</span>
                           <input
@@ -706,28 +637,35 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                         </div>
                       </div>
 
-                      {/* In Stock Pill */}
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateVariant(v.id, 'in_stock', !v.in_stock)}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                          v.in_stock !== false
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {v.in_stock !== false ? 'In Stock' : 'Out'}
-                      </button>
+                      {/* In Stock Toggle Switch with Fixed Width */}
+                      <div className="w-12 flex items-center justify-center flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateVariant(v.id, 'in_stock', v.in_stock === false ? true : false)}
+                          title={v.in_stock !== false ? 'In Stock (Click to toggle)' : 'Out of Stock (Click to toggle)'}
+                          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            v.in_stock !== false ? 'bg-emerald-600' : 'bg-slate-300'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                              v.in_stock !== false ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
 
                       {/* Delete Icon */}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteVariant(v.id)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                        title="Delete variant"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="w-6 flex items-center justify-center flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteVariant(v.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Delete variant"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
