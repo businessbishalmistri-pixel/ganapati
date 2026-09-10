@@ -393,7 +393,7 @@ Please keep my order ready for store pickup. Thank you!`;
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">Delivery chnages</span>
+                  <span className="text-slate-600">Delivery charges</span>
                   <span className="font-mono font-medium text-slate-900">
                     {deliveryFee === 0 ? '0' : `₹${deliveryFee.toFixed(2)}`}
                   </span>
