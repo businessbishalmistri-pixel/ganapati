@@ -400,7 +400,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Scale className="w-3.5 h-3.5 text-slate-600" />
+                <Scale className="w-3.5 h-3.5 text-slate-600 hidden sm:inline-block" />
                 <span className="truncate">Weight (KG/g)</span>
               </button>
 
@@ -413,7 +413,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Package className="w-3.5 h-3.5 text-slate-600" />
+                <Package className="w-3.5 h-3.5 text-slate-600 hidden sm:inline-block" />
                 <span className="truncate">Packs / Units</span>
               </button>
 
@@ -426,7 +426,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-slate-600" />
+                <Sparkles className="w-3.5 h-3.5 text-slate-600 hidden sm:inline-block" />
                 <span className="truncate">Sizes (S/M/L)</span>
               </button>
             </div>
