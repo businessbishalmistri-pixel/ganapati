@@ -108,20 +108,15 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
       
       {/* 📱 Tablet & Desktop App Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 font-bold">
-            <ShoppingBag className="w-4 h-4" />
+        <div>
+          <div className="flex items-center gap-1.5">
+            <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
-              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Live
-              </span>
-            </div>
-            <span className="text-[11px] text-slate-400 font-medium">Store & Product Management</span>
-          </div>
+          <span className="text-[11px] text-slate-400 font-medium">Store & Product Management</span>
         </div>
 
         {/* Header Right Actions */}

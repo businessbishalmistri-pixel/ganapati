@@ -68,12 +68,9 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 sm:p-10 backdrop-blur-sm">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 mb-4">
-              <ShoppingBag className="w-7 h-7" />
-            </div>
+          <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ganapati Stores</h1>
-            <p className="text-sm font-medium text-slate-500 mt-1">
+            <p className="text-xs font-medium text-slate-500 mt-1">
               Centralized Inventory & Store Management
             </p>
           </div>
