@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, AlertTriangle, XCircle, ShoppingBag, Zap, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { X, Check, AlertTriangle, XCircle, ShoppingBag, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 
 export const ProductModal = ({ product, onClose }) => {
-  const { addToCart, setIsCartOpen, setIsCheckoutOpen } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { settings } = useSettings();
   const [selectedImage, setSelectedImage] = useState(product?.image || '');
   const [quantity, setQuantity] = useState(1);
@@ -33,14 +33,6 @@ export const ProductModal = ({ product, onClose }) => {
     const success = addToCart(product, quantity);
     if (success) {
       onClose();
-    }
-  };
-
-  const handleBuyNow = () => {
-    const success = addToCart(product, quantity);
-    if (success) {
-      onClose();
-      setIsCheckoutOpen(true);
     }
   };
 
@@ -220,25 +212,15 @@ export const ProductModal = ({ product, onClose }) => {
               )}
 
               {/* Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md active:scale-98"
+                  className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md active:scale-98 cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4 text-emerald-400" />
-                  Add to Cart
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleBuyNow}
-                  disabled={isOutOfStock}
-                  className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20 active:scale-98"
-                >
-                  <Zap className="w-4 h-4" />
-                  Buy Now
+                  {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </button>
               </div>
 

@@ -13,7 +13,7 @@ import { useSettings } from '../context/SettingsContext';
 import { ProductCard } from './ProductCard';
 
 export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduct }) => {
-  const { addToCart, setIsCheckoutOpen, cartItems } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { settings } = useSettings();
   const [selectedImage, setSelectedImage] = useState(product?.image || '');
   const [quantity, setQuantity] = useState(1);
@@ -74,13 +74,6 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedVariant);
-  };
-
-  const handleBuyNow = () => {
-    const success = addToCart(product, quantity, selectedVariant);
-    if (success) {
-      setIsCheckoutOpen(true);
-    }
   };
 
   return (
@@ -290,20 +283,10 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
                 type="button"
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
-                className="inline-flex items-center justify-center gap-2 bg-[#15803d] hover:bg-[#166534] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-medium px-6 sm:px-8 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-xs active:scale-98 cursor-pointer h-12"
+                className="inline-flex items-center justify-center gap-2 bg-[#15803d] hover:bg-[#166534] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-medium px-8 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-xs active:scale-98 cursor-pointer h-12"
               >
                 <span>{isOutOfStock ? 'Out of stock' : 'Add to cart'}</span>
                 <ShoppingCart className="w-4 h-4" />
-              </button>
-
-              {/* Buy Now / COD Button */}
-              <button
-                type="button"
-                onClick={handleBuyNow}
-                disabled={isOutOfStock}
-                className="inline-flex items-center justify-center bg-[#f59e0b] hover:bg-[#d97706] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-slate-900 font-semibold px-6 sm:px-8 py-3.5 rounded-full text-xs sm:text-sm transition-all shadow-xs active:scale-98 cursor-pointer h-12"
-              >
-                <span>Buy now</span>
               </button>
 
             </div>

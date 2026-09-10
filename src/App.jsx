@@ -3,7 +3,6 @@ import { Navbar } from './components/Navbar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
 import { CartDrawer } from './components/CartDrawer';
-import { CheckoutModal } from './components/CheckoutModal';
 import { OrderSuccessModal } from './components/OrderSuccessModal';
 import { ToastContainer } from './components/Toast';
 import { inventoryApi } from './services/inventoryApi';
@@ -490,10 +489,6 @@ export function App() {
 
       {/* Modals & Drawers */}
       <CartDrawer />
-
-      <CheckoutModal
-        onOrderSuccess={(orderData) => setLatestOrderInfo(orderData)}
-      />
 
       <OrderSuccessModal
         orderDetails={latestOrderInfo}
