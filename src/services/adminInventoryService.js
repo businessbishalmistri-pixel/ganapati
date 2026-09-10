@@ -308,6 +308,44 @@ class AdminInventoryService {
     this.saveCategories(updated);
     return true;
   }
+
+  async deleteCategoryAndReassign(id, newCategoryName) {
+    const targetCat = this.categories.find(c => c.id === id);
+    if (!targetCat) return false;
+
+    const oldCategoryName = targetCat.name;
+
+    // 1. Reassign products in local cache and database if newCategoryName provided
+    if (newCategoryName && newCategoryName.trim()) {
+      const cleanNewCat = newCategoryName.trim();
+      let currentProducts = this.getCachedProducts();
+      
+      // Update local products
+      const updatedProducts = currentProducts.map(p => {
+        if (p.category === oldCategoryName) {
+          return { ...p, category: cleanNewCat, updated_at: new Date().toISOString() };
+        }
+        return p;
+      });
+      this.cacheProductsLocally(updatedProducts);
+      inventoryApi.products = updatedProducts.filter(p => p.status === 'active');
+      inventoryApi.notify();
+
+      // Update in Supabase PostgreSQL
+      try {
+        await supabase
+          .from('products')
+          .update({ category: cleanNewCat, updated_at: new Date().toISOString() })
+          .eq('category', oldCategoryName);
+      } catch (err) {
+        console.warn('Supabase bulk category update notice:', err);
+      }
+    }
+
+    // 2. Delete the category
+    this.deleteCategory(id);
+    return true;
+  }
 }
 
 export const adminInventoryService = new AdminInventoryService();

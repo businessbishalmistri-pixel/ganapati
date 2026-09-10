@@ -7,6 +7,8 @@ import {
   Check, 
   X, 
   Package, 
+  AlertTriangle,
+  ArrowRight,
   Sparkles,
   ShoppingBag,
   Coffee,
@@ -33,6 +35,10 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
   const [newCatIcon, setNewCatIcon] = useState('ShoppingBag');
   const [editName, setEditName] = useState('');
   const [editIcon, setEditIcon] = useState('ShoppingBag');
+
+  // Reassign Modal State for non-empty categories
+  const [reassignModalCat, setReassignModalCat] = useState(null);
+  const [targetCategoryName, setTargetCategoryName] = useState('');
 
   // Compute category product counts
   const categoryCounts = categories.map((cat) => {
@@ -64,6 +70,23 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
     if (!editName.trim()) return;
     onUpdateCategory(id, { name: editName.trim(), icon: editIcon });
     setEditingId(null);
+  };
+
+  // Smart Delete Handler: 0 items = instant delete with no confirmation; >0 items = modal popup
+  const handleDeleteClick = (cat) => {
+    if (cat.count === 0) {
+      onDeleteCategory(cat.id);
+    } else {
+      setReassignModalCat(cat);
+      setTargetCategoryName('');
+    }
+  };
+
+  const handleConfirmReassignAndDelete = () => {
+    if (!reassignModalCat || !targetCategoryName.trim()) return;
+    onDeleteCategory(reassignModalCat.id, targetCategoryName.trim());
+    setReassignModalCat(null);
+    setTargetCategoryName('');
   };
 
   return (
@@ -158,7 +181,6 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
         </form>
       )}
 
-
       {/* Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {categoryCounts.map((cat) => {
@@ -213,27 +235,25 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-0.5 rounded-full">
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                      cat.count > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'
+                    }`}>
                       {cat.count} {cat.count === 1 ? 'product' : 'products'}
                     </span>
 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleStartEdit(cat)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                         title="Edit category"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (window.confirm(`Delete category "${cat.name}"? Products in this category will become unassigned.`)) {
-                            onDeleteCategory(cat.id);
-                          }
-                        }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete category"
+                        onClick={() => handleDeleteClick(cat)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title={cat.count === 0 ? "Delete empty category immediately" : `Delete category (Reassign ${cat.count} products)`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -245,6 +265,86 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
           );
         })}
       </div>
+
+      {/* 🔄 POPUP MODAL: Reassign Products & Delete Category */}
+      {reassignModalCat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-600">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Reassign Products & Delete</h3>
+                  <p className="text-xs text-slate-500">Category contains active inventory items</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setReassignModalCat(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Information Notice */}
+            <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200/80 text-xs text-amber-900 space-y-1">
+              <p className="font-semibold">
+                Category <span className="underline font-bold text-amber-950 font-mono">"{reassignModalCat.name}"</span> currently has <span className="font-extrabold text-amber-950">{reassignModalCat.count}</span> products.
+              </p>
+              <p className="text-[11px] text-amber-800">
+                Please select a new category to shift all these products into before deleting.
+              </p>
+            </div>
+
+            {/* Category Selector Dropdown */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700">
+                Shift Products to Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={targetCategoryName}
+                onChange={(e) => setTargetCategoryName(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+              >
+                <option value="">-- Select Destination Category --</option>
+                {categories
+                  .filter((c) => c.id !== reassignModalCat.id && c.name !== reassignModalCat.name)
+                  .map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setReassignModalCat(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              {/* Delete Button ONLY visible when a target category is selected */}
+              {targetCategoryName && (
+                <button
+                  type="button"
+                  onClick={handleConfirmReassignAndDelete}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-600/20 transition-all cursor-pointer animate-fadeIn"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Shift {reassignModalCat.count} Products & Delete</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

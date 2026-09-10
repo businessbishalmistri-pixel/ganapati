@@ -68,13 +68,40 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   };
 
   const handleToggleInStock = async (id) => {
-    await adminInventoryService.toggleInStock(id);
-    await loadData();
+    // 1. Instant optimistic state update (0ms switch slide animation)
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          const nextInStock = !p.in_stock;
+          return {
+            ...p,
+            in_stock: nextInStock,
+            stock: nextInStock ? (p.stock > 0 ? p.stock : 50) : 0,
+            stock_quantity: nextInStock ? (p.stock_quantity > 0 ? p.stock_quantity : 50) : 0
+          };
+        }
+        return p;
+      })
+    );
+
+    // 2. Background database sync
+    try {
+      await adminInventoryService.toggleInStock(id);
+    } catch (err) {
+      console.warn('Failed to sync stock toggle to database:', err);
+    }
   };
 
   const handleToggleStatus = async (id) => {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          return { ...p, status: p.status === 'draft' ? 'active' : 'draft' };
+        }
+        return p;
+      })
+    );
     await adminInventoryService.toggleStatus(id);
-    await loadData();
   };
 
   // Category Handlers
@@ -88,9 +115,24 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     setCategories([...adminInventoryService.getCategories()]);
   };
 
-  const handleDeleteCategory = (id) => {
-    adminInventoryService.deleteCategory(id);
-    setCategories([...adminInventoryService.getCategories()]);
+  const handleDeleteCategory = async (id, targetCategoryName) => {
+    if (targetCategoryName) {
+      const oldCat = categories.find((c) => c.id === id);
+      const oldName = oldCat?.name;
+
+      // Optimistically shift products in local React state
+      if (oldName) {
+        setProducts((prev) =>
+          prev.map((p) => (p.category === oldName ? { ...p, category: targetCategoryName } : p))
+        );
+      }
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+
+      await adminInventoryService.deleteCategoryAndReassign(id, targetCategoryName);
+    } else {
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+      adminInventoryService.deleteCategory(id);
+    }
   };
 
   const handleOpenAddModal = () => {
