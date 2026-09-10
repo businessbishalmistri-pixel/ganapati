@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
-  Star, 
   ShoppingCart, 
   Check, 
   Package, 
@@ -18,7 +17,6 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
   const { settings } = useSettings();
   const [selectedImage, setSelectedImage] = useState(product?.image || '');
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState('reviews'); // 'reviews' | 'description'
 
   // Real XYVOT variants
   const variants = product?.variants || [];
@@ -314,133 +312,30 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
 
         </div>
 
-        {/* ==================== BOTTOM TABS & REVIEWS SECTION ==================== */}
-        <div className="pt-8 border-t border-slate-200/80 space-y-8">
-          
-          {/* Tabs Bar */}
-          <div className="flex items-center gap-8 border-b border-slate-200/60 pb-3 text-sm font-semibold">
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`pb-3 -mb-3 transition-colors cursor-pointer ${
-                activeTab === 'reviews'
-                  ? 'border-b-2 border-slate-900 text-slate-900 font-bold'
-                  : 'text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              Rating & Reviews
-            </button>
-
-            <button
-              onClick={() => setActiveTab('description')}
-              className={`pb-3 -mb-3 transition-colors cursor-pointer ${
-                activeTab === 'description'
-                  ? 'border-b-2 border-slate-900 text-slate-900 font-bold'
-                  : 'text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              Description
-            </button>
+        {/* ==================== PRODUCT DESCRIPTION SECTION ==================== */}
+        <div className="pt-6 border-t border-slate-200/80 space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-200/60 pb-2.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-600" />
+            <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">
+              Product Description
+            </h3>
           </div>
 
-          {activeTab === 'reviews' ? (
-            /* Reviews Content Grid */
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
-              
-              {/* Overall Score */}
-              <div className="md:col-span-3 space-y-1.5 text-left">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-4xl font-bold text-slate-900">4.5</span>
-                  <span className="text-xs text-slate-400">out of 5</span>
-                </div>
-                <div className="flex items-center gap-1 text-amber-400">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                </div>
-                <p className="text-xs text-slate-400 pt-0.5">
-                  ({product.reviewsCount || 245} Review)
-                </p>
+          <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
+            <p>
+              {product.description || 'Our produce is handpicked directly from certified local farms and organic growers to ensure peak freshness, rich flavor, and maximum nutritional value.'}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="font-bold text-slate-900 mb-1">🌿 100% Farm Fresh</p>
+                <p className="text-xs text-slate-500">Sourced daily with strict quality and hygiene inspection.</p>
               </div>
-
-              {/* Star Rating Breakdown Progress Bars */}
-              <div className="md:col-span-5 space-y-2 text-xs text-slate-600">
-                <div className="flex items-center gap-3">
-                  <span className="w-10 flex-shrink-0 text-slate-700">5 Star</span>
-                  <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-amber-400 rounded-full" style={{ width: '82%' }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="w-10 flex-shrink-0 text-slate-700">4 Star</span>
-                  <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-amber-400 rounded-full" style={{ width: '65%' }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="w-10 flex-shrink-0 text-slate-700">3 Star</span>
-                  <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-amber-400 rounded-full" style={{ width: '25%' }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="w-10 flex-shrink-0 text-slate-700">2 Star</span>
-                  <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-amber-400 rounded-full" style={{ width: '12%' }} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="w-10 flex-shrink-0 text-slate-700">1 Star</span>
-                  <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-amber-400 rounded-full" style={{ width: '4%' }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Review this Product CTA */}
-              <div className="md:col-span-4 text-center md:text-right space-y-2 md:pl-6 border-t md:border-t-0 md:border-l border-slate-100 pt-6 md:pt-0">
-                <h3 className="text-base font-bold text-slate-900">
-                  Review this product
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Share your thoughts with other customers
-                </p>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => alert('Thank you for submitting your verified feedback!')}
-                    className="inline-block px-6 py-2.5 rounded-full border border-slate-800 hover:bg-slate-900 hover:text-white text-slate-800 text-xs font-semibold transition-all cursor-pointer"
-                  >
-                    Write a customer review
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          ) : (
-            /* Detailed Description Content */
-            <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
-              <p>
-                {product.description || 'Our produce is handpicked directly from certified local farms and organic growers to ensure peak freshness, rich flavor, and maximum nutritional value.'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="font-bold text-slate-900 mb-1">🌿 100% Farm Fresh</p>
-                  <p className="text-xs text-slate-500">Sourced daily with strict quality and hygiene inspection.</p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="font-bold text-slate-900 mb-1">🚚 Same-Day Dispatch</p>
-                  <p className="text-xs text-slate-500">Packed securely and dispatched quickly for Cash on Delivery.</p>
-                </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="font-bold text-slate-900 mb-1">🚚 Same-Day Dispatch</p>
+                <p className="text-xs text-slate-500">Packed securely and dispatched quickly for Cash on Delivery.</p>
               </div>
             </div>
-          )}
-
+          </div>
         </div>
 
         {/* Similar Category Products Section (Identical Home Page Density) */}

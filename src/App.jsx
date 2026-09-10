@@ -377,7 +377,6 @@ export function App() {
                         <option value="featured">Featured First</option>
                         <option value="price-low">Price: Low to High</option>
                         <option value="price-high">Price: High to Low</option>
-                        <option value="rating">Highest Rated</option>
                         <option value="stock">Most in Stock</option>
                       </select>
                     </div>

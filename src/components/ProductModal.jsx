@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Star, Check, AlertTriangle, XCircle, ShoppingBag, Zap, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { X, Check, AlertTriangle, XCircle, ShoppingBag, Zap, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 
@@ -118,16 +118,11 @@ export const ProductModal = ({ product, onClose }) => {
           <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               
-              {/* Category & Rating */}
+              {/* Category */}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md">
                   {product.category}
                 </span>
-                <div className="flex items-center gap-1 text-sm font-semibold text-slate-700">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span>{product.rating}</span>
-                  <span className="text-slate-400 text-xs font-normal">({product.reviewsCount} reviews)</span>
-                </div>
               </div>
 
               {/* Title & Price */}
