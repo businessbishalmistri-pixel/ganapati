@@ -83,7 +83,20 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         unit: productToEdit.unit || '1 kg',
         status: productToEdit.status || 'active'
       });
-      setVariants(Array.isArray(productToEdit.variants) ? productToEdit.variants : []);
+      const existingVariants = Array.isArray(productToEdit.variants) && productToEdit.variants.length > 0 
+        ? productToEdit.variants 
+        : [{
+            id: `v-${Date.now()}-0`,
+            name: productToEdit.unit || 'Standard Pack',
+            unit: productToEdit.unit || 'Standard Pack',
+            selling_price: parseFloat(productToEdit.selling_price ?? productToEdit.price ?? 100) || 100,
+            price: parseFloat(productToEdit.selling_price ?? productToEdit.price ?? 100) || 100,
+            mrp: parseFloat(productToEdit.mrp ?? productToEdit.original_price ?? 120) || 120,
+            original_price: parseFloat(productToEdit.mrp ?? productToEdit.original_price ?? 120) || 120,
+            stock_quantity: 999,
+            in_stock: true
+          }];
+      setVariants(existingVariants);
     } else {
       setFormData({
         title: '',
@@ -97,9 +110,18 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         unit: '1 kg',
         status: 'active'
       });
-      setVariants([]);
+      setVariants([{
+        id: `v-${Date.now()}-0`,
+        name: '1 Pack / 1 Unit',
+        unit: '1 Pack / 1 Unit',
+        selling_price: 100,
+        price: 100,
+        mrp: 120,
+        original_price: 120,
+        stock_quantity: 999,
+        in_stock: true
+      }]);
     }
-    setCustomOptionText('');
     setErrors({});
   }, [productToEdit, isOpen, categories]);
 
@@ -200,6 +222,24 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     }
   };
 
+  // Append new blank/custom variant from the secondary button
+  const handleAddNewBlankVariant = () => {
+    const prevPrice = variants.length > 0 ? (parseFloat(variants[variants.length - 1].selling_price || variants[variants.length - 1].price) || 100) : 100;
+    const prevMrp = variants.length > 0 ? (parseFloat(variants[variants.length - 1].mrp || variants[variants.length - 1].original_price) || Math.round(prevPrice * 1.2)) : 120;
+    const newVariant = {
+      id: `v-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: `Option ${variants.length + 1}`,
+      unit: `Option ${variants.length + 1}`,
+      selling_price: prevPrice,
+      price: prevPrice,
+      mrp: prevMrp,
+      original_price: prevMrp,
+      stock_quantity: 999,
+      in_stock: true
+    };
+    setVariants(prev => [...prev, newVariant]);
+  };
+
   // Update a single field in a variant
   const handleUpdateVariant = (id, field, value) => {
     setVariants(prev => prev.map(v => {
@@ -213,9 +253,16 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     }));
   };
 
-  // Delete a variant
+  // Delete a variant (Keep at least 1 default row)
   const handleDeleteVariant = (id) => {
+    if (variants.length <= 1) return;
     setVariants(prev => prev.filter(v => v.id !== id));
+  };
+
+  const handleResetVariants = () => {
+    if (variants.length > 1) {
+      setVariants([variants[0]]);
+    }
   };
 
   const validate = () => {
@@ -253,12 +300,12 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         in_stock: anyInStock,
         stock: anyInStock ? 999 : 0,
         stock_quantity: anyInStock ? 999 : 0,
-        has_variants: variants.length > 0,
-        hasVariants: variants.length > 0,
+        has_variants: variants.length > 1,
+        hasVariants: variants.length > 1,
         variants: variants,
         id: productToEdit?.id
       };
-      await onSave(payload);
+      onSave(payload);
       onClose();
     } catch (err) {
       console.error('Failed to save product', err);
@@ -343,8 +390,8 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
           {/* ⚡ PRODUCT VARIANTS / QUICK ADD BUILDER */}
           <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-3">
             
-            {/* 4 Category Tabs (100% Full Width Grid) */}
-            <div className="w-full grid grid-cols-4 gap-1 bg-slate-200/70 p-1 rounded-xl text-xs">
+            {/* 3 Category Tabs (100% Full Width Grid) */}
+            <div className="w-full grid grid-cols-3 gap-1 bg-slate-200/70 p-1 rounded-xl text-xs">
               <button
                 type="button"
                 onClick={() => setVariantTab('weight')}
@@ -382,19 +429,6 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               >
                 <Sparkles className="w-3.5 h-3.5 text-slate-600" />
                 <span className="truncate">Sizes (S/M/L)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setVariantTab('custom')}
-                className={`py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                  variantTab === 'custom'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-600" />
-                <span className="truncate">Custom</span>
               </button>
             </div>
 
@@ -472,91 +506,6 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                     ))}
                   </>
                 )}
-
-                {/* 4. Custom Tab Notice */}
-                {variantTab === 'custom' && (
-                  <span className="text-slate-400 italic text-[11px]">
-                    Type a custom option name below:
-                  </span>
-                )}
-              </div>
-
-              {/* Right Custom Input & Add Button */}
-              <div className="flex items-center gap-1.5 ml-auto">
-                {variantTab === 'weight' ? (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="text"
-                      placeholder="e.g. 750 or 1.5"
-                      value={customOptionText}
-                      onChange={(e) => setCustomOptionText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (customOptionText.trim()) {
-                            handleAddVariant(`${customOptionText.trim()} ${customUnit}`);
-                            setCustomOptionText('');
-                          }
-                        }
-                      }}
-                      className="h-8 w-28 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
-                    />
-                    <select
-                      value={customUnit}
-                      onChange={(e) => setCustomUnit(e.target.value)}
-                      className="h-8 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
-                    >
-                      <option value="KG">KG</option>
-                      <option value="g">g</option>
-                      <option value="L">L</option>
-                      <option value="ml">ml</option>
-                      <option value="Pc">Pc</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (customOptionText.trim()) {
-                          handleAddVariant(`${customOptionText.trim()} ${customUnit}`);
-                          setCustomOptionText('');
-                        }
-                      }}
-                      className="h-8 px-3 bg-[#505488] hover:bg-[#434775] text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
-                    >
-                      <span>+ Add</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="text"
-                      placeholder="Custom option name..."
-                      value={customOptionText}
-                      onChange={(e) => setCustomOptionText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (customOptionText.trim()) {
-                            handleAddVariant(customOptionText.trim());
-                            setCustomOptionText('');
-                          }
-                        }
-                      }}
-                      className="h-8 w-36 sm:w-44 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-blue-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (customOptionText.trim()) {
-                          handleAddVariant(customOptionText.trim());
-                          setCustomOptionText('');
-                        }
-                      }}
-                      className="h-8 px-3 bg-[#505488] hover:bg-[#434775] text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-0.5 cursor-pointer"
-                    >
-                      <span>+ Add</span>
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -565,13 +514,15 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
                 <div className="p-2.5 bg-slate-50/90 border-b border-slate-200/80 flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-700">Configured Variant Prices ({variants.length})</span>
-                  <button
-                    type="button"
-                    onClick={() => setVariants([])}
-                    className="text-[11px] font-semibold text-red-600 hover:underline cursor-pointer"
-                  >
-                    Clear All
-                  </button>
+                  {variants.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleResetVariants}
+                      className="text-[11px] font-semibold text-slate-500 hover:text-red-600 hover:underline cursor-pointer"
+                    >
+                      Reset to 1 Option
+                    </button>
+                  )}
                 </div>
 
                 {/* Table Column Headers */}
@@ -642,20 +593,37 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                         </button>
                       </div>
 
-                      {/* Delete Icon */}
+                      {/* Delete Icon (Only shown if more than 1 variant) */}
                       <div className="w-6 flex items-center justify-center flex-shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteVariant(v.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Delete variant"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {variants.length > 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteVariant(v.id)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Delete variant"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <span className="w-3.5 h-3.5 block" title="Default Option"></span>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Subtle Secondary + Add Variant Button (Blue marked area) */}
+                <div className="p-2 bg-slate-50/70 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={handleAddNewBlankVariant}
+                    className="w-full py-1.5 px-3 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 border-dashed rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-slate-400" />
+                    <span>+ Add Variant</span>
+                  </button>
+                </div>
+
               </div>
             )}
           </div>
