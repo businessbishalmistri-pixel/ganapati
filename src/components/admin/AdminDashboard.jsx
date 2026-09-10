@@ -107,7 +107,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans antialiased text-slate-900 pb-16 md:pb-8">
       
       {/* 📱 Tablet & Desktop App Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-5 py-[10px] flex items-center justify-between shadow-xs">
         <div>
           <div className="flex items-center gap-1.5">
             <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
