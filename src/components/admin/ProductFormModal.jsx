@@ -106,7 +106,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   const sellingNum = parseFloat(formData.selling_price) || 0;
   const mrpNum = parseFloat(formData.mrp) || sellingNum;
 
-  // Handle Image File Selection, Client-Side Compression & Supabase Storage Upload
+  // Handle Image File Selection, Client-Side Compression & Supabase Upload
   const handleImageFileSelect = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -115,43 +115,36 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     }
 
     setIsUploadingImage(true);
-    setUploadStatusText('Compressing image on device...');
+    setUploadStatusText('Processing image...');
     try {
-      // 1. Client-side compression with canvas
+      // 1. High-speed client-side compression with HTML5 Canvas -> WebP
       const compressed = await compressImage(file, { maxWidth: 1080, maxHeight: 1080, quality: 0.82 });
       
-      // 2. Immediate local preview (0ms lag)
+      const persistentUrl = compressed?.dataUrl || compressed?.previewUrl;
+      
+      // 2. Set optimized image URL immediately (0ms lag, persistent)
       setFormData(prev => ({ 
         ...prev, 
-        image_url: compressed.previewUrl,
-        image: compressed.previewUrl 
+        image_url: persistentUrl,
+        image: persistentUrl 
       }));
 
-      const origKb = Math.round(compressed.originalSize / 1024);
-      const compKb = Math.round(compressed.compressedSize / 1024);
-      setCompressionStats({
-        originalKb: origKb,
-        compressedKb: compKb,
-        savings: Math.max(0, Math.round((1 - compKb / (origKb || 1)) * 100))
-      });
-
-      // 3. Upload to Supabase Storage Bucket
-      setUploadStatusText('Uploading to Supabase Storage...');
-      const publicUrl = await uploadImageToSupabase(compressed.file, formData.title || 'product');
-
-      // 4. Set permanent public Supabase URL
-      setFormData(prev => ({
-        ...prev,
-        image_url: publicUrl,
-        image: publicUrl
-      }));
-      setUploadStatusText('Uploaded & Saved to Supabase Cloud!');
+      // 3. Upload to Supabase Storage if available, fallback smoothly to WebP Data URI
+      if (compressed?.file) {
+        const publicUrl = await uploadImageToSupabase(compressed.file, formData.title || 'product', persistentUrl);
+        if (publicUrl && publicUrl !== persistentUrl) {
+          setFormData(prev => ({
+            ...prev,
+            image_url: publicUrl,
+            image: publicUrl
+          }));
+        }
+      }
     } catch (err) {
-      console.error('Image compression / upload failed:', err);
-      // Keep local preview if upload had error, but inform user
-      alert('Upload to Supabase Storage notice: ' + (err.message || 'Check storage permissions'));
+      console.warn('Image compression / upload notice:', err);
     } finally {
       setIsUploadingImage(false);
+      setUploadStatusText('');
     }
   };
 

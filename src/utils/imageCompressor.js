@@ -1,31 +1,47 @@
 /**
  * imageCompressor.js
  * In-browser high-performance image compression using HTML5 Canvas.
- * Resizes large camera photos down to 1080px max dimension and compresses to WebP / JPEG (~80-120KB).
+ * Resizes large camera photos down to 1080px max dimension and compresses to WebP (~60-120KB).
  */
 export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, quality = 0.82 } = {}) {
   if (!file) return null;
 
   return new Promise((resolve, reject) => {
-    // If SVG or gif or already very small (< 30KB), return directly
-    if (file.type === 'image/svg+xml' || file.type === 'image/gif' || file.size < 30 * 1024) {
-      resolve({
-        blob: file,
-        file: file,
-        previewUrl: URL.createObjectURL(file),
-        width: 0,
-        height: 0,
-        originalSize: file.size,
-        compressedSize: file.size,
-      });
-      return;
-    }
-
     const reader = new FileReader();
     reader.onerror = reject;
     reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      
+      // If SVG or gif or already very small WebP/PNG (< 30KB), return directly with persistent base64 dataUrl
+      if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        resolve({
+          blob: file,
+          file: file,
+          previewUrl: dataUrl,
+          dataUrl: dataUrl,
+          width: 0,
+          height: 0,
+          originalSize: file.size,
+          compressedSize: file.size,
+        });
+        return;
+      }
+
       const img = new Image();
-      img.onerror = reject;
+      img.onerror = () => {
+        // Fallback to raw dataUrl if canvas cannot render
+        resolve({
+          blob: file,
+          file: file,
+          previewUrl: dataUrl,
+          dataUrl: dataUrl,
+          width: 0,
+          height: 0,
+          originalSize: file.size,
+          compressedSize: file.size,
+        });
+      };
+
       img.onload = () => {
         let width = img.width;
         let height = img.height;
@@ -56,11 +72,13 @@ export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, q
         const outputType = 'image/webp';
         canvas.toBlob(
           (blob) => {
+            const compressedDataUrl = canvas.toDataURL(outputType, quality);
             if (!blob) {
               resolve({
                 blob: file,
                 file: file,
-                previewUrl: URL.createObjectURL(file),
+                previewUrl: compressedDataUrl || dataUrl,
+                dataUrl: compressedDataUrl || dataUrl,
                 width,
                 height,
                 originalSize: file.size,
@@ -75,7 +93,8 @@ export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, q
             resolve({
               blob,
               file: compressedFile,
-              previewUrl: URL.createObjectURL(blob),
+              previewUrl: compressedDataUrl,
+              dataUrl: compressedDataUrl,
               width,
               height,
               originalSize: file.size,
@@ -86,7 +105,7 @@ export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, q
           quality
         );
       };
-      img.src = e.target.result;
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   });

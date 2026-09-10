@@ -126,6 +126,10 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
                 <img
                   src={selectedImage}
                   alt={product.title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80';
+                  }}
                   className="w-full h-full object-contain object-center transition-all duration-300 transform hover:scale-105"
                 />
               ) : (
@@ -148,7 +152,15 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
                         : 'border border-slate-200/80 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-contain" />
+                    <img
+                      src={img}
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                      }}
+                      className="w-full h-full object-contain"
+                    />
                   </button>
                 ))}
               </div>

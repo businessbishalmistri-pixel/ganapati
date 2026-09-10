@@ -171,6 +171,10 @@ Please confirm my order and deliver to the above address. Thank you!`;
                           <img
                             src={item.image_url || item.image}
                             alt={item.title || item.name}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=160&q=80';
+                            }}
                             className="w-full h-full object-cover"
                           />
                         ) : (
