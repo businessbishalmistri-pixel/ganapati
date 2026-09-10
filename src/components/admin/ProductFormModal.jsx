@@ -814,19 +814,13 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   </div>
 
                   {/* Info & Replace Action */}
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex-1 min-w-0 space-y-0.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                       <span className="truncate">Image Ready</span>
                     </div>
 
-                    {compressionStats && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 font-bold">
-                        <span>Compressed: {compressionStats.originalKb}KB ➔ {compressionStats.compressedKb}KB ({compressionStats.savings}% saved)</span>
-                      </div>
-                    )}
-
-                    <p className="text-[10px] text-slate-400 truncate">
+                    <p className="text-[11px] text-slate-400 truncate">
                       Click or drag to replace image from device
                     </p>
                   </div>
