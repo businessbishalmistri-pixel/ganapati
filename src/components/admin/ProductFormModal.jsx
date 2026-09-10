@@ -617,9 +617,8 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   <button
                     type="button"
                     onClick={handleAddNewBlankVariant}
-                    className="w-full py-1.5 px-3 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 border-dashed rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    className="w-full py-1.5 px-3 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 border-dashed rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5 text-slate-400" />
                     <span>+ Add Variant</span>
                   </button>
                 </div>
