@@ -7,6 +7,8 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://ftiivdzbimggyxbbkaji.supabase.co';
 const SUPABASE_ANON_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0aWl2ZHpiaW1nZ3l4YmJrYWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzQ2MDksImV4cCI6MjEwNDYxMDYwOX0.ybjdQubcyaathpa4fXhv5nr2otanhyvEbDpbLxeIqXI';
 
+import { INITIAL_DEFAULT_PRODUCTS, normalizeProduct } from './inventoryData';
+
 export const DEFAULT_STORE_API_KEY = 'xyvot_pk_live_139a19_75624283aczwi2';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -29,11 +31,18 @@ export async function fetchLiveProductsFromBackend() {
       try {
         const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
         if (cachedAdmin) {
-          productsList = JSON.parse(cachedAdmin);
+          const parsed = JSON.parse(cachedAdmin);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            productsList = parsed;
+          }
         }
       } catch (e) {
         console.warn('Could not read admin products cache', e);
       }
+    }
+
+    if (productsList.length === 0) {
+      productsList = INITIAL_DEFAULT_PRODUCTS;
     }
 
     // Filter out draft products from storefront
@@ -125,8 +134,8 @@ export async function fetchLiveProductsFromBackend() {
         return JSON.parse(cachedAdmin).filter(p => p.status !== 'draft');
       }
     } catch (e) {}
+    return INITIAL_DEFAULT_PRODUCTS.filter(p => p.status !== 'draft');
   }
-  return [];
 }
 
 /**
