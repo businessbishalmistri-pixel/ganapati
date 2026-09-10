@@ -5,17 +5,6 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    borderRadius: {
-      'none': '0px',
-      'sm': '6px',
-      DEFAULT: '6px',
-      'md': '6px',
-      'lg': '6px',
-      'xl': '6px',
-      '2xl': '6px',
-      '3xl': '6px',
-      'full': '6px',
-    },
     extend: {
       colors: {
         brand: {
@@ -38,7 +27,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.08)',
