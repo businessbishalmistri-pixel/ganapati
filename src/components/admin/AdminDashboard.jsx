@@ -221,10 +221,10 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           </p>
         </div>
 
-        {/* 🎨 Modern Abstract Geometric Hero Cards (3 Side-by-Side Widgets with 10px Gap) */}
-        <div className="grid grid-cols-3 gap-[10px]">
+        {/* 🎨 Modern Abstract Geometric Hero Cards (3 Side-by-Side Widgets with 5px Gap on Mobile) */}
+        <div className="grid grid-cols-3 gap-[5px] sm:gap-3 md:gap-4">
           {/* Card 1: Total Products (Dark Onyx & Cobalt Blue) */}
-          <div className="bg-[#181920] text-white p-2.5 sm:p-5 sm:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[110px] sm:min-h-[148px] group hover:shadow-xl transition-all">
+          <div className="bg-[#181920] text-white p-2 sm:p-5 sm:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-slate-800 min-h-[105px] sm:min-h-[148px] group hover:shadow-xl transition-all">
             {/* Concentric rings graphic overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
@@ -262,7 +262,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           </div>
 
           {/* Card 2: In-Stock / Available Products (Royal Purple & Sunburst Yellow) */}
-          <div className="bg-[#7c3aed] text-white p-2.5 sm:p-5 sm:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-purple-600/60 min-h-[110px] sm:min-h-[148px] group hover:shadow-xl transition-all">
+          <div className="bg-[#7c3aed] text-white p-2 sm:p-5 sm:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-purple-600/60 min-h-[105px] sm:min-h-[148px] group hover:shadow-xl transition-all">
             {/* Concentric rings graphic overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="90%" cy="80%" r="40" stroke="white" strokeWidth="1" fill="none" />
@@ -300,7 +300,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           </div>
 
           {/* Card 3: Active Categories (Azure Electric Blue & Emerald Mint) */}
-          <div className="bg-[#2563eb] text-white p-2.5 sm:p-5 sm:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-blue-500/60 min-h-[110px] sm:min-h-[148px] group hover:shadow-xl transition-all">
+          <div className="bg-[#2563eb] text-white p-2 sm:p-5 sm:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden shadow-md flex flex-col justify-between border border-blue-500/60 min-h-[105px] sm:min-h-[148px] group hover:shadow-xl transition-all">
             {/* Concentric rings graphic overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="90%" cy="20%" r="40" stroke="white" strokeWidth="1" fill="none" />
