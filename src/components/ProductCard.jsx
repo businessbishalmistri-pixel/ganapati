@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Minus, Clock, Check, AlertTriangle, XCircle, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
+import { VariantSelectorSheet } from './VariantSelectorSheet';
 
 export const ProductCard = ({ product, onSelectProduct }) => {
   const { addToCart, updateQuantity, cartItems } = useCart();
   const { settings } = useSettings();
+  const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
 
   const priceVal = parseFloat(product.selling_price || product.price || 0) || 0;
   const mrpVal = parseFloat(product.mrp || product.originalPrice || product.original_price || 0) || 0;
@@ -103,18 +105,24 @@ export const ProductCard = ({ product, onSelectProduct }) => {
             </div>
           </div>
 
-          {/* Blinkit-Style Green ADD / SELECT Button */}
+          {/* Action Button: Variant Selector Sheet if multiple options, direct stepper/add if standard */}
           {hasVariants ? (
             <button
-              onClick={() => onSelectProduct(product)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isOutOfStock) {
+                  setIsVariantSheetOpen(true);
+                }
+              }}
               disabled={isOutOfStock}
-              className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 border ${
+              title={isOutOfStock ? 'Out of Stock' : 'Select Variant & Add'}
+              className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 border cursor-pointer ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-600/10'
               }`}
             >
-              <span>{isOutOfStock ? 'Out' : 'SELECT'}</span>
+              <span>{isOutOfStock ? 'Out' : 'ADD'}</span>
             </button>
           ) : qtyInCart > 0 ? (
             <div className="flex items-center border border-emerald-600 bg-emerald-600 text-white rounded overflow-hidden shadow-xs">
@@ -125,7 +133,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(product.id, qtyInCart - 1, product.stock);
                 }}
                 title="Decrease"
-                className="w-6 h-7 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-emerald-700 transition-colors font-bold active:scale-90"
+                className="w-6 h-7 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-emerald-700 transition-colors font-bold active:scale-90 cursor-pointer"
               >
                 <Minus className="w-3 h-3" />
               </button>
@@ -142,17 +150,20 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(product.id, qtyInCart + 1, product.stock);
                 }}
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
-                className="w-6 h-7 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold active:scale-90"
+                className="w-6 h-7 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold active:scale-90 cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
               </button>
             </div>
           ) : (
             <button
-              onClick={() => addToCart(product, 1)}
+              onClick={(e) => {
+                e.stopPropagation();
+                addToCart(product, 1);
+              }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-              className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 border ${
+              className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 border cursor-pointer ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-600/10'
@@ -164,6 +175,15 @@ export const ProductCard = ({ product, onSelectProduct }) => {
         </div>
 
       </div>
+
+      {/* 📱 Mobile Half-Screen Bottom Sheet / 🖥️ Desktop Modal for Variant Selection */}
+      {hasVariants && (
+        <VariantSelectorSheet
+          isOpen={isVariantSheetOpen}
+          onClose={() => setIsVariantSheetOpen(false)}
+          product={product}
+        />
+      )}
     </div>
   );
 };

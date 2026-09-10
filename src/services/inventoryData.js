@@ -34,7 +34,13 @@ export const INITIAL_DEFAULT_PRODUCTS = [
     status: 'active',
     image_url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=600&q=80',
     description: 'Fortune Sunlite Sunflower Oil is enriched with Vitamin A and Vitamin D, light and easy to digest for daily cooking.',
-    sku: 'GP-100201'
+    sku: 'GP-100201',
+    has_variants: true,
+    variants: [
+      { id: 'v-oil-1', name: '1 Litre Pouch', unit: '1 L', selling_price: 155, mrp: 185, stock_quantity: 45 },
+      { id: 'v-oil-2', name: '2 Litre Jar', unit: '2 L', selling_price: 305, mrp: 360, stock_quantity: 20 },
+      { id: 'v-oil-3', name: '5 Litre Can', unit: '5 L', selling_price: 740, mrp: 880, stock_quantity: 15 }
+    ]
   },
   {
     id: 'prod-2',
@@ -52,7 +58,13 @@ export const INITIAL_DEFAULT_PRODUCTS = [
     status: 'active',
     image_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
     description: '100% whole wheat flour made from grain heavy MP Shudh wheat with 0% maida for soft and fluffy rotis.',
-    sku: 'GP-100202'
+    sku: 'GP-100202',
+    has_variants: true,
+    variants: [
+      { id: 'v-atta-1', name: '1 kg Pack', unit: '1 kg', selling_price: 55, mrp: 62, stock_quantity: 50 },
+      { id: 'v-atta-2', name: '5 kg Pack', unit: '5 kg', selling_price: 245, mrp: 280, stock_quantity: 30 },
+      { id: 'v-atta-3', name: '10 kg Bag', unit: '10 kg', selling_price: 475, mrp: 540, stock_quantity: 18 }
+    ]
   },
   {
     id: 'prod-3',
@@ -70,7 +82,12 @@ export const INITIAL_DEFAULT_PRODUCTS = [
     status: 'active',
     image_url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80',
     description: 'Aged long-grain aromatic Basmati rice, perfect for special occasions, biryanis, and pulav.',
-    sku: 'GP-100203'
+    sku: 'GP-100203',
+    has_variants: true,
+    variants: [
+      { id: 'v-rice-1', name: '1 kg Pouch', unit: '1 kg', selling_price: 110, mrp: 130, stock_quantity: 40 },
+      { id: 'v-rice-2', name: '5 kg Bag', unit: '5 kg', selling_price: 480, mrp: 560, stock_quantity: 25 }
+    ]
   },
   {
     id: 'prod-4',
