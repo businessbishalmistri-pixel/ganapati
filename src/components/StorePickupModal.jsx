@@ -130,23 +130,7 @@ export function StorePickupModal({ onConfirmPickup }) {
         <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden min-h-0">
           <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
             
-            {/* Store Hub Address Information Card */}
-            <div className="p-3.5 bg-[#F4F5F7] rounded-2xl flex items-start gap-3 border border-slate-200/60">
-              <div className="w-7 h-7 rounded-xl bg-white text-slate-900 flex items-center justify-center shrink-0 shadow-2xs">
-                <Store className="w-3.5 h-3.5 text-slate-900" />
-              </div>
-              <div className="space-y-0.5 text-xs">
-                <span className="font-bold text-slate-900 block">{settings?.storeName || 'Ganapati Store'}</span>
-                <span className="text-[11px] text-slate-600 block leading-snug">
-                  {settings?.storeAddress || 'Main Store Hub'}
-                </span>
-                <span className="text-[10.5px] text-emerald-700 font-semibold block pt-0.5">
-                  Store Hours: {settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM'}
-                </span>
-              </div>
-            </div>
-
-            {/* Form Fields: Full Name & WhatsApp Number only */}
+            {/* Form Fields: Full Name & WhatsApp Number first */}
             <div className="space-y-3.5">
               {/* 1. Full Name */}
               <div>
@@ -195,6 +179,22 @@ export function StorePickupModal({ onConfirmPickup }) {
                   />
                 </div>
                 {errors.phone && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.phone}</p>}
+              </div>
+            </div>
+
+            {/* Store Hub Address Information Card (At the Bottom) */}
+            <div className="p-3.5 bg-[#F4F5F7] rounded-2xl flex items-start gap-3 border border-slate-200/60">
+              <div className="w-7 h-7 rounded-xl bg-white text-slate-900 flex items-center justify-center shrink-0 shadow-2xs">
+                <Store className="w-3.5 h-3.5 text-slate-900" />
+              </div>
+              <div className="space-y-0.5 text-xs">
+                <span className="font-bold text-slate-900 block">{settings?.storeName || 'Ganapati Store'}</span>
+                <span className="text-[11px] text-slate-600 block leading-snug">
+                  {settings?.storeAddress || 'Main Store Hub'}
+                </span>
+                <span className="text-[10.5px] text-emerald-700 font-semibold block pt-0.5">
+                  Store Hours: {settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM'}
+                </span>
               </div>
             </div>
           </div>
