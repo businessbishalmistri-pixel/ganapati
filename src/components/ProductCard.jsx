@@ -173,10 +173,10 @@ export const ProductCard = ({ product, onSelectProduct }) => {
       {/* Product Details Area (Compact 3-Column Density) */}
       <div className="p-1.5 sm:p-2.5 flex-1 flex flex-col justify-between space-y-1">
         <div>
-          {/* Title with 3-line clamp (medium font on mobile) */}
+          {/* Title with 3-line clamp (medium font on mobile, 20% larger font size) */}
           <h3 
             onClick={() => onSelectProduct(product)}
-            className="font-medium sm:font-semibold text-slate-900 text-[10.5px] sm:text-[12.5px] line-clamp-3 hover:text-emerald-600 transition-colors cursor-pointer leading-snug"
+            className="font-medium sm:font-semibold text-slate-900 text-[12.6px] sm:text-[12.5px] line-clamp-3 hover:text-emerald-600 transition-colors cursor-pointer leading-snug"
             title={product.title || product.name}
           >
             {product.title || product.name}
