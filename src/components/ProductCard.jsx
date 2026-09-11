@@ -12,9 +12,13 @@ export const ProductCard = ({ product, onSelectProduct }) => {
   const priceVal = parseFloat(product.selling_price || product.price || 0) || 0;
   const mrpVal = parseFloat(product.mrp || product.originalPrice || product.original_price || 0) || 0;
   const hasVariants = Boolean((product.has_variants || product.hasVariants) && Array.isArray(product.variants) && product.variants.length > 0);
-  const minPrice = hasVariants
-    ? Math.min(...product.variants.map((v) => parseFloat(v.selling_price || v.price || priceVal)))
+  const firstVariant = hasVariants ? product.variants[0] : null;
+  const displayPrice = firstVariant 
+    ? (parseFloat(firstVariant.selling_price || firstVariant.price || priceVal) || priceVal)
     : priceVal;
+  const displayMrp = firstVariant 
+    ? (parseFloat(firstVariant.mrp || firstVariant.originalPrice || firstVariant.original_price || mrpVal) || 0)
+    : mrpVal;
 
   const cartItem = cartItems.find((i) => (i.id === product.id || i.cartKey === product.id));
   const qtyInCart = cartItem ? cartItem.quantity : 0;
@@ -98,12 +102,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
           <div className="min-w-0">
             <div className="flex items-baseline gap-1">
-              <span className="text-xs sm:text-sm font-black text-slate-900 truncate">
-                {hasVariants ? `From ${settings.currency}${minPrice.toFixed(0)}` : `${settings.currency}${priceVal.toFixed(0)}`}
+              <span className="text-xs sm:text-sm font-black text-slate-900">
+                {settings.currency}{displayPrice.toFixed(0)}
               </span>
-              {mrpVal > priceVal && (
+              {displayMrp > displayPrice && (
                 <span className="text-[10px] text-slate-400 line-through">
-                  {settings.currency}{mrpVal.toFixed(0)}
+                  {settings.currency}{displayMrp.toFixed(0)}
                 </span>
               )}
             </div>
