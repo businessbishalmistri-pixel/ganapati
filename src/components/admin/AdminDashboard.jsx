@@ -194,18 +194,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
       {/* 📱 Tablet & Desktop App Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 py-[10px] flex items-center justify-between shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
-              isRefreshing 
-                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                : 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isRefreshing ? 'bg-blue-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
-              {isRefreshing ? 'Syncing...' : 'Live DB'}
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-400 font-medium">Store & Inventory Management</span>
+          <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
         </div>
 
         {/* Header Right Actions */}
