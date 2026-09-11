@@ -204,6 +204,31 @@ export function App() {
     return () => unsubscribe();
   }, []);
 
+  // Filter & Sort computation with Smart Typo-Tolerant Search
+  const filteredProducts = useMemo(() => {
+    // 1. Filter by category
+    const categoryFiltered = products.filter((p) => {
+      return (
+        selectedCategory === 'All Products' ||
+        (p.category && p.category.toLowerCase() === selectedCategory.toLowerCase())
+      );
+    });
+
+    // 2. Apply smart typo-tolerant fuzzy search
+    const searched = searchQuery.trim()
+      ? smartSearchProducts(categoryFiltered, searchQuery)
+      : categoryFiltered;
+
+    // 3. Apply sorting (if explicit sort chosen, otherwise preserve relevance)
+    return [...searched].sort((a, b) => {
+      if (sortBy === 'price-low') return a.price - b.price;
+      if (sortBy === 'price-high') return b.price - a.price;
+      if (sortBy === 'rating') return b.rating - a.rating;
+      if (sortBy === 'stock') return b.stock - a.stock;
+      return 0; // relevance / featured default
+    });
+  }, [products, selectedCategory, searchQuery, sortBy]);
+
   const inStockCount = products.filter((p) => p.stock > 0).length;
 
   // Render Admin View if on /admin
