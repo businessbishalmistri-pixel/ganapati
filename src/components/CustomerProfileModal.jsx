@@ -181,13 +181,14 @@ export function CustomerProfileModal() {
                   Delivery Address / House No. <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <textarea
-                    rows={4}
+                  <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
                     required
-                    placeholder="House / Flat No., Landmark, Street Name, City, Pincode"
+                    placeholder="House / Flat No., Landmark, Area"
                     value={address}
                     onChange={(e) => { setAddress(e.target.value); setErrors(prev => ({ ...prev, address: '' })); }}
-                    className={`w-full p-3 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all resize-none ${
+                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
                       errors.address ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
                     }`}
                   />
