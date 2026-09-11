@@ -109,7 +109,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
             </button>
           ) : totalQtyInCart > 0 ? (
             <div 
-              className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-1 py-0.5 sm:px-1.5 shadow-md gap-1 min-h-[26px] sm:min-h-[28px]"
+              className="inline-flex items-center justify-between border border-emerald-600 bg-emerald-600 text-white rounded shadow-md min-w-[76px] sm:min-w-[80px] h-[26px] sm:h-[28px] overflow-hidden select-none"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
@@ -122,12 +122,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(primaryCartKey, totalQtyInCart - 1, maxStock);
                 }}
                 title="Decrease"
-                className="p-0.5 sm:p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 rounded transition-colors font-bold active:scale-90 cursor-pointer"
+                className="flex-1 h-full flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 transition-colors font-bold cursor-pointer"
               >
-                <Minus className="w-2.5 sm:w-3 h-2.5 sm:h-3" />
+                <Minus className="w-3.5 h-3.5" />
               </button>
               
-              <span className="px-0.5 text-center text-[11.5px] sm:text-xs font-black select-none font-mono min-w-[14px]">
+              <span className="px-1 text-center text-[12px] sm:text-xs font-black select-none font-mono min-w-[18px]">
                 {totalQtyInCart}
               </span>
               
@@ -141,9 +141,9 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(primaryCartKey, totalQtyInCart + 1, maxStock);
                 }}
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
-                className="p-0.5 sm:p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
+                className="flex-1 h-full flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold cursor-pointer"
               >
-                <Plus className="w-2.5 sm:w-3 h-2.5 sm:h-3" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
