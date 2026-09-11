@@ -112,7 +112,7 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
           {/* Left Column: Gallery */}
           <div className="lg:col-span-6 space-y-4">
             {/* Hero Main Image Frame */}
-            <div className="relative aspect-square w-full rounded-2xl bg-white border border-slate-100 shadow-xs flex items-center justify-center p-6 sm:p-10 overflow-hidden">
+            <div className="relative h-[250px] sm:h-[350px] lg:h-auto lg:aspect-square w-full rounded-2xl bg-white border border-slate-100 shadow-xs flex items-center justify-center p-4 sm:p-8 lg:p-10 overflow-hidden">
               {selectedImage ? (
                 <img
                   src={selectedImage}
