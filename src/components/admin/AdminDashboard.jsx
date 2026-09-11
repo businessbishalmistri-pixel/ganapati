@@ -15,6 +15,7 @@ import {
   Bolt
 } from 'lucide-react';
 import { adminInventoryService } from '../../services/adminInventoryService';
+import { supabase } from '../../services/supabaseStore';
 import { ProductInventoryTable } from './ProductInventoryTable';
 import { CategoryManager } from './CategoryManager';
 import { ProductFormModal } from './ProductFormModal';
@@ -31,8 +32,8 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
 
-  const loadData = async () => {
-    setIsRefreshing(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setIsRefreshing(true);
     try {
       const [prods, cats] = await Promise.all([
         adminInventoryService.getAllProducts(),
@@ -44,12 +45,33 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
       console.error('Failed to load admin data:', err);
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
+      if (!silent) setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
     loadData();
+
+    // Subscribe to real-time changes on products table across all admin devices
+    let channel;
+    try {
+      let debounceTimer = null;
+      channel = supabase
+        .channel('realtime:admin:products')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            loadData(true);
+          }, 250);
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime admin subscription notice:', e);
+    }
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   // Compute clean metrics for summary
@@ -163,10 +185,14 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
       {/* 📱 Tablet & Desktop App Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 py-[10px] flex items-center justify-between shadow-xs">
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live DB
+            </span>
           </div>
-          <span className="text-[11px] text-slate-400 font-medium">Store Management</span>
+          <span className="text-[11px] text-slate-400 font-medium">Store & Inventory Management</span>
         </div>
 
         {/* Header Right Actions */}
