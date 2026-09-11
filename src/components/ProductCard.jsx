@@ -4,10 +4,12 @@ import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 import { VariantSelectorSheet } from './VariantSelectorSheet';
 
-export const ProductCard = ({ product, onSelectProduct }) => {
+export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
   const { addToCart, updateQuantity, cartItems } = useCart();
   const { settings } = useSettings();
   const [isVariantSheetOpen, setIsVariantSheetOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const priceVal = parseFloat(product.selling_price || product.price || 0) || 0;
   const mrpVal = parseFloat(product.mrp || product.originalPrice || product.original_price || 0) || 0;
@@ -41,21 +43,33 @@ export const ProductCard = ({ product, onSelectProduct }) => {
   return (
     <div className="group relative bg-white rounded border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
       
-      {/* Product Image Area */}
+      {/* Product Image Area with Shimmer Skeleton */}
       <div 
         className="relative aspect-square w-full bg-slate-100 overflow-hidden cursor-pointer"
         onClick={() => onSelectProduct(product)}
       >
+        {/* Shimmer Skeleton Placeholder while image is loading */}
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse z-0" />
+        )}
+
         {product.image_url || product.image ? (
           <img
             src={product.image_url || product.image}
             alt={product.title || product.name}
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchpriority={priority ? 'high' : 'auto'}
+            onLoad={() => setImageLoaded(true)}
             onError={(e) => {
+              setImageError(true);
+              setImageLoaded(true);
               e.currentTarget.onerror = null;
               e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80';
             }}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+            className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-300 relative z-1 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100">

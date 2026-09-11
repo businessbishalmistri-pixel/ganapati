@@ -6,7 +6,8 @@ export const CategoryShelf = ({
   categoryName, 
   products, 
   onSelectProduct, 
-  onViewCategory 
+  onViewCategory,
+  isPriorityShelf = false
 }) => {
   if (!products || products.length === 0) return null;
 
@@ -38,11 +39,12 @@ export const CategoryShelf = ({
 
       {/* Products Grid (3 Columns on Mobile, 3+ on Tablet/Desktop) */}
       <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
-        {products.map((product) => (
+        {products.map((product, idx) => (
           <ProductCard
             key={product.id}
             product={product}
             onSelectProduct={onSelectProduct}
+            priority={isPriorityShelf && idx < 6}
           />
         ))}
       </div>

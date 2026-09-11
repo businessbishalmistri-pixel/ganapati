@@ -49,6 +49,7 @@ export function App() {
   const [products, setProducts] = useState(() => inventoryApi.products || []);
   const [loading, setLoading] = useState(() => (!inventoryApi.products || inventoryApi.products.length === 0));
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [bannerLoaded, setBannerLoaded] = useState(false);
 
   // Filters & Sorting
   const [selectedCategory, setSelectedCategory] = useState('All Products');
@@ -263,19 +264,27 @@ export function App() {
         />
       ) : (
         <>
-          {/* Store Banner Image */}
+          {/* Store Banner Image with Shimmer Skeleton */}
           <section className="w-full border-b border-slate-200/80">
             <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-              <img
-                src={settings?.bannerImageUrl || "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png"}
-                alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store — Fresh Groceries & Daily Essentials"}
-                className="w-full h-auto block rounded-xl shadow-xs"
-                loading="eager"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png";
-                }}
-              />
+              <div className="relative w-full overflow-hidden rounded-xl bg-slate-100 min-h-[90px] sm:min-h-[140px] shadow-xs">
+                {!bannerLoaded && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse z-0" />
+                )}
+                <img
+                  src={settings?.bannerImageUrl || "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png"}
+                  alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store — Fresh Groceries & Daily Essentials"}
+                  className={`w-full h-auto block rounded-xl relative z-1 transition-opacity duration-300 ${bannerLoaded ? 'opacity-100' : 'opacity-0'}`}
+                  loading="eager"
+                  fetchpriority="high"
+                  onLoad={() => setBannerLoaded(true)}
+                  onError={(e) => {
+                    setBannerLoaded(true);
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png";
+                  }}
+                />
+              </div>
             </div>
           </section>
 
@@ -335,17 +344,27 @@ export function App() {
                   </div>
                 )}
 
-                {/* Products Grid */}
+                {/* Products Grid Skeleton / Content */}
                 {loading ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
-                    {[...Array(12)].map((_, i) => (
-                      <div key={i} className="bg-white rounded p-2 sm:p-3 border border-slate-100 space-y-1.5 sm:space-y-2 animate-pulse">
-                        <div className="aspect-square bg-slate-200 rounded" />
-                        <div className="h-2.5 sm:h-3 bg-slate-200 rounded w-4/5" />
-                        <div className="h-2 sm:h-3 bg-slate-200 rounded w-1/2" />
-                        <div className="h-4 sm:h-5 bg-slate-200 rounded w-full pt-1" />
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
+                      {[...Array(9)].map((_, i) => (
+                        <div key={i} className="bg-white rounded border border-slate-200/80 p-1.5 sm:p-2 flex flex-col justify-between overflow-hidden shadow-2xs space-y-1.5">
+                          {/* Image Skeleton Box with shimmer */}
+                          <div className="aspect-square bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse rounded relative overflow-hidden">
+                            <div className="absolute bottom-1 right-1 w-9 h-5 bg-slate-300/80 rounded" />
+                          </div>
+                          {/* Title Skeleton Lines */}
+                          <div className="space-y-1 pt-1">
+                            <div className="h-2.5 bg-slate-200 rounded w-full animate-pulse" />
+                            <div className="h-2.5 bg-slate-200 rounded w-3/4 animate-pulse" />
+                            <div className="h-2 bg-slate-100 rounded w-1/2 animate-pulse" />
+                          </div>
+                          {/* Price Skeleton */}
+                          <div className="h-4 bg-slate-200 rounded w-1/3 animate-pulse pt-0.5" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : filteredProducts.length === 0 ? (
                   <div className="bg-white rounded p-8 text-center border border-slate-200/90 space-y-2.5 max-w-md mx-auto my-4 shadow-xs">
@@ -369,11 +388,11 @@ export function App() {
                     </button>
                   </div>
                 ) : selectedCategory === 'All Products' && !searchQuery.trim() ? (
-                  /* Multi-Category Shelves View within Split Layout */
+                  /* Multi-Category Shelves View with First-Shelf Priority Loading */
                   <div className="space-y-4">
                     {dynamicCategories
                       .filter((cat) => cat !== 'All Products')
-                      .map((catName) => {
+                      .map((catName, shelfIdx) => {
                         const catProducts = products.filter(
                           (p) => p.category && p.category.toLowerCase() === catName.toLowerCase()
                         );
@@ -384,18 +403,20 @@ export function App() {
                             products={catProducts}
                             onSelectProduct={handleSelectProduct}
                             onViewCategory={(cat) => setSelectedCategory(cat)}
+                            isPriorityShelf={shelfIdx === 0}
                           />
                         );
                       })}
                   </div>
                 ) : (
-                  /* High-Density Compact Product Grid */
+                  /* High-Density Compact Product Grid with Above-The-Fold Priority */
                   <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
-                    {filteredProducts.map((product) => (
+                    {filteredProducts.map((product, idx) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         onSelectProduct={handleSelectProduct}
+                        priority={idx < 6}
                       />
                     ))}
                   </div>
