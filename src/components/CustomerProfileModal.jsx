@@ -28,6 +28,7 @@ export function CustomerProfileModal() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [useForPickup, setUseForPickup] = useState(true);
   const [address, setAddress] = useState('');
   const [coords, setCoords] = useState({ lat: 22.8291, lng: 88.6148 }); // Default to West Bengal area or previous coord
   const [errors, setErrors] = useState({});
@@ -47,6 +48,7 @@ export function CustomerProfileModal() {
         setName(customer.name || customer.fullName || '');
         setPhone(customer.phone ? customer.phone.replace(/\D/g, '').slice(-10) : '');
         setAddress(customer.address || customer.street || '');
+        setUseForPickup(customer.useForPickup !== undefined ? customer.useForPickup : true);
         if (customer.lat && customer.lng) {
           setCoords({ lat: parseFloat(customer.lat), lng: parseFloat(customer.lng) });
         }
@@ -54,6 +56,7 @@ export function CustomerProfileModal() {
         setName('');
         setPhone('');
         setAddress('');
+        setUseForPickup(true);
       }
       setErrors({});
     }
@@ -95,6 +98,9 @@ export function CustomerProfileModal() {
       phone: phone.trim(),
       address: address.trim(),
       street: address.trim(),
+      useForPickup: useForPickup,
+      pickupName: useForPickup ? name.trim() : (customer?.pickupName || ''),
+      pickupPhone: useForPickup ? phone.trim() : (customer?.pickupPhone || ''),
       lat: latNum,
       lng: lngNum,
       gpsLocation: latNum && lngNum ? `${latNum}, ${lngNum}` : '',
@@ -196,6 +202,26 @@ export function CustomerProfileModal() {
                     />
                   </div>
                   {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                </div>
+
+                {/* Checkbox: Use this details for store pickup orders */}
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={useForPickup}
+                      onChange={(e) => setUseForPickup(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 transition-colors cursor-pointer accent-emerald-600"
+                    />
+                    <div className="text-xs">
+                      <span className="font-semibold text-slate-800 block">
+                        Use this details for store pickup orders
+                      </span>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        Saves this name and contact number for quick 1-click store pickup orders.
+                      </p>
+                    </div>
+                  </label>
                 </div>
 
                 {/* 3. Delivery Address */}

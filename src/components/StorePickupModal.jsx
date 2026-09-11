@@ -40,8 +40,9 @@ export function StorePickupModal({ onConfirmPickup }) {
   useEffect(() => {
     if (isPickupModalOpen) {
       if (customer) {
-        setName(customer.name || customer.fullName || '');
-        setPhone(customer.phone ? customer.phone.replace(/\D/g, '').slice(-10) : '');
+        setName(customer.pickupName || customer.name || customer.fullName || '');
+        const rawPhone = customer.pickupPhone || customer.phone || '';
+        setPhone(rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : '');
       } else {
         setName('');
         setPhone('');
@@ -72,9 +73,12 @@ export function StorePickupModal({ onConfirmPickup }) {
     if (!validate()) return;
 
     const profileData = {
-      name: name.trim(),
-      fullName: name.trim(),
-      phone: phone.trim()
+      ...(customer || {}),
+      name: customer?.name || name.trim(),
+      fullName: customer?.fullName || name.trim(),
+      phone: customer?.phone || phone.trim(),
+      pickupName: name.trim(),
+      pickupPhone: phone.trim()
     };
 
     saveProfile(profileData);

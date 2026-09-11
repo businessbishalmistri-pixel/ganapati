@@ -79,8 +79,11 @@ export const CartDrawer = () => {
       return;
     }
 
+    const pickupName = customer?.pickupName || customer?.name || customer?.fullName;
+    const pickupPhone = customer?.pickupPhone || customer?.phone;
+
     // 2. If pickup and customer name/phone missing, prompt dedicated Store Pickup modal
-    if (deliveryMethod === 'pickup' && (!customer || !customer.name || !customer.phone)) {
+    if (deliveryMethod === 'pickup' && (!customer || !pickupName || !pickupPhone)) {
       openPickupModal('checkout');
       return;
     }
@@ -128,8 +131,8 @@ Please confirm and dispatch to my delivery address. Thank you!`;
 *Delivery Method:* Store Pickup (Pay at Store)
 
 *Customer Details:*
-• *Name:* ${customer?.name || 'Customer'}
-• *Phone:* ${customer?.phone || 'Not provided'}
+• *Name:* ${pickupName || 'Customer'}
+• *Phone:* ${pickupPhone || 'Not provided'}
 • *Store Pickup Hub:* ${settings?.storeAddress || 'Main Store Hub'}
 
 *Items Ordered:*
@@ -440,48 +443,54 @@ Please keep my order ready for store pickup. Thank you!`;
                     </div>
                   )
                 ) : (
-                  <div className="space-y-2 py-0.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-0.5 min-w-0">
-                        <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                          <Store className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-                          <span>{settings?.storeName || 'Ganapati Store'}</span>
-                        </p>
-                        <p className="text-slate-600 text-[11px] leading-snug">
-                          {settings?.storeAddress || 'Main Store Hub'}
-                        </p>
-                      </div>
-                      {customer?.name && (
-                        <button
-                          type="button"
-                          onClick={() => openPickupModal()}
-                          className="text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                        >
-                          Change
-                        </button>
-                      )}
-                    </div>
+                  (() => {
+                    const pickupDisplayName = customer?.pickupName || customer?.name || customer?.fullName;
+                    const pickupDisplayPhone = customer?.pickupPhone || customer?.phone;
+                    return (
+                      <div className="space-y-2 py-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-0.5 min-w-0">
+                            <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                              <Store className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                              <span>{settings?.storeName || 'Ganapati Store'}</span>
+                            </p>
+                            <p className="text-slate-600 text-[11px] leading-snug">
+                              {settings?.storeAddress || 'Main Store Hub'}
+                            </p>
+                          </div>
+                          {pickupDisplayName && (
+                            <button
+                              type="button"
+                              onClick={() => openPickupModal()}
+                              className="text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                            >
+                              Change
+                            </button>
+                          )}
+                        </div>
 
-                    {customer?.name ? (
-                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500 font-medium">Pickup Contact:</span>
-                        <span className="font-bold text-slate-900 truncate">
-                          {customer.name} {customer.phone ? `(${customer.phone})` : ''}
-                        </span>
+                        {pickupDisplayName ? (
+                          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                            <span className="text-slate-500 font-medium">Pickup Contact:</span>
+                            <span className="font-bold text-slate-900 truncate">
+                              {pickupDisplayName} {pickupDisplayPhone ? `(${pickupDisplayPhone})` : ''}
+                            </span>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => openPickupModal('checkout')}
+                            className="pt-1.5 border-t border-slate-100 flex items-center justify-between cursor-pointer text-slate-700 hover:text-slate-900 transition-colors"
+                          >
+                            <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-slate-600" />
+                              <span>Click to enter pickup contact (Name & Phone)</span>
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div
-                        onClick={() => openPickupModal('checkout')}
-                        className="pt-1.5 border-t border-slate-100 flex items-center justify-between cursor-pointer text-slate-700 hover:text-slate-900 transition-colors"
-                      >
-                        <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-slate-600" />
-                          <span>Click to enter pickup contact (Name & Phone)</span>
-                        </span>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                      </div>
-                    )}
-                  </div>
+                    );
+                  })()
                 )}
               </div>
 
