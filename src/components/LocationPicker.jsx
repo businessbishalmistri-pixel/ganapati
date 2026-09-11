@@ -23,12 +23,21 @@ const getCustomIcon = () => {
   return undefined;
 };
 
-export const LocationPicker = ({ coordinates, onChange, addressHint = '', label = 'GPS Map Delivery Pin' }) => {
+export const LocationPicker = ({ 
+  coordinates, 
+  onChange, 
+  addressHint = '', 
+  label = 'GPS Map Delivery Pin',
+  required = false,
+  error = null,
+  autoLocate = true
+}) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
   const [isLocating, setIsLocating] = useState(false);
   const [geoError, setGeoError] = useState(null);
+  const hasAutoLocatedRef = useRef(false);
 
   // Default coordinate (e.g. West Bengal / India or user location)
   const defaultPos = coordinates?.lat && coordinates?.lng 
@@ -131,12 +140,20 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
     );
   };
 
+  // Attempt automatic GPS location detection on mount if user hasn't specified coordinates yet
+  useEffect(() => {
+    if (autoLocate && !hasAutoLocatedRef.current && typeof window !== 'undefined' && navigator?.geolocation) {
+      hasAutoLocatedRef.current = true;
+      handleGetCurrentLocation();
+    }
+  }, [autoLocate]);
+
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-2 px-4 sm:px-0">
         {label && (
           <label className="block text-xs font-semibold text-slate-700">
-            {label}
+            {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
         <button
@@ -154,9 +171,15 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
         </button>
       </div>
 
-      <div className="relative rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-200 shadow-inner h-60 sm:h-64 bg-slate-100 [&_.leaflet-control-attribution]:!hidden">
+      <div className={`relative rounded-none sm:rounded-xl overflow-hidden border-y sm:border transition-all ${
+        error ? 'border-red-400 ring-2 ring-red-400/20' : 'border-slate-200'
+      } shadow-inner h-60 sm:h-64 bg-slate-100 [&_.leaflet-control-attribution]:!hidden`}>
         <div ref={mapContainerRef} className="w-full h-full" />
       </div>
+
+      {error && (
+        <p className="mx-4 sm:mx-0 text-xs text-red-500 font-medium">{error}</p>
+      )}
 
       {geoError && (
         <div className="mx-4 sm:mx-0 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">

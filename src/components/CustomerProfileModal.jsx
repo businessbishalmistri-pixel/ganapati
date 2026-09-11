@@ -63,6 +63,10 @@ export function CustomerProfileModal() {
       errs.address = 'Please enter your delivery address';
     }
 
+    if (!coords || !coords.lat || !coords.lng) {
+      errs.coords = 'Please pinpoint your delivery spot on the map';
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -200,8 +204,14 @@ export function CustomerProfileModal() {
                 <div className="bg-slate-50/50 p-0 sm:p-3 rounded-none sm:rounded-2xl border-0 sm:border border-slate-100">
                   <LocationPicker
                     coordinates={coords}
-                    onChange={(newCoords) => setCoords(newCoords)}
+                    onChange={(newCoords) => {
+                      setCoords(newCoords);
+                      setErrors(prev => ({ ...prev, coords: '' }));
+                    }}
                     label="Pinpoint Delivery Spot"
+                    required={true}
+                    error={errors.coords}
+                    autoLocate={!customer?.lat || !customer?.lng}
                   />
                 </div>
               </div>
