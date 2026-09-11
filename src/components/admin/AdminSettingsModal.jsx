@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store, 
-  Megaphone, MapPin, Clock, UploadCloud, Loader2, Trash2, Link as LinkIcon 
+  Megaphone, MapPin, Clock, UploadCloud, Loader2, Trash2, Plus
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useToast } from '../../context/ToastContext';
@@ -24,7 +24,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
   
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,6 +37,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setFlatShippingFee(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
       setFreeShippingThreshold(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
       setIsUploadingBanner(false);
+      setIsDragging(false);
     }
   }, [isOpen, settings]);
 
@@ -51,8 +52,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleBannerUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const processBannerFile = async (file) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -91,11 +91,35 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       showToast('Error uploading banner: ' + (err.message || 'Unknown error'), 'error');
     } finally {
       setIsUploadingBanner(false);
+      setIsDragging(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handleRemoveBanner = async () => {
+  const handleBannerUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) processBannerFile(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processBannerFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleRemoveBanner = async (e) => {
+    if (e) e.stopPropagation();
     setBannerImageUrl('');
     try {
       await updateSettings({ bannerImageUrl: '' });
@@ -248,100 +272,113 @@ export function AdminSettingsModal({ isOpen, onClose }) {
             />
           </div>
 
-          {/* 2. Storefront Banner Image Upload & Live Preview Card */}
+          {/* 2. Full Drag & Drop / Click-to-Upload Storefront Banner Box */}
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <Image className="w-4 h-4 text-blue-600" />
                 <span>Storefront Banner Image</span>
               </label>
-              <button
-                type="button"
-                onClick={() => setShowUrlInput(!showUrlInput)}
-                className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <LinkIcon className="w-3 h-3" />
-                <span>{showUrlInput ? 'Hide URL Link' : 'Edit URL directly'}</span>
-              </button>
-            </div>
 
-            {/* Banner Preview & Upload Area */}
-            <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
-              <div className="w-full aspect-[21/9] sm:aspect-[3/1] max-h-36 overflow-hidden relative flex items-center justify-center bg-slate-900/5">
+              {/* Action Buttons in Header */}
+              <div className="flex items-center gap-2">
                 {bannerImageUrl ? (
-                  <img
-                    src={bannerImageUrl}
-                    alt="Storefront Banner Preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add New Image</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveBanner}
+                      className="text-[11px] font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1 cursor-pointer transition-colors bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg"
+                      title="Remove banner"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  </>
                 ) : (
-                  <div 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-center p-6 text-slate-400 text-xs flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-200/50 transition-colors w-full h-full justify-center"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">
-                      <UploadCloud className="w-5 h-5" />
-                    </div>
-                    <span className="font-semibold text-slate-600">Click to upload storefront banner</span>
-                    <span className="text-[10px] text-slate-400">PNG, JPG, or WebP (auto-compressed)</span>
-                  </div>
-                )}
-
-                {/* Uploading Progress Overlay */}
-                {isUploadingBanner && (
-                  <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 z-10">
-                    <Loader2 className="w-6 h-6 animate-spin text-white" />
-                    <span className="text-xs font-bold">Compressing & Uploading...</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Upload Controls Bar */}
-              <div className="p-2.5 bg-white border-t border-slate-100 flex items-center justify-between gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleBannerUpload}
-                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                  className="hidden"
-                />
-
-                <button
-                  type="button"
-                  disabled={isUploadingBanner}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  <UploadCloud className="w-3.5 h-3.5" />
-                  <span>{isUploadingBanner ? 'Uploading...' : (bannerImageUrl ? 'Change Banner' : 'Upload Banner')}</span>
-                </button>
-
-                {bannerImageUrl && (
                   <button
                     type="button"
-                    onClick={handleRemoveBanner}
-                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Remove banner from storefront"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Remove</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Upload Image</span>
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Optional URL input toggle */}
-            {showUrlInput && (
-              <div className="pt-1 animate-fadeIn">
-                <input
-                  type="url"
-                  placeholder="https://.../banner.png or Supabase storage link"
-                  value={bannerImageUrl}
-                  onChange={(e) => setBannerImageUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
-                />
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleBannerUpload}
+              accept="image/png, image/jpeg, image/webp, image/svg+xml"
+              className="hidden"
+            />
+
+            {/* Interactive Drag & Drop / Click-to-Upload Area */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-200 cursor-pointer group shadow-2xs ${
+                isDragging 
+                  ? 'border-blue-500 bg-blue-50/70 scale-[1.01]' 
+                  : bannerImageUrl 
+                    ? 'border-slate-200 bg-slate-100 hover:border-blue-400' 
+                    : 'border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100/80 hover:border-slate-400'
+              }`}
+            >
+              <div className="w-full aspect-[21/9] sm:aspect-[3/1] max-h-40 overflow-hidden relative flex items-center justify-center">
+                {bannerImageUrl ? (
+                  <>
+                    <img
+                      src={bannerImageUrl}
+                      alt="Storefront Banner"
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
+                      <span className="text-xs font-bold bg-black/60 px-3 py-1.5 rounded-xl backdrop-blur-xs flex items-center gap-1.5">
+                        <UploadCloud className="w-4 h-4" />
+                        Click to change image
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-6 text-slate-400 text-xs flex flex-col items-center gap-2 select-none">
+                    <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-slate-200/80 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <UploadCloud className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-700 block text-xs sm:text-sm">
+                        Click to upload storefront banner
+                      </span>
+                      <span className="text-[11px] text-slate-400 mt-0.5 block">
+                        or drag and drop here (PNG, JPG, WebP)
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Uploading Progress Overlay */}
+                {isUploadingBanner && (
+                  <div className="absolute inset-0 bg-slate-900/75 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 z-10 animate-fadeIn">
+                    <Loader2 className="w-7 h-7 animate-spin text-white" />
+                    <span className="text-xs font-bold">Compressing & Uploading to Supabase...</span>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* 3. Minimal WhatsApp Order Number (Icon + Input) */}
