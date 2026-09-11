@@ -197,14 +197,14 @@ export function CustomerProfileModal() {
             </div>
 
             {/* Right Side: Map Selection */}
-            <div className="space-y-4">
-              <div className="border-b border-slate-100 pb-2">
+            <div className="space-y-3 -mx-4 sm:mx-0">
+              <div className="border-b border-slate-100 pb-2 px-4 sm:px-0">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Location Pinpoint
                 </span>
               </div>
 
-              <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+              <div className="bg-slate-50/50 p-0 sm:p-3 rounded-none sm:rounded-2xl border-0 sm:border border-slate-100">
                 <LocationPicker
                   coordinates={coords}
                   onChange={(newCoords) => setCoords(newCoords)}
