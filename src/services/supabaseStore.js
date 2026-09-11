@@ -240,14 +240,15 @@ export async function fetchStoreInfoFromBackend() {
   try {
     const { data, error } = await supabase
       .from('organizations')
-      .select('name, owner_phone, owner_email')
+      .select('id, name, owner_phone, owner_email')
       .limit(1)
       .maybeSingle();
 
     if (!error && data) {
       return {
-        storeName: data.name || 'Store Hub',
-        whatsappNumber: data.owner_phone || '+91 9147364980',
+        id: data.id,
+        storeName: data.name || '',
+        whatsappNumber: data.owner_phone || '',
         supportEmail: data.owner_email || ''
       };
     }
@@ -255,6 +256,26 @@ export async function fetchStoreInfoFromBackend() {
     console.warn('Could not fetch store organization info:', err);
   }
   return null;
+}
+
+/**
+ * Persist updated store name & whatsapp phone to backend
+ */
+export async function updateStoreInfoInBackend(newSettings = {}) {
+  try {
+    const updates = {};
+    if (newSettings.storeName) updates.name = newSettings.storeName;
+    if (newSettings.whatsappNumber) updates.owner_phone = newSettings.whatsappNumber;
+
+    if (Object.keys(updates).length > 0) {
+      const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
+      if (orgs && orgs.length > 0) {
+        await supabase.from('organizations').update(updates).eq('id', orgs[0].id);
+      }
+    }
+  } catch (err) {
+    console.warn('Could not sync store settings to backend:', err);
+  }
 }
 
 /**

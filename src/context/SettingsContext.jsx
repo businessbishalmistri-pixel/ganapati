@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const SettingsContext = createContext();
 
-import { fetchStoreInfoFromBackend } from '../services/supabaseStore';
+import { fetchStoreInfoFromBackend, updateStoreInfoInBackend } from '../services/supabaseStore';
 
 const DEFAULT_SETTINGS = {
   storeName: 'Ganapati Store',
@@ -34,14 +34,31 @@ export const SettingsProvider = ({ children }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    // Dynamically fetch store organization name from database
+    // Dynamically fetch store organization info from database
     fetchStoreInfoFromBackend().then((info) => {
-      if (info && info.storeName) {
-        setSettings((prev) => ({
-          ...prev,
-          storeName: info.storeName || prev.storeName,
-          whatsappNumber: info.whatsappNumber || prev.whatsappNumber
-        }));
+      if (info) {
+        setSettings((prev) => {
+          let savedLocal = {};
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) savedLocal = JSON.parse(raw);
+          } catch (e) {
+            console.error(e);
+          }
+
+          // Local explicit admin changes take priority over fallback backend values
+          const resolvedStoreName = savedLocal.storeName || (info.storeName ? info.storeName : prev.storeName);
+          const resolvedWhatsapp = savedLocal.whatsappNumber || (info.whatsappNumber ? info.whatsappNumber : prev.whatsappNumber);
+
+          const nextSettings = {
+            ...prev,
+            ...savedLocal,
+            storeName: resolvedStoreName,
+            whatsappNumber: resolvedWhatsapp
+          };
+
+          return nextSettings;
+        });
       }
     });
   }, []);
@@ -79,6 +96,9 @@ export const SettingsProvider = ({ children }) => {
       }
       return updated;
     });
+
+    // Also persist store name and phone to backend database
+    updateStoreInfoInBackend(newValues);
   };
 
   const resetSettings = () => {

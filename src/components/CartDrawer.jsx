@@ -89,8 +89,10 @@ export const CartDrawer = () => {
       return;
     }
 
-    const storePhone = (settings?.whatsappNumber || '919147364980').replace(/\D/g, '');
-    const cleanStorePhone = storePhone.length === 10 ? '91' + storePhone : storePhone;
+    const rawStorePhone = (settings?.whatsappNumber || '').replace(/\D/g, '');
+    let storeDigits = rawStorePhone;
+    if (storeDigits.startsWith('0')) storeDigits = storeDigits.substring(1);
+    const cleanStorePhone = storeDigits.length === 10 ? '91' + storeDigits : (storeDigits || '919147364980');
 
     const itemsList = cartItems
       .map((item, idx) => {
