@@ -14,14 +14,12 @@ export const CategoryShelf = ({
     <section className="space-y-4 pt-2">
       {/* Category Section Header */}
       <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-        <div className="flex flex-col min-w-0 pr-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-600 flex-shrink-0" />
-            <h2 className="text-[11.5px] sm:text-sm font-black uppercase tracking-wider text-slate-700 truncate leading-tight" title={categoryName}>
-              {categoryName}
-            </h2>
-          </div>
-          <span className="text-[9.5px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded self-start mt-1">
+        <div className="flex items-center gap-1.5 min-w-0 pr-2">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-600 flex-shrink-0" />
+          <h2 className="text-[11.5px] sm:text-sm font-black uppercase tracking-wider text-slate-700 truncate leading-tight" title={categoryName}>
+            {categoryName}
+          </h2>
+          <span className="text-[9.5px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded flex-shrink-0">
             {products.length} {products.length === 1 ? 'item' : 'items'}
           </span>
         </div>
