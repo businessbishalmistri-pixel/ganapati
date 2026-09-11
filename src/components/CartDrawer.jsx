@@ -32,7 +32,13 @@ export const CartDrawer = () => {
     totalItemsCount
   } = useCart();
 
-  const { customer, openProfileModal, openPickupModal } = useAuth();
+  const { 
+    customer, 
+    pickupProfile, 
+    sessionPickupContact, 
+    openProfileModal, 
+    openPickupModal 
+  } = useAuth();
   const { settings } = useSettings();
   const { showToast } = useToast();
 
@@ -67,24 +73,26 @@ export const CartDrawer = () => {
   );
 
   const isFreeDelivery = subtotal >= freeThreshold;
-  const deliveryFee = deliveryMethod === 'pickup' ? 0 : (isFreeDelivery ? 0 : flatFee);
-  const totalAmount = subtotal + deliveryFee;
-
   const freeShippingProgress = freeThreshold > 0 ? Math.min(100, Math.round((subtotal / freeThreshold) * 100)) : 100;
   const amountNeededForFreeShipping = Math.max(0, freeThreshold - subtotal);
 
-  const handleProceedToWhatsApp = () => {
-    // 1. If shipping and customer details missing, prompt to fill
-    if (deliveryMethod === 'shipping' && (!customer || !customer.name || !customer.phone || !customer.address)) {
+  const handleCheckoutWhatsApp = () => {
+    if (cartItems.length === 0) {
+      showToast('Your cart is empty', 'error');
+      return;
+    }
+
+    // 1. If home delivery and address missing, prompt Delivery details modal
+    if (deliveryMethod === 'shipping' && (!customer || !customer.address || !customer.phone)) {
       openProfileModal('checkout');
       return;
     }
 
-    const pickupName = customer?.pickupName || customer?.name || customer?.fullName;
-    const pickupPhone = customer?.pickupPhone || customer?.phone;
+    const activePickupName = sessionPickupContact?.name || pickupProfile?.name || customer?.pickupName || customer?.name || customer?.fullName;
+    const activePickupPhone = sessionPickupContact?.phone || pickupProfile?.phone || customer?.pickupPhone || customer?.phone;
 
-    // 2. If pickup and customer name/phone missing, prompt dedicated Store Pickup modal
-    if (deliveryMethod === 'pickup' && (!customer || !pickupName || !pickupPhone)) {
+    // 2. If pickup and pickup name/phone missing, prompt dedicated Store Pickup modal
+    if (deliveryMethod === 'pickup' && (!activePickupName || !activePickupPhone)) {
       openPickupModal('checkout');
       return;
     }
@@ -134,8 +142,8 @@ Please confirm and dispatch to my delivery address. Thank you!`;
 *Delivery Method:* Store Pickup (Pay at Store)
 
 *Customer Details:*
-• *Name:* ${pickupName || 'Customer'}
-• *Phone:* ${pickupPhone || 'Not provided'}
+• *Name:* ${activePickupName || 'Customer'}
+• *Phone:* ${activePickupPhone || 'Not provided'}
 • *Store Pickup Hub:* ${settings?.storeAddress || 'Main Store Hub'}
 
 *Items Ordered:*
@@ -448,8 +456,8 @@ Please keep my order ready for store pickup. Thank you!`;
                 </div>
               ) : (
                 (() => {
-                  const pickupDisplayName = customer?.pickupName || customer?.name || customer?.fullName;
-                  const pickupDisplayPhone = customer?.pickupPhone || customer?.phone;
+                  const pickupDisplayName = sessionPickupContact?.name || pickupProfile?.name || customer?.pickupName || customer?.name || customer?.fullName;
+                  const pickupDisplayPhone = sessionPickupContact?.phone || pickupProfile?.phone || customer?.pickupPhone || customer?.phone;
                   return (
                     <div className="space-y-2.5">
                       {/* Separate Card 1: Store Pickup Location Details */}

@@ -16,8 +16,10 @@ export function StorePickupModal({ onConfirmPickup }) {
   const { 
     isPickupModalOpen, 
     closePickupModal, 
-    customer, 
-    saveProfile, 
+    customer,
+    pickupProfile,
+    sessionPickupContact,
+    savePickupProfile, 
     pickupPendingAction 
   } = useAuth();
   
@@ -26,6 +28,7 @@ export function StorePickupModal({ onConfirmPickup }) {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [saveForFuture, setSaveForFuture] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -39,17 +42,14 @@ export function StorePickupModal({ onConfirmPickup }) {
 
   useEffect(() => {
     if (isPickupModalOpen) {
-      if (customer) {
-        setName(customer.pickupName || customer.name || customer.fullName || '');
-        const rawPhone = customer.pickupPhone || customer.phone || '';
-        setPhone(rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : '');
-      } else {
-        setName('');
-        setPhone('');
-      }
+      const activeName = sessionPickupContact?.name || pickupProfile?.name || customer?.name || customer?.fullName || '';
+      const rawPhone = sessionPickupContact?.phone || pickupProfile?.phone || customer?.phone || '';
+      setName(activeName);
+      setPhone(rawPhone ? rawPhone.replace(/\D/g, '').slice(-10) : '');
+      setSaveForFuture(false); // Default to unselected/one-time as requested
       setErrors({});
     }
-  }, [isPickupModalOpen, customer]);
+  }, [isPickupModalOpen, customer, pickupProfile, sessionPickupContact]);
 
   if (!isPickupModalOpen) return null;
 
@@ -72,21 +72,22 @@ export function StorePickupModal({ onConfirmPickup }) {
     e.preventDefault();
     if (!validate()) return;
 
-    const profileData = {
-      ...(customer || {}),
-      name: customer?.name || name.trim(),
-      fullName: customer?.fullName || name.trim(),
-      phone: customer?.phone || phone.trim(),
-      pickupName: name.trim(),
-      pickupPhone: phone.trim()
+    const pickupData = {
+      name: name.trim(),
+      phone: phone.trim()
     };
 
-    saveProfile(profileData);
-    showToast('Pickup contact details saved!', 'success');
+    savePickupProfile(pickupData, saveForFuture);
+    showToast(
+      saveForFuture 
+        ? 'Pickup contact saved for future orders!' 
+        : 'Pickup contact set for this order!', 
+      'success'
+    );
     closePickupModal();
 
     if (onConfirmPickup && pickupPendingAction === 'checkout') {
-      onConfirmPickup(profileData);
+      onConfirmPickup(pickupData);
     }
   };
 
@@ -130,8 +131,8 @@ export function StorePickupModal({ onConfirmPickup }) {
         <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden min-h-0">
           <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
             
-            {/* Form Fields: Full Name & WhatsApp Number first */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+            {/* Form Fields: Stacked vertically */}
+            <div className="space-y-3.5">
               {/* 1. Full Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -179,6 +180,26 @@ export function StorePickupModal({ onConfirmPickup }) {
                   />
                 </div>
                 {errors.phone && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.phone}</p>}
+              </div>
+
+              {/* 3. Checkbox: Use this for future store pickup (Default unchecked) */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={saveForFuture}
+                    onChange={(e) => setSaveForFuture(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 transition-colors cursor-pointer accent-slate-900"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-slate-800 block">
+                      Use this for future store pickup
+                    </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                      If unchecked, these details are used only once for this order and your saved profile remains unchanged.
+                    </p>
+                  </div>
+                </label>
               </div>
             </div>
 

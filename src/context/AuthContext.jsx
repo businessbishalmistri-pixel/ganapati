@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 
 const PROFILE_KEY = 'ganapati_customer_profile';
+const PICKUP_PROFILE_KEY = 'ganapati_pickup_profile';
 const LEGACY_SESSION_KEY = 'customer_session';
 
 export const AuthProvider = ({ children }) => {
@@ -16,6 +17,19 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
 
+  const [pickupProfile, setPickupProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem(PICKUP_PROFILE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Could not read pickup profile', e);
+    }
+    return null;
+  });
+
+  // Ephemeral/session-only pickup contact for current cart order
+  const [sessionPickupContact, setSessionPickupContact] = useState(null);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profilePendingAction, setProfilePendingAction] = useState(null); // 'checkout' | null
 
@@ -27,11 +41,10 @@ export const AuthProvider = ({ children }) => {
     const handleStorage = () => {
       try {
         const saved = localStorage.getItem(PROFILE_KEY) || localStorage.getItem(LEGACY_SESSION_KEY);
-        if (saved) {
-          setCustomer(JSON.parse(saved));
-        } else {
-          setCustomer(null);
-        }
+        setCustomer(saved ? JSON.parse(saved) : null);
+
+        const savedPickup = localStorage.getItem(PICKUP_PROFILE_KEY);
+        setPickupProfile(savedPickup ? JSON.parse(savedPickup) : null);
       } catch (e) {
         console.warn('Could not parse profile from storage', e);
       }
@@ -67,6 +80,29 @@ export const AuthProvider = ({ children }) => {
     return standardized;
   };
 
+  const savePickupProfile = (pickupData, saveForFuture = false) => {
+    const standardized = {
+      name: pickupData.name || '',
+      phone: pickupData.phone || '',
+      updatedAt: new Date().toISOString()
+    };
+
+    // Always set for current checkout session
+    setSessionPickupContact(standardized);
+
+    // Only save permanently to localStorage if user explicitly checked "Use this for future store pickup"
+    if (saveForFuture) {
+      try {
+        localStorage.setItem(PICKUP_PROFILE_KEY, JSON.stringify(standardized));
+      } catch (e) {
+        console.warn('Could not save pickup profile to localStorage', e);
+      }
+      setPickupProfile(standardized);
+    }
+
+    return standardized;
+  };
+
   const openProfileModal = (pendingAction = null) => {
     setProfilePendingAction(pendingAction);
     setIsProfileOpen(true);
@@ -89,8 +125,11 @@ export const AuthProvider = ({ children }) => {
 
   const clearProfile = () => {
     localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(PICKUP_PROFILE_KEY);
     localStorage.removeItem(LEGACY_SESSION_KEY);
     setCustomer(null);
+    setPickupProfile(null);
+    setSessionPickupContact(null);
   };
 
   return (
@@ -98,6 +137,10 @@ export const AuthProvider = ({ children }) => {
       value={{
         customer,
         currentCustomer: customer,
+        pickupProfile,
+        sessionPickupContact,
+        setSessionPickupContact,
+        savePickupProfile,
         isProfileOpen,
         setIsProfileOpen,
         openProfileModal,
