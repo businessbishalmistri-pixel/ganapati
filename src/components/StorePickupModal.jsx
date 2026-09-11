@@ -96,7 +96,7 @@ export function StorePickupModal({ onConfirmPickup }) {
       <div className="fixed inset-0" onClick={closePickupModal} />
 
       {/* Sheet / Modal Container */}
-      <div className="relative bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
+      <div className="relative bg-white w-full max-w-xl md:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
         
         {/* Mobile Drag Indicator Pill */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden flex-shrink-0" />
@@ -131,7 +131,7 @@ export function StorePickupModal({ onConfirmPickup }) {
           <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
             
             {/* Form Fields: Full Name & WhatsApp Number first */}
-            <div className="space-y-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
               {/* 1. Full Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
