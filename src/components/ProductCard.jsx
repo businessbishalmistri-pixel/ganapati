@@ -69,29 +69,29 @@ export const ProductCard = ({ product, onSelectProduct }) => {
 
 
       {/* Product Details Area (Compact Density) */}
-      <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between space-y-2">
+      <div className="p-2 sm:p-2.5 flex-1 flex flex-col justify-between space-y-1.5">
         <div>
           {/* Title */}
           <h3 
             onClick={() => onSelectProduct(product)}
-            className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-2 hover:text-emerald-600 transition-colors cursor-pointer leading-snug"
+            className="font-bold text-slate-900 text-[11.5px] sm:text-[12.5px] line-clamp-2 hover:text-emerald-600 transition-colors cursor-pointer leading-snug"
             title={product.title || product.name}
           >
             {product.title || product.name}
           </h3>
 
           {/* Unit / Options / Category Info */}
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-1 mt-0.5">
             {hasVariants ? (
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">
+              <span className="text-[9.5px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">
                 {product.variants.length} Options
               </span>
             ) : product.unit ? (
-              <span className="text-[11px] text-slate-500 font-medium truncate">
+              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
                 {product.unit}
               </span>
             ) : (
-              <span className="text-[11px] text-slate-500 font-medium truncate">
+              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
                 {product.category || 'Item'}
               </span>
             )}
@@ -99,14 +99,14 @@ export const ProductCard = ({ product, onSelectProduct }) => {
         </div>
 
         {/* Price & Add Stepper Row */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
+        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1">
           <div className="min-w-0">
             <div className="flex items-baseline gap-1">
-              <span className="text-xs sm:text-sm font-black text-slate-900">
+              <span className="text-[12px] sm:text-sm font-black text-slate-900">
                 {settings.currency}{displayPrice.toFixed(0)}
               </span>
               {displayMrp > displayPrice && (
-                <span className="text-[10px] text-slate-400 line-through">
+                <span className="text-[9.5px] text-slate-400 line-through">
                   {settings.currency}{displayMrp.toFixed(0)}
                 </span>
               )}
@@ -124,7 +124,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Select Variant & Add'}
-              className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 border cursor-pointer ${
+              className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 border cursor-pointer ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-600/10'
@@ -133,7 +133,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               <span>{isOutOfStock ? 'Out' : 'ADD'}</span>
             </button>
           ) : qtyInCart > 0 ? (
-            <div className="flex items-center border border-emerald-600 bg-emerald-600 text-white rounded overflow-hidden shadow-xs">
+            <div className="flex items-center border border-emerald-600 bg-emerald-600 text-white rounded overflow-hidden shadow-2xs">
               <button
                 type="button"
                 onClick={(e) => {
@@ -141,12 +141,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(product.id, qtyInCart - 1, product.stock);
                 }}
                 title="Decrease"
-                className="w-6 h-7 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-emerald-700 transition-colors font-bold active:scale-90 cursor-pointer"
+                className="w-5.5 h-6 sm:w-6.5 sm:h-6.5 flex items-center justify-center hover:bg-emerald-700 transition-colors font-bold active:scale-90 cursor-pointer"
               >
-                <Minus className="w-3 h-3" />
+                <Minus className="w-2.5 h-2.5" />
               </button>
               
-              <span className="w-5 sm:w-6 text-center text-xs font-black select-none">
+              <span className="w-4.5 sm:w-5.5 text-center text-[11px] font-black select-none">
                 {qtyInCart}
               </span>
               
@@ -158,9 +158,9 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(product.id, qtyInCart + 1, product.stock);
                 }}
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
-                className="w-6 h-7 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold active:scale-90 cursor-pointer"
+                className="w-5.5 h-6 sm:w-6.5 sm:h-6.5 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold active:scale-90 cursor-pointer"
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-2.5 h-2.5" />
               </button>
             </div>
           ) : (
@@ -171,7 +171,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-              className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded text-xs font-black uppercase tracking-wider transition-all shadow-xs active:scale-95 border cursor-pointer ${
+              className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 border cursor-pointer ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-600/10'
