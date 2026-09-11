@@ -8,7 +8,7 @@ export const ToastContainer = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+    <div className="hidden sm:flex fixed bottom-6 right-6 z-50 flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
       {toasts.map((toast) => {
         let bgColor = 'bg-slate-900/95 text-white border-slate-700/50';
         let Icon = CheckCircle2;
