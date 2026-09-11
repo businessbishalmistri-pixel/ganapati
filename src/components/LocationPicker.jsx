@@ -44,10 +44,10 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
           center: defaultPos,
           zoom: 14,
           zoomControl: true,
+          attributionControl: false,
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap',
           maxZoom: 19,
         }).addTo(map);
 
@@ -154,7 +154,7 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
         </button>
       </div>
 
-      <div className="relative rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-200 shadow-inner h-60 sm:h-64 bg-slate-100">
+      <div className="relative rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-200 shadow-inner h-60 sm:h-64 bg-slate-100 [&_.leaflet-control-attribution]:!hidden">
         <div ref={mapContainerRef} className="w-full h-full" />
       </div>
 
