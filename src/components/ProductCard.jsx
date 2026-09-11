@@ -202,11 +202,11 @@ export const ProductCard = ({ product, onSelectProduct }) => {
 
         {/* Price Row */}
         <div className="pt-0.5 flex items-baseline gap-1">
-          <span className="text-[11.5px] sm:text-[13px] font-black text-slate-900">
+          <span className="text-[14px] sm:text-[13px] font-black text-slate-900 tracking-tight">
             {settings.currency}{displayPrice.toFixed(0)}
           </span>
           {displayMrp > displayPrice && (
-            <span className="text-[9px] sm:text-[9.5px] text-slate-400 line-through">
+            <span className="text-[11px] sm:text-[9.5px] text-slate-400 line-through">
               {settings.currency}{displayMrp.toFixed(0)}
             </span>
           )}
