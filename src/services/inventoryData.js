@@ -278,6 +278,7 @@ export function normalizeProduct(p) {
   const effectiveStock = parseInt(p.stock_quantity ?? p.stock ?? (inStock ? 50 : 0), 10);
   const costPrice = parseFloat(p.cost_price || 0) || 0;
   const lowStockThreshold = parseInt(p.low_stock_threshold ?? 5, 10);
+  const isPinned = Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned' || p.featured);
 
   return {
     id: p.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -285,6 +286,8 @@ export function normalizeProduct(p) {
     name: p.title || p.name || 'Untitled Product',
     category: p.category || 'Groceries & Staples',
     sub_category: p.sub_category || '',
+    is_pinned: isPinned,
+    is_starred: isPinned,
     description: p.description || '',
     selling_price: sellingPrice,
     price: sellingPrice,

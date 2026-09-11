@@ -221,8 +221,13 @@ export function App() {
       ? smartSearchProducts(categoryFiltered, searchQuery)
       : categoryFiltered;
 
-    // 3. Apply sorting (if explicit sort chosen, otherwise preserve relevance)
+    // 3. Apply sorting: Starred/pinned products always float to the top
     return [...searched].sort((a, b) => {
+      const aPinned = Boolean(a.is_pinned || a.is_starred || a.sub_category === 'pinned');
+      const bPinned = Boolean(b.is_pinned || b.is_starred || b.sub_category === 'pinned');
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+
       if (sortBy === 'price-low') return a.price - b.price;
       if (sortBy === 'price-high') return b.price - a.price;
       if (sortBy === 'rating') return b.rating - a.rating;

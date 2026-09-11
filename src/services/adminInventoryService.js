@@ -198,6 +198,22 @@ class AdminInventoryService {
   }
 
   /**
+   * Toggle star/pinned status for product
+   */
+  async togglePinProduct(id) {
+    const currentList = this.getCachedProducts();
+    const prod = currentList.find(p => p.id === id);
+    if (!prod) return null;
+
+    const nextPinned = !prod.is_pinned;
+    return this.updateProduct(id, {
+      is_pinned: nextPinned,
+      is_starred: nextPinned,
+      sub_category: nextPinned ? 'pinned' : ''
+    });
+  }
+
+  /**
    * Toggle product in stock vs out of stock
    */
   async toggleInStock(id) {

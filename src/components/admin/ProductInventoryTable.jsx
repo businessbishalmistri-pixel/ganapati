@@ -10,7 +10,8 @@ import {
   RefreshCw, 
   Package,
   ChevronRight,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Star
 } from 'lucide-react';
 import { smartSearchProducts } from '../../utils/smartSearch';
 
@@ -21,6 +22,7 @@ export function ProductInventoryTable({
   onAddProduct,
   onDeleteProduct,
   onToggleInStock,
+  onTogglePinProduct,
   onRefresh,
   isRefreshing
 }) {
@@ -65,8 +67,13 @@ export function ProductInventoryTable({
       ? smartSearchProducts(baseFiltered, searchQuery)
       : baseFiltered;
 
-    // 3. Default sort by latest updated
+    // 3. Default sort: Starred/pinned items first, then by latest updated
     return [...searched].sort((a, b) => {
+      const aPinned = Boolean(a.is_pinned || a.is_starred || a.sub_category === 'pinned');
+      const bPinned = Boolean(b.is_pinned || b.is_starred || b.sub_category === 'pinned');
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+
       const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
       const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
       return dateB - dateA;
@@ -368,6 +375,23 @@ export function ProductInventoryTable({
                         <span>Edit</span>
                         <ChevronRight className="w-3 h-3 text-slate-400" />
                       </button>
+
+                      {/* ⭐ Star Pin to Top (Mobile) */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTogglePinProduct && onTogglePinProduct(product.id);
+                        }}
+                        className={`p-1 rounded-full transition-colors cursor-pointer flex items-center justify-center ${
+                          product.is_pinned 
+                            ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' 
+                            : 'text-slate-300 hover:text-amber-400 hover:bg-slate-100'
+                        }`}
+                        title={product.is_pinned ? "Starred (Shown at top)" : "Star product (Pin to top)"}
+                      >
+                        <Star className={`w-3.5 h-3.5 transition-colors ${product.is_pinned ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />
+                      </button>
                     </div>
 
                     {/* Red Outline Trash Button */}
@@ -459,9 +483,25 @@ export function ProductInventoryTable({
                             )}
                           </div>
                           <div className="min-w-0 max-w-[280px] lg:max-w-md">
-                            <span className="font-bold text-slate-900 block truncate text-xs" title={product.title}>
-                              {product.title}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-900 block truncate text-xs" title={product.title}>
+                                {product.title}
+                              </span>
+                              {/* ⭐ Star Pin to Top (Desktop after title) */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onTogglePinProduct && onTogglePinProduct(product.id);
+                                }}
+                                className={`p-0.5 rounded hover:bg-slate-100 transition-colors inline-flex items-center justify-center cursor-pointer flex-shrink-0 ${
+                                  product.is_pinned ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'
+                                }`}
+                                title={product.is_pinned ? "Starred (Shown at top)" : "Star product (Pin to top)"}
+                              >
+                                <Star className={`w-3.5 h-3.5 transition-colors ${product.is_pinned ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />
+                              </button>
+                            </div>
                             {product.unit && (
                               <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded font-medium mt-0.5 inline-block">
                                 {product.unit}
