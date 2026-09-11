@@ -131,12 +131,6 @@ export function CustomerProfileModal() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Left Side: 3 Form Inputs */}
               <div className="space-y-4">
-                <div className="border-b border-slate-100 pb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Customer Information
-                  </span>
-                </div>
-
                 {/* 1. Full Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
