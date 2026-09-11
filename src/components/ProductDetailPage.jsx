@@ -311,14 +311,14 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
           </div>
         </div>
 
-        {/* Similar Category Products Section (Identical Home Page Density) */}
+        {/* Recommendation Products Section (Identical Home Screen 3-Column Density) */}
         {fallbackProducts.length > 0 && (
           <div className="space-y-4 pt-6 border-t border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-600" />
                 <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700">
-                  Similar Products in {product.category || 'Store'}
+                  Recommendation
                 </h2>
                 <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                   {fallbackProducts.length} items
@@ -334,12 +334,13 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
               </button>
             </div>
 
-            {/* Products Grid (Identical High Density Sizing to Home Page) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
-              {fallbackProducts.map((simProd) => (
+            {/* Products Grid (3 Columns on Mobile, 3+ on Tablet/Desktop identical to Home Screen) */}
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
+              {fallbackProducts.map((simProd, idx) => (
                 <ProductCard
                   key={simProd.id}
                   product={simProd}
+                  priority={idx < 3}
                   onSelectProduct={(p) => {
                     onSelectProduct(p);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
