@@ -23,9 +23,13 @@ import { AdminSettingsModal } from './AdminSettingsModal';
 
 export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'categories'
-  const [products, setProducts] = useState([]);
+  // ⚡ 0ms SWR Instant Paint: initialize immediately from cached snapshot
+  const [products, setProducts] = useState(() => adminInventoryService.getCachedProducts() || []);
   const [categories, setCategories] = useState(() => adminInventoryService.getCategories() || []);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    const cached = adminInventoryService.getCachedProducts();
+    return !cached || cached.length === 0;
+  });
   const [isRefreshing, setIsRefreshing] = useState(false);
   // Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -39,8 +43,12 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
         adminInventoryService.getAllProducts(),
         adminInventoryService.getCategories()
       ]);
-      setProducts(prods);
-      setCategories(cats);
+      if (Array.isArray(prods) && prods.length > 0) {
+        setProducts(prods);
+      }
+      if (Array.isArray(cats) && cats.length > 0) {
+        setCategories(cats);
+      }
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -50,7 +58,8 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   };
 
   useEffect(() => {
-    loadData();
+    // Background revalidation on mount (non-blocking)
+    loadData(true);
 
     // Subscribe to real-time changes on products table across all admin devices
     let channel;
@@ -187,9 +196,13 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-bold text-sm sm:text-base text-slate-900 leading-tight">Ganapati Admin</h1>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live DB
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+              isRefreshing 
+                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isRefreshing ? 'bg-blue-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
+              {isRefreshing ? 'Syncing...' : 'Live DB'}
             </span>
           </div>
           <span className="text-[11px] text-slate-400 font-medium">Store & Inventory Management</span>
