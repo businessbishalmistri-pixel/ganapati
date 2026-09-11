@@ -198,10 +198,10 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
         errs.phone = 'Contact number is required';
       }
     } else {
-      if (!customerInfo.name.trim()) errs.name = 'Full name is required';
+      if (!customerInfo.name.trim()) errs.name = 'Please enter who will pick up the order';
       if (!customerInfo.phone.trim()) {
-        errs.phone = 'WhatsApp phone number is required';
-      } else if (customerInfo.phone.trim().length < 10) {
+        errs.phone = 'Contact number is required';
+      } else if (customerInfo.phone.trim().replace(/\D/g, '').length < 10) {
         errs.phone = 'Please enter a valid 10-digit mobile number';
       }
     }
@@ -213,7 +213,12 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
   const handlePlaceCodOrder = async (e) => {
     e.preventDefault();
     if (!validate()) {
-      showToast('Please fill in all required delivery details', 'error');
+      showToast(
+        deliveryMethod === 'pickup' 
+          ? 'Please provide who will pick up (Name & Phone number)' 
+          : 'Please fill in all required delivery details', 
+        'error'
+      );
       return;
     }
 
@@ -499,40 +504,48 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
                 {/* Pickup Customer Contact Info */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-                      <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[9px]">1</span>
-                      Pickup Person Details
-                    </h3>
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[9px] font-bold">1</span>
+                        Who will pick up the order?
+                      </h3>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Please provide the name and mobile number of the person collecting this order.
+                      </p>
+                    </div>
 
                     {customerInfo.name && !isEditingPickupPerson && (
                       <button
                         type="button"
                         onClick={() => setIsEditingPickupPerson(true)}
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F4F5F7] hover:bg-slate-200 text-slate-800 transition-colors cursor-pointer active:scale-95"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#F4F5F7] hover:bg-slate-200 text-slate-800 transition-colors cursor-pointer active:scale-95 shrink-0"
                       >
                         <Edit3 className="w-3 h-3 text-slate-600" />
-                        <span>Edit</span>
+                        <span>Change</span>
                       </button>
                     )}
                   </div>
 
                   {customerInfo.name && !isEditingPickupPerson ? (
-                    <div className="bg-[#F4F5F7] p-3.5 rounded-2xl flex items-center justify-between">
+                    <div className="bg-[#F4F5F7] p-3.5 rounded-2xl flex items-center justify-between border border-slate-200/60">
                       <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-slate-900 text-sm">{customerInfo.name}</span>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white text-slate-800 text-[10px] font-bold shadow-xs">
-                            <Check className="w-3 h-3 text-slate-800" />
-                            <span>Profile Contact</span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white text-emerald-800 text-[10px] font-bold shadow-2xs border border-emerald-100">
+                            <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                            <span>Collecting in Store</span>
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 font-medium">+91 {customerInfo.phone}</p>
+                        <p className="text-xs text-slate-600 font-medium font-mono">
+                          +91 {customerInfo.phone ? customerInfo.phone.replace(/\D/g, '').slice(-10) : ''}
+                        </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
                       {customerInfo.name && (
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <span className="text-xs font-semibold text-slate-600">Enter Pickup Person Details</span>
                           <button
                             type="button"
                             onClick={() => setIsEditingPickupPerson(false)}
@@ -545,29 +558,42 @@ export const CheckoutModal = ({ onOrderSuccess }) => {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Full Name <span className="text-rose-500">*</span>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Pickup Person Name <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="Full name"
+                            placeholder="Name of person collecting order"
                             value={customerInfo.name}
-                            onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                            className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border-0 focus:bg-white focus:ring-1 focus:ring-slate-400 outline-none transition-all"
+                            onChange={(e) => {
+                              setCustomerInfo({ ...customerInfo, name: e.target.value });
+                              if (errors.name) setErrors(prev => ({ ...prev, name: null }));
+                            }}
+                            className={`w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border ${errors.name ? 'border-rose-400 bg-rose-50/40' : 'border-transparent'} focus:bg-white focus:border-slate-400 focus:ring-1 focus:ring-slate-400 outline-none transition-all`}
                           />
+                          {errors.name && (
+                            <p className="text-[10px] text-rose-600 font-semibold mt-1">{errors.name}</p>
+                          )}
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            WhatsApp Number <span className="text-rose-500">*</span>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">
+                            Pickup Person Phone / WhatsApp <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="tel"
+                            maxLength={10}
                             placeholder="10-digit mobile number"
                             value={customerInfo.phone}
-                            onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value.replace(/\D/g, '') })}
-                            className="w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border-0 focus:bg-white focus:ring-1 focus:ring-slate-400 outline-none transition-all"
+                            onChange={(e) => {
+                              setCustomerInfo({ ...customerInfo, phone: e.target.value.replace(/\D/g, '') });
+                              if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
+                            }}
+                            className={`w-full px-3.5 py-2.5 text-xs font-medium rounded-xl bg-[#F4F5F7] border ${errors.phone ? 'border-rose-400 bg-rose-50/40' : 'border-transparent'} focus:bg-white focus:border-slate-400 focus:ring-1 focus:ring-slate-400 outline-none transition-all font-mono`}
                           />
+                          {errors.phone && (
+                            <p className="text-[10px] text-rose-600 font-semibold mt-1">{errors.phone}</p>
+                          )}
                         </div>
                       </div>
                     </div>

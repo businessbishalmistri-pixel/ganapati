@@ -70,11 +70,15 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    } else {
       document.body.style.overflow = '';
-    };
-  }, []);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (productToEdit) {
@@ -320,6 +324,8 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       setIsSaving(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
