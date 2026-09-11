@@ -229,6 +229,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = (cartKey, newQuantity, maxStock) => {
+    const targetKeyStr = String(cartKey);
     if (newQuantity <= 0) {
       removeFromCart(cartKey);
       return;
@@ -240,17 +241,28 @@ export const CartProvider = ({ children }) => {
     }
 
     setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        (item.cartKey || item.cartItemId || item.id) === cartKey 
+      prevItems.map((item) => {
+        const itemKeyStr = String(item.cartKey || item.cartItemId || item.id);
+        const match = itemKeyStr === targetKeyStr || String(item.id) === targetKeyStr;
+        return match
           ? { ...item, quantity: Math.min(newQuantity, item.stockQuantity || item.stock || maxStock || newQuantity) } 
-          : item
-      )
+          : item;
+      })
     );
   };
 
   const removeFromCart = (cartKey) => {
-    const item = cartItems.find((i) => (i.cartKey || i.cartItemId || item?.id) === cartKey);
-    setCartItems((prevItems) => prevItems.filter((i) => (i.cartKey || i.cartItemId || i.id) !== cartKey));
+    const targetKeyStr = String(cartKey);
+    const item = cartItems.find((i) => {
+      const iKeyStr = String(i.cartKey || i.cartItemId || i.id);
+      return iKeyStr === targetKeyStr || String(i.id) === targetKeyStr;
+    });
+    setCartItems((prevItems) => 
+      prevItems.filter((i) => {
+        const iKeyStr = String(i.cartKey || i.cartItemId || i.id);
+        return iKeyStr !== targetKeyStr && String(i.id) !== targetKeyStr;
+      })
+    );
     if (item) {
       const vLabel = item.variantName || (item.selectedVariant ? (item.selectedVariant.name || item.selectedVariant.size) : '');
       showToast(`Removed "${item.title || item.name}${vLabel ? ` (${vLabel})` : ''}" from cart`, 'info');

@@ -11,8 +11,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
 
   const priceVal = parseFloat(product.selling_price || product.price || 0) || 0;
   const mrpVal = parseFloat(product.mrp || product.originalPrice || product.original_price || 0) || 0;
-  const hasVariants = Boolean((product.has_variants || product.hasVariants) && Array.isArray(product.variants) && product.variants.length > 0);
-  const firstVariant = hasVariants ? product.variants[0] : null;
+  const variantsList = Array.isArray(product?.variants) ? product.variants : [];
+  const hasVariants = Boolean(
+    variantsList.length > 1 || 
+    ((product?.has_variants || product?.hasVariants) && variantsList.length > 0)
+  );
+  const firstVariant = hasVariants ? variantsList[0] : null;
   const displayPrice = firstVariant 
     ? (parseFloat(firstVariant.selling_price || firstVariant.price || priceVal) || priceVal)
     : priceVal;
@@ -20,10 +24,19 @@ export const ProductCard = ({ product, onSelectProduct }) => {
     ? (parseFloat(firstVariant.mrp || firstVariant.originalPrice || firstVariant.original_price || mrpVal) || 0)
     : mrpVal;
 
-  const cartItem = cartItems.find((i) => (i.id === product.id || i.cartKey === product.id));
-  const qtyInCart = cartItem ? cartItem.quantity : 0;
-  const isOutOfStock = product.in_stock === false || (product.stock !== undefined && product.stock <= 0);
-  const isMaxInCart = false;
+  // Track all cart items matching this product (standard or any of its variants)
+  const matchingCartItems = cartItems.filter((i) => {
+    const iKey = String(i.cartKey || i.cartItemId || i.id);
+    return iKey === String(product.id) || iKey.startsWith(`${product.id}_`) || String(i.id) === String(product.id);
+  });
+  const totalQtyInCart = matchingCartItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
+  const primaryCartKey = matchingCartItems.length > 0 
+    ? (matchingCartItems[0].cartKey || matchingCartItems[0].cartItemId || matchingCartItems[0].id) 
+    : product.id;
+
+  const maxStock = parseInt(product.stock_quantity ?? product.stock ?? 999, 10);
+  const isOutOfStock = product.in_stock === false || (product.stock !== undefined && product.stock <= 0 && (!hasVariants || variantsList.every(v => (v.stock_quantity ?? v.stock ?? 0) <= 0)));
+  const isMaxInCart = maxStock > 0 && totalQtyInCart >= maxStock;
 
   return (
     <div className="group relative bg-white rounded border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
@@ -84,7 +97,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
           <div className="flex items-center gap-1 mt-0.5">
             {hasVariants ? (
               <span className="text-[9.5px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">
-                {product.variants.length} Options
+                {variantsList.length} Options
               </span>
             ) : product.unit ? (
               <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
@@ -116,7 +129,10 @@ export const ProductCard = ({ product, onSelectProduct }) => {
           {/* Action Button: Variant Selector Sheet if multiple options, direct stepper/add if standard */}
           {hasVariants ? (
             <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 if (!isOutOfStock) {
                   setIsVariantSheetOpen(true);
@@ -124,54 +140,67 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Select Variant & Add'}
-              className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 border cursor-pointer ${
+              className={`min-h-[26px] px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 border cursor-pointer flex items-center justify-center gap-1 ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                  : totalQtyInCart > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-emerald-600/20'
                   : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-600/10'
               }`}
             >
-              <span>{isOutOfStock ? 'Out' : 'ADD'}</span>
+              <span>{isOutOfStock ? 'Out' : totalQtyInCart > 0 ? `ADD • ${totalQtyInCart}` : 'ADD'}</span>
             </button>
-          ) : qtyInCart > 0 ? (
-            <div className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-1 py-0.5 shadow-2xs gap-0.5">
+          ) : totalQtyInCart > 0 ? (
+            <div 
+              className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-1 py-0.5 shadow-2xs gap-0.5 min-h-[26px]"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <button
                 type="button"
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  updateQuantity(product.id, qtyInCart - 1, product.stock);
+                  updateQuantity(primaryCartKey, totalQtyInCart - 1, maxStock);
                 }}
                 title="Decrease"
-                className="p-1 flex items-center justify-center hover:bg-emerald-700 rounded transition-colors font-bold active:scale-90 cursor-pointer"
+                className="p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
                 <Minus className="w-2.5 h-2.5" />
               </button>
               
               <span className="px-1 text-center text-[11px] sm:text-xs font-black select-none font-mono min-w-[14px]">
-                {qtyInCart}
+                {totalQtyInCart}
               </span>
               
               <button
                 type="button"
                 disabled={isMaxInCart}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  updateQuantity(product.id, qtyInCart + 1, product.stock);
+                  updateQuantity(primaryCartKey, totalQtyInCart + 1, maxStock);
                 }}
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
-                className="p-1 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
+                className="p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
                 <Plus className="w-2.5 h-2.5" />
               </button>
             </div>
           ) : (
             <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 addToCart(product, 1);
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-              className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 border cursor-pointer ${
+              className={`min-h-[26px] px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 border cursor-pointer flex items-center justify-center ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-600/10'
