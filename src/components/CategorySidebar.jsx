@@ -33,9 +33,9 @@ export const CategorySidebar = ({
   });
 
   return (
-    <aside className="w-[64px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-2 sm:top-3 z-20 self-start">
+    <aside className="w-[62px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-1 sm:top-2 z-20 self-start">
       {/* Container */}
-      <div className="bg-white rounded border border-slate-200/90 shadow-xs overflow-hidden max-h-[calc(100dvh-1rem)] overflow-y-auto scrollbar-none">
+      <div className="bg-white rounded border border-slate-200/90 shadow-xs overflow-hidden max-h-[calc(100dvh-0.5rem)] overflow-y-auto scrollbar-none">
         
         {/* Desktop Sidebar Header */}
         <div className="hidden lg:block p-2.5 bg-slate-50 border-b border-slate-200/80">
@@ -54,7 +54,7 @@ export const CategorySidebar = ({
                 key={cat.name}
                 type="button"
                 onClick={() => onSelectCategory(cat.name)}
-                className={`flex flex-col lg:flex-row items-center lg:items-center gap-1 lg:gap-2.5 p-1.5 sm:p-2 lg:p-2.5 text-center lg:text-left transition-all duration-150 relative cursor-pointer group ${
+                className={`flex flex-col lg:flex-row items-center lg:items-center gap-0.5 sm:gap-1 lg:gap-2.5 p-1 sm:p-2 lg:p-2.5 text-center lg:text-left transition-all duration-150 relative cursor-pointer group ${
                   isSelected
                     ? 'bg-emerald-50/90 text-emerald-950 font-bold'
                     : 'bg-white hover:bg-slate-50 text-slate-700 font-medium'
@@ -70,7 +70,7 @@ export const CategorySidebar = ({
 
                 {/* Category Thumbnail */}
                 <div 
-                  className={`w-9 h-9 sm:w-10 sm:h-10 lg:w-9 lg:h-9 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center border transition-all ${
+                  className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-9 lg:h-9 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center border transition-all ${
                     isSelected
                       ? 'border-emerald-500 bg-white shadow-xs'
                       : 'border-slate-200 bg-slate-50 group-hover:border-slate-300'

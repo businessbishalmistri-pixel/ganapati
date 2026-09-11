@@ -249,7 +249,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FBFA] flex flex-col selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F9FBFA] flex flex-col selection:bg-emerald-500 selection:text-white relative [overflow-x:clip]">
       {/* Top Organic Ambient Green Gradient (matching reference app environment) */}
       <div className="absolute top-0 inset-x-0 h-[420px] bg-gradient-to-b from-emerald-500/18 via-emerald-200/20 via-50% to-transparent pointer-events-none z-0" />
 
