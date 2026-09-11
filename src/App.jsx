@@ -204,79 +204,6 @@ export function App() {
     return () => unsubscribe();
   }, []);
 
-  // Real-time listener for XYVOT store order approvals & status changes
-  useEffect(() => {
-    const channel = supabase
-      .channel('store_orders_realtime_notifications')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'sales_orders' },
-        (payload) => {
-          const updatedOrder = payload.new;
-          if (!updatedOrder) return;
-
-          const orderPhone = (updatedOrder.customer_phone || '').replace(/\D/g, '');
-          const customerPhone = (activeCustomer?.phone || '').replace(/\D/g, '');
-
-          // If this order belongs to the active customer or is recent
-          if (customerPhone && orderPhone.endsWith(customerPhone.slice(-10))) {
-            const status = (updatedOrder.status || '').toLowerCase();
-            const inv = updatedOrder.invoice_number || 'your order';
-
-            if (status.includes('confirmed') || status.includes('approved')) {
-              showToast(`🎉 Order #${inv} has been Confirmed by Store! Estimated dispatch/pickup: Today.`, 'success');
-            } else if (status.includes('ready')) {
-              showToast(`🏬 Order #${inv} is Ready for Pickup at Ganapati Store!`, 'success');
-            } else if (status.includes('dispatched') || status.includes('way') || status.includes('out_for_delivery')) {
-              showToast(`🚚 Order #${inv} is Out for Delivery to your doorstep!`, 'info');
-            } else if (status.includes('delivered') || status.includes('completed')) {
-              showToast(`✓ Order #${inv} has been Delivered successfully!`, 'success');
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeCustomer]);
-
-  const handleRefreshInventory = async () => {
-    setIsRefreshing(true);
-    const catalog = await inventoryApi.fetchCatalog();
-    setProducts(catalog);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      showToast('Products synced in real-time!', 'info');
-    }, 400);
-  };
-
-  // Filter & Sort computation with Smart Typo-Tolerant Search
-  const filteredProducts = useMemo(() => {
-    // 1. Filter by category
-    const categoryFiltered = products.filter((p) => {
-      return (
-        selectedCategory === 'All Products' ||
-        (p.category && p.category.toLowerCase() === selectedCategory.toLowerCase())
-      );
-    });
-
-    // 2. Apply smart typo-tolerant fuzzy search
-    const searched = searchQuery.trim()
-      ? smartSearchProducts(categoryFiltered, searchQuery)
-      : categoryFiltered;
-
-    // 3. Apply sorting (if explicit sort chosen, otherwise preserve relevance)
-    return [...searched].sort((a, b) => {
-      if (sortBy === 'price-low') return a.price - b.price;
-      if (sortBy === 'price-high') return b.price - a.price;
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'stock') return b.stock - a.stock;
-      return 0; // relevance / featured default
-    });
-  }, [products, selectedCategory, searchQuery, sortBy]);
-
   const inStockCount = products.filter((p) => p.stock > 0).length;
 
   // Render Admin View if on /admin
@@ -293,9 +220,6 @@ export function App() {
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-emerald-500 selection:text-white">
       {/* Gentle Welcome Confetti on Screen Load */}
       <WelcomeConfetti />
-
-      {/* Toast notifications */}
-      <ToastContainer />
 
       {/* Navigation */}
       <Navbar
