@@ -132,7 +132,8 @@ export const formatWhatsAppMessage = (order, storeSettings = {}) => {
 
   msg += `${divider}\n\n`;
   
-  msg += `💳 *Payment:* ${isShipping ? 'Cash on Delivery (COD)' : 'Pay on Store Pickup (COD / Cash / UPI)'}\n\n`;
+  msg += `💳 *Payment:* ${isShipping ? 'Cash on Delivery (COD)' : 'Pay on Store Pickup (COD / Cash / UPI)'}\n`;
+  msg += `ℹ️ *Note:* The total amount may vary depending on the store. The bill will be provided by the store.\n\n`;
   msg += `_Thank you for ordering with ${storeSettings.storeName || 'Ganapati Store'}!_`;
 
   return msg;
