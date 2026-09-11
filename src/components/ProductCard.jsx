@@ -81,7 +81,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
 
         {/* 🛒 Action Button / Stepper Overlay on Bottom-Right of Image (Blue Marked Area) */}
         <div 
-          className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 z-10"
+          className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {hasVariants ? (
@@ -97,7 +97,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Select Variant & Add'}
-              className={`min-h-[22px] sm:min-h-[26px] px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded text-[9.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center gap-0.5 sm:gap-1 ${
+              className={`min-h-[26px] sm:min-h-[28px] px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11.5px] sm:text-[11.5px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center gap-1 ${
                 isOutOfStock
                   ? 'bg-white/90 backdrop-blur-xs text-slate-400 cursor-not-allowed border-slate-200'
                   : totalQtyInCart > 0
@@ -109,7 +109,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
             </button>
           ) : totalQtyInCart > 0 ? (
             <div 
-              className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-0.5 py-0.5 sm:px-1 shadow-md gap-0.5 min-h-[22px] sm:min-h-[26px]"
+              className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-1 py-0.5 sm:px-1.5 shadow-md gap-1 min-h-[26px] sm:min-h-[28px]"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
@@ -124,10 +124,10 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                 title="Decrease"
                 className="p-0.5 sm:p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
-                <Minus className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
+                <Minus className="w-2.5 sm:w-3 h-2.5 sm:h-3" />
               </button>
               
-              <span className="px-0.5 text-center text-[10px] sm:text-xs font-black select-none font-mono min-w-[12px]">
+              <span className="px-0.5 text-center text-[11.5px] sm:text-xs font-black select-none font-mono min-w-[14px]">
                 {totalQtyInCart}
               </span>
               
@@ -143,7 +143,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
                 className="p-0.5 sm:p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
-                <Plus className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
+                <Plus className="w-2.5 sm:w-3 h-2.5 sm:h-3" />
               </button>
             </div>
           ) : (
@@ -157,7 +157,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-              className={`min-h-[22px] sm:min-h-[26px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded text-[9.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center ${
+              className={`min-h-[26px] sm:min-h-[28px] px-2.5 py-1 sm:px-3 sm:py-1 rounded text-[11.5px] sm:text-[11.5px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center ${
                 isOutOfStock
                   ? 'bg-white/90 backdrop-blur-xs text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-white hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-900/10'
