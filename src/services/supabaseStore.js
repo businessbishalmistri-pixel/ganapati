@@ -233,49 +233,102 @@ export async function fetchSingleProductById(productId) {
   return null;
 }
 
+export function mapDbToStoreSettings(dbRow) {
+  if (!dbRow) return null;
+  return {
+    storeName: dbRow.store_name ?? 'Ganapati Store',
+    whatsappNumber: dbRow.whatsapp_number ?? '+91 9147364980',
+    storeAddress: dbRow.store_address ?? 'Main Store Hub',
+    storeHours: dbRow.store_hours ?? 'Mon - Sun: 8:00 AM - 9:00 PM',
+    announcementText: dbRow.announcement_text ?? 'Free delivery on orders over ₹200 • Cash on Delivery',
+    bannerImageUrl: dbRow.banner_image_url ?? 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png',
+    flatShippingFee: dbRow.flat_shipping_fee !== undefined && dbRow.flat_shipping_fee !== null ? Number(dbRow.flat_shipping_fee) : 30,
+    freeShippingThreshold: dbRow.free_shipping_threshold !== undefined && dbRow.free_shipping_threshold !== null ? Number(dbRow.free_shipping_threshold) : 200,
+    currency: dbRow.currency ?? '₹'
+  };
+}
+
+export function mapStoreSettingsToDb(settings = {}) {
+  const dbPayload = {
+    id: 'main_store',
+    updated_at: new Date().toISOString()
+  };
+  if (settings.storeName !== undefined) dbPayload.store_name = settings.storeName;
+  if (settings.whatsappNumber !== undefined) dbPayload.whatsapp_number = settings.whatsappNumber;
+  if (settings.storeAddress !== undefined) dbPayload.store_address = settings.storeAddress;
+  if (settings.storeHours !== undefined) dbPayload.store_hours = settings.storeHours;
+  if (settings.announcementText !== undefined) dbPayload.announcement_text = settings.announcementText;
+  if (settings.bannerImageUrl !== undefined) dbPayload.banner_image_url = settings.bannerImageUrl;
+  if (settings.flatShippingFee !== undefined) dbPayload.flat_shipping_fee = Number(settings.flatShippingFee) || 0;
+  if (settings.freeShippingThreshold !== undefined) dbPayload.free_shipping_threshold = Number(settings.freeShippingThreshold) || 0;
+  if (settings.currency !== undefined) dbPayload.currency = settings.currency;
+  return dbPayload;
+}
+
 /**
- * Fetch real store organization info from database
+ * Fetch 100% of store settings directly from Supabase store_settings table
  */
-export async function fetchStoreInfoFromBackend() {
+export async function fetchStoreSettingsFromSupabase() {
   try {
     const { data, error } = await supabase
-      .from('organizations')
-      .select('id, name, owner_phone, owner_email')
-      .limit(1)
+      .from('store_settings')
+      .select('*')
+      .eq('id', 'main_store')
       .maybeSingle();
 
     if (!error && data) {
-      return {
-        id: data.id,
-        storeName: data.name || '',
-        whatsappNumber: data.owner_phone || '',
-        supportEmail: data.owner_email || ''
-      };
+      return mapDbToStoreSettings(data);
+    }
+
+    // Fallback if id is not 'main_store'
+    const { data: firstRow, error: firstErr } = await supabase
+      .from('store_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    if (!firstErr && firstRow) {
+      return mapDbToStoreSettings(firstRow);
     }
   } catch (err) {
-    console.warn('Could not fetch store organization info:', err);
+    console.warn('Could not fetch store_settings from Supabase:', err);
   }
   return null;
 }
 
 /**
- * Persist updated store name & whatsapp phone to backend
+ * Persist 100% of store settings directly to Supabase store_settings table
  */
-export async function updateStoreInfoInBackend(newSettings = {}) {
+export async function updateStoreSettingsInSupabase(newSettings = {}) {
   try {
-    const updates = {};
-    if (newSettings.storeName) updates.name = newSettings.storeName;
-    if (newSettings.whatsappNumber) updates.owner_phone = newSettings.whatsappNumber;
+    const payload = mapStoreSettingsToDb(newSettings);
+    const { data, error } = await supabase
+      .from('store_settings')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .maybeSingle();
 
-    if (Object.keys(updates).length > 0) {
-      const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
-      if (orgs && orgs.length > 0) {
-        await supabase.from('organizations').update(updates).eq('id', orgs[0].id);
-      }
+    if (error) {
+      console.error('Error updating store_settings in Supabase:', error);
+      return { success: false, error };
     }
+
+    return { success: true, data: mapDbToStoreSettings(data) };
   } catch (err) {
-    console.warn('Could not sync store settings to backend:', err);
+    console.error('Exception updating store_settings:', err);
+    return { success: false, error: err };
   }
+}
+
+/**
+ * Backward compatibility helpers
+ */
+export async function fetchStoreInfoFromBackend() {
+  return await fetchStoreSettingsFromSupabase();
+}
+
+export async function updateStoreInfoInBackend(newSettings = {}) {
+  return await updateStoreSettingsInSupabase(newSettings);
 }
 
 /**

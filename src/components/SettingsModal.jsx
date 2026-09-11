@@ -41,10 +41,10 @@ export const SettingsModal = ({ onCatalogReset }) => {
 
   if (!isSettingsOpen) return null;
 
-  const handleSaveGeneral = (e) => {
+  const handleSaveGeneral = async (e) => {
     e.preventDefault();
-    updateSettings(formData);
-    showToast('Store settings updated successfully!', 'success');
+    await updateSettings(formData);
+    showToast('Store settings updated in Supabase cloud!', 'success');
   };
 
   const handleSaveFirebase = (e) => {

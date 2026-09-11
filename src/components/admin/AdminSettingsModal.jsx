@@ -58,28 +58,36 @@ export function AdminSettingsModal({ isOpen, onClose }) {
     window.open(testUrl, '_blank');
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!whatsappNumber.trim()) {
       showToast('WhatsApp number cannot be empty', 'error');
       return;
     }
 
-    updateSettings({
-      whatsappNumber: whatsappNumber.trim(),
-      storeName: storeName.trim(),
-      storeAddress: storeAddress.trim(),
-      storeHours: storeHours.trim(),
-      announcementText: announcementText.trim(),
-      bannerImageUrl: bannerImageUrl.trim(),
-      flatShippingFee: Number(flatShippingFee) || 0,
-      freeShippingThreshold: Number(freeShippingThreshold) || 0
-    });
+    try {
+      setIsSaving(true);
+      await updateSettings({
+        whatsappNumber: whatsappNumber.trim(),
+        storeName: storeName.trim(),
+        storeAddress: storeAddress.trim(),
+        storeHours: storeHours.trim(),
+        announcementText: announcementText.trim(),
+        bannerImageUrl: bannerImageUrl.trim(),
+        flatShippingFee: Number(flatShippingFee) || 0,
+        freeShippingThreshold: Number(freeShippingThreshold) || 0
+      });
 
-    showToast('Store settings updated successfully!', 'success');
-    setTimeout(() => {
-      onClose();
-    }, 150);
+      showToast('Store settings saved to Supabase cloud!', 'success');
+      setTimeout(() => {
+        onClose();
+      }, 150);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      showToast('Failed to save settings to cloud', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
