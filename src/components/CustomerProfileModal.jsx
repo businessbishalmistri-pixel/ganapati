@@ -90,10 +90,13 @@ export function CustomerProfileModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6 animate-fadeIn">
-      <div className="bg-white w-full h-full sm:h-auto max-w-3xl lg:max-w-4xl rounded-none sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-100 flex flex-col min-h-screen sm:min-h-0 sm:max-h-[92vh] overflow-hidden my-0 sm:my-auto">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex flex-col sm:items-center sm:justify-center p-0 sm:p-6 animate-fadeIn sm:overflow-y-auto">
+      <div className="bg-white w-full h-[100dvh] sm:h-auto max-w-3xl lg:max-w-4xl rounded-none sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-100 flex flex-col sm:max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
+        <div 
+          className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0"
+          style={{ paddingTop: 'max(14px, env(safe-area-inset-top, 14px))' }}
+        >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 flex-shrink-0">
               <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -116,101 +119,106 @@ export function CustomerProfileModal() {
         </div>
 
         {/* Form Body with 2-Column Split Layout */}
-        <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
-          {profilePendingAction === 'checkout' && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2.5">
-              <ShoppingBag className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <span>Please save your delivery information and map pin below to send your WhatsApp order.</span>
-            </div>
-          )}
+        <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden min-h-0">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+            {profilePendingAction === 'checkout' && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2.5">
+                <ShoppingBag className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <span>Please save your delivery information and map pin below to send your WhatsApp order.</span>
+              </div>
+            )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* Left Side: 3 Form Inputs */}
-            <div className="space-y-4">
-              <div className="border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Customer Information
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Left Side: 3 Form Inputs */}
+              <div className="space-y-4">
+                <div className="border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Customer Information
+                  </span>
+                </div>
+
+                {/* 1. Full Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Amit Roy"
+                      value={name}
+                      onChange={(e) => { setName(e.target.value); setErrors(prev => ({ ...prev, name: '' })); }}
+                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                        errors.name ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                  </div>
+                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                </div>
+
+                {/* 2. Contact Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Contact Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 9876543210"
+                      value={phone}
+                      onChange={(e) => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: '' })); }}
+                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all font-mono ${
+                        errors.phone ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                  </div>
+                  {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                </div>
+
+                {/* 3. Delivery Address */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Delivery Address / House No. <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="House / Flat No., Landmark, Area"
+                      value={address}
+                      onChange={(e) => { setAddress(e.target.value); setErrors(prev => ({ ...prev, address: '' })); }}
+                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                        errors.address ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                  </div>
+                  {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
+                </div>
               </div>
 
-              {/* 1. Full Name */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Amit Roy"
-                    value={name}
-                    onChange={(e) => { setName(e.target.value); setErrors(prev => ({ ...prev, name: '' })); }}
-                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
-                      errors.name ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
-                    }`}
+              {/* Right Side: Map Selection */}
+              <div className="-mx-4 sm:mx-0">
+                <div className="bg-slate-50/50 p-0 sm:p-3 rounded-none sm:rounded-2xl border-0 sm:border border-slate-100">
+                  <LocationPicker
+                    coordinates={coords}
+                    onChange={(newCoords) => setCoords(newCoords)}
+                    label="Pinpoint Delivery Spot"
                   />
                 </div>
-                {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-              </div>
-
-              {/* 2. Contact Number */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Contact Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input
-                    type="tel"
-                    required
-                    placeholder="e.g. 9876543210"
-                    value={phone}
-                    onChange={(e) => { setPhone(e.target.value); setErrors(prev => ({ ...prev, phone: '' })); }}
-                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all font-mono ${
-                      errors.phone ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
-                    }`}
-                  />
-                </div>
-                {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
-              </div>
-
-              {/* 3. Delivery Address */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Delivery Address / House No. <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="House / Flat No., Landmark, Area"
-                    value={address}
-                    onChange={(e) => { setAddress(e.target.value); setErrors(prev => ({ ...prev, address: '' })); }}
-                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-xs sm:text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
-                      errors.address ? 'border-red-300 ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
-                    }`}
-                  />
-                </div>
-                {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
-              </div>
-            </div>
-
-            {/* Right Side: Map Selection */}
-            <div className="-mx-4 sm:mx-0">
-              <div className="bg-slate-50/50 p-0 sm:p-3 rounded-none sm:rounded-2xl border-0 sm:border border-slate-100">
-                <LocationPicker
-                  coordinates={coords}
-                  onChange={(newCoords) => setCoords(newCoords)}
-                  label="Pinpoint Delivery Spot"
-                />
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          {/* Action Buttons Footer */}
+          <div 
+            className="px-4 sm:px-6 py-3 border-t border-slate-100 flex items-center justify-end gap-2.5 bg-slate-50/70 flex-shrink-0"
+            style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
+          >
             <button
               type="button"
               onClick={closeProfileModal}
