@@ -9,6 +9,16 @@ class InventoryService {
     this.products = this.loadCachedData();
     this.fetchCatalog();
     this.setupRealtimeSubscription();
+
+    if (typeof window !== 'undefined') {
+      const handleFocus = () => {
+        if (document.visibilityState === 'visible') {
+          this.fetchCatalog();
+        }
+      };
+      window.addEventListener('visibilitychange', handleFocus);
+      window.addEventListener('focus', handleFocus);
+    }
   }
 
   loadCachedData() {

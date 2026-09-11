@@ -45,26 +45,45 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Silent Background Revalidation from Supabase store_settings table
-    fetchStoreSettingsFromSupabase().then((dbSettings) => {
-      if (isMounted) {
-        if (dbSettings) {
+    const syncFreshSettings = async () => {
+      try {
+        const dbSettings = await fetchStoreSettingsFromSupabase();
+        if (isMounted && dbSettings) {
           setSettings((prev) => {
+            const isDifferent = Object.keys(dbSettings).some(k => dbSettings[k] !== prev[k]);
+            if (!isDifferent) return prev;
             const next = { ...prev, ...dbSettings };
             try {
               localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(next));
             } catch (err) {}
             return next;
           });
+          setIsLoadingSettings(false);
         }
-        setIsLoadingSettings(false);
+      } catch (err) {
+        console.warn('Error fetching Supabase store_settings:', err);
+        if (isMounted) setIsLoadingSettings(false);
       }
-    }).catch((err) => {
-      console.warn('Error fetching Supabase store_settings:', err);
-      if (isMounted) setIsLoadingSettings(false);
-    });
+    };
 
-    // 2. Subscribe to Realtime Postgres Changes on store_settings table
+    // 1. Initial background fetch
+    syncFreshSettings();
+
+    // 2. Active Polling Heartbeat (every 5 seconds) for mobile phones where WebSockets sleep
+    const pollInterval = setInterval(() => {
+      syncFreshSettings();
+    }, 5000);
+
+    // 3. Re-sync immediately when phone is unlocked or browser tab is brought to foreground
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncFreshSettings();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    // 4. Subscribe to Realtime Postgres Changes on store_settings table
     const channel = supabase
       .channel('realtime:public:store_settings')
       .on(
@@ -87,7 +106,7 @@ export const SettingsProvider = ({ children }) => {
       )
       .subscribe();
 
-    // 3. Multi-Tab Instant In-Memory Sync via BroadcastChannel
+    // 5. Multi-Tab Instant In-Memory Sync via BroadcastChannel
     let bc = null;
     try {
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -114,6 +133,9 @@ export const SettingsProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
+      clearInterval(pollInterval);
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
       supabase.removeChannel(channel);
       if (bc) bc.close();
       window.removeEventListener('storage', handleStorage);
