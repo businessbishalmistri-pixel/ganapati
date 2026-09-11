@@ -113,7 +113,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
         </div>
 
         {/* Mobile Search Bar */}
-        <div className="pb-2 md:hidden">
+        <div className="mt-[5px] pb-2 md:hidden">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input
