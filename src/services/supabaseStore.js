@@ -133,6 +133,9 @@ export async function fetchLiveProductsFromBackend() {
         unit: p.unit || p.weight || '',
         sku: p.sku || '',
         brand: p.brand || 'Ganapati Stores',
+        sub_category: p.sub_category || '',
+        is_pinned: Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned' || p.featured),
+        is_starred: Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned' || p.featured),
         status: p.status || 'active'
       };
     });

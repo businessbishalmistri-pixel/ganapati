@@ -147,6 +147,28 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     await adminInventoryService.toggleStatus(id);
   };
 
+  const handleTogglePinProduct = async (id) => {
+    // Optimistically toggle in local React state
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          const nextPinned = !p.is_pinned;
+          return { ...p, is_pinned: nextPinned, is_starred: nextPinned, sub_category: nextPinned ? 'pinned' : '' };
+        }
+        return p;
+      })
+    );
+    const updated = await adminInventoryService.togglePinProduct(id);
+    if (updated) {
+      showToast(
+        updated.is_pinned 
+          ? `⭐ "${updated.title}" pinned to top of store!` 
+          : `"${updated.title}" unstarred`,
+        'info'
+      );
+    }
+  };
+
   // Category Handlers
   const handleAddCategory = (cat) => {
     adminInventoryService.addCategory(cat);
@@ -423,6 +445,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
             onDeleteProduct={handleDeleteProduct}
             onToggleInStock={handleToggleInStock}
             onToggleStatus={handleToggleStatus}
+            onTogglePinProduct={handleTogglePinProduct}
             onRefresh={loadData}
             isRefreshing={isRefreshing}
           />
