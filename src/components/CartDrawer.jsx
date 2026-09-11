@@ -107,9 +107,7 @@ export const CartDrawer = () => {
     const itemsList = cartItems
       .map((item, idx) => {
         const itemOption = item.variantName || item.selectedVariant?.name || item.unit || '';
-        const unitPrice = parseFloat(item.selling_price ?? item.price ?? 0);
-        const itemTotal = unitPrice * item.quantity;
-        return `${idx + 1}. ${item.title || item.name}${itemOption ? ` (${itemOption})` : ''} - Qty: ${item.quantity} (₹${itemTotal.toFixed(2)})`;
+        return `${idx + 1}. ${item.title || item.name}${itemOption ? ` (${itemOption})` : ''} - Qty: ${item.quantity}`;
       })
       .join('\n');
 
@@ -132,10 +130,8 @@ export const CartDrawer = () => {
 *Items Ordered:*
 ${itemsList}
 
-*Bill Summary:*
-• Items Subtotal: ₹${subtotal.toFixed(2)}
-• Delivery Charges: ${deliveryFee === 0 ? 'FREE (₹0.00)' : `₹${deliveryFee.toFixed(2)}`}
-• *Total Payable (COD):* ₹${totalAmount.toFixed(2)}
+*Payment (COD):*
+The total amount may vary depending on the store. The bill will be provided by the store.
 
 Please confirm and dispatch to my delivery address. Thank you!`;
     } else {
@@ -151,10 +147,8 @@ Please confirm and dispatch to my delivery address. Thank you!`;
 *Items Ordered:*
 ${itemsList}
 
-*Bill Summary:*
-• Items Subtotal: ₹${subtotal.toFixed(2)}
-• Delivery Charges: ₹0.00 (Store Pickup)
-• *Total Payable on Pickup:* ₹${subtotal.toFixed(2)}
+*Payment on Pickup:*
+The total amount may vary depending on the store. The bill will be provided by the store.
 
 Please keep my order ready for store pickup. Thank you!`;
     }
