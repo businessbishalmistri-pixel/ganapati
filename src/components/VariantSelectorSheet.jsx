@@ -128,6 +128,7 @@ export function VariantSelectorSheet({ isOpen, onClose, product }) {
               const vDiscount = mrp > price && mrp > 0
                 ? Math.round(((mrp - price) / mrp) * 100)
                 : 0;
+              const inCartItem = cartItems.find(i => String(i.cartKey || i.cartItemId) === `${product.id}_${v.id}` || String(i.variantId) === String(v.id));
 
               return (
                 <div
@@ -156,9 +157,16 @@ export function VariantSelectorSheet({ isOpen, onClose, product }) {
                     </div>
 
                     <div>
-                      <span className="font-bold text-xs sm:text-sm text-slate-900 block leading-tight">
-                        {v.name || v.unit || v.size || v.title || 'Standard'}
-                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900 block leading-tight">
+                          {v.name || v.unit || v.size || v.title || 'Standard'}
+                        </span>
+                        {inCartItem && inCartItem.quantity > 0 && (
+                          <span className="text-[9.5px] font-bold text-emerald-800 bg-emerald-100/90 px-1.5 py-0.2 rounded-full font-mono">
+                            In cart: {inCartItem.quantity}
+                          </span>
+                        )}
+                      </div>
                       {isOutOfStock ? (
                         <span className="text-[10px] font-bold text-rose-600">
                           Out of Stock
@@ -248,7 +256,7 @@ export function VariantSelectorSheet({ isOpen, onClose, product }) {
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>{isCurrentOutOfStock ? 'Currently Unavailable' : 'Add to Cart'}</span>
+            <span>{isCurrentOutOfStock ? 'Currently Unavailable' : `Add ${quantity > 1 ? `${quantity} items` : 'to Cart'} • ${settings.currency}${totalPrice.toFixed(2)}`}</span>
           </button>
         </div>
 

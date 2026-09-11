@@ -149,13 +149,14 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1, selectedVariant = null) => {
     const itemStock = selectedVariant 
-      ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 0, 10) 
-      : parseInt(product.stock_quantity ?? product.stock ?? 0, 10);
+      ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 999, 10) 
+      : parseInt(product.stock_quantity ?? product.stock ?? 999, 10);
     const itemPrice = selectedVariant 
       ? parseFloat(selectedVariant.selling_price ?? selectedVariant.price) 
       : parseFloat(product.selling_price ?? product.price ?? 0);
-    const variantLabel = selectedVariant ? (selectedVariant.name || selectedVariant.size) : null;
-    const cartKey = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
+    const variantLabel = selectedVariant ? (selectedVariant.name || selectedVariant.size || selectedVariant.unit) : null;
+    const variantId = selectedVariant?.id ? String(selectedVariant.id) : null;
+    const cartKey = variantId ? `${product.id}_${variantId}` : String(product.id);
 
     if (itemStock <= 0) {
       showToast(`Sorry, "${product.title || product.name}${variantLabel ? ` (${variantLabel})` : ''}" is out of stock.`, 'warning');
@@ -165,7 +166,10 @@ export const CartProvider = ({ children }) => {
     let addedSuccessfully = false;
 
     setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex((item) => (item.cartKey || item.cartItemId || item.id) === cartKey);
+      const existingIndex = prevItems.findIndex((item) => {
+        const itemKey = item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : String(item.id));
+        return String(itemKey) === String(cartKey);
+      });
 
       if (existingIndex > -1) {
         const currentQty = prevItems[existingIndex].quantity;
@@ -182,6 +186,12 @@ export const CartProvider = ({ children }) => {
         const updated = [...prevItems];
         updated[existingIndex] = {
           ...updated[existingIndex],
+          price: itemPrice,
+          selling_price: itemPrice,
+          unit: variantLabel || updated[existingIndex].unit || product.unit || '1 unit',
+          variantName: variantLabel,
+          variantId: variantId,
+          selectedVariant: selectedVariant || updated[existingIndex].selectedVariant,
           quantity: newQty,
         };
         addedSuccessfully = true;
@@ -202,12 +212,14 @@ export const CartProvider = ({ children }) => {
             cartKey: cartKey,
             cartItemId: cartKey,
             id: product.id,
-            variantId: selectedVariant?.id || null,
+            variantId: variantId,
             variantName: variantLabel,
             sku: selectedVariant?.sku || product.sku || '',
             name: product.name || product.title,
             title: product.title || product.name,
             price: itemPrice,
+            selling_price: itemPrice,
+            unit: variantLabel || product.unit || '1 unit',
             quantity: quantity,
             stockQuantity: itemStock,
             stock: itemStock,
@@ -242,8 +254,8 @@ export const CartProvider = ({ children }) => {
 
     setCartItems((prevItems) =>
       prevItems.map((item) => {
-        const itemKeyStr = String(item.cartKey || item.cartItemId || item.id);
-        const match = itemKeyStr === targetKeyStr || String(item.id) === targetKeyStr;
+        const itemKeyStr = String(item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : item.id));
+        const match = itemKeyStr === targetKeyStr;
         return match
           ? { ...item, quantity: Math.min(newQuantity, item.stockQuantity || item.stock || maxStock || newQuantity) } 
           : item;
@@ -254,13 +266,13 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = (cartKey) => {
     const targetKeyStr = String(cartKey);
     const item = cartItems.find((i) => {
-      const iKeyStr = String(i.cartKey || i.cartItemId || i.id);
-      return iKeyStr === targetKeyStr || String(i.id) === targetKeyStr;
+      const iKeyStr = String(i.cartKey || i.cartItemId || (i.variantId ? `${i.id}_${i.variantId}` : i.id));
+      return iKeyStr === targetKeyStr;
     });
     setCartItems((prevItems) => 
       prevItems.filter((i) => {
-        const iKeyStr = String(i.cartKey || i.cartItemId || i.id);
-        return iKeyStr !== targetKeyStr && String(i.id) !== targetKeyStr;
+        const iKeyStr = String(i.cartKey || i.cartItemId || (i.variantId ? `${i.id}_${i.variantId}` : i.id));
+        return iKeyStr !== targetKeyStr;
       })
     );
     if (item) {

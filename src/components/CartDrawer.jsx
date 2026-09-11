@@ -91,8 +91,10 @@ export const CartDrawer = () => {
 
     const itemsList = cartItems
       .map((item, idx) => {
-        const itemPrice = (item.selling_price || item.price || 0) * item.quantity;
-        return `${idx + 1}. ${item.title || item.name}${item.unit ? ` (${item.unit})` : ''} - Qty: ${item.quantity} (₹${itemPrice.toFixed(2)})`;
+        const itemOption = item.variantName || item.selectedVariant?.name || item.unit || '';
+        const unitPrice = parseFloat(item.selling_price ?? item.price ?? 0);
+        const itemTotal = unitPrice * item.quantity;
+        return `${idx + 1}. ${item.title || item.name}${itemOption ? ` (${itemOption})` : ''} - Qty: ${item.quantity} (₹${itemTotal.toFixed(2)})`;
       })
       .join('\n');
 
@@ -259,9 +261,11 @@ Please keep my order ready for store pickup. Thank you!`;
             ) : (
               <div className="space-y-2 py-2.5">
                 {cartItems.map((item) => {
-                  const itemKey = item.cartKey || item.cartItemId || item.id;
+                  const itemKey = item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : item.id);
                   const isMax = item.quantity >= (item.stockQuantity || item.stock || 999);
-                  const price = item.selling_price || item.price || 0;
+                  const unitPrice = parseFloat(item.selling_price ?? item.price ?? 0);
+                  const itemTotal = unitPrice * item.quantity;
+                  const variantLabel = item.variantName || (item.selectedVariant ? (item.selectedVariant.name || item.selectedVariant.size || item.selectedVariant.unit) : null);
 
                   return (
                     <div
@@ -292,17 +296,30 @@ Please keep my order ready for store pickup. Thank you!`;
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                             {item.title || item.name}
                           </h4>
-                          {price > 0 && (
+                          {unitPrice > 0 && (
                             <span className="text-xs sm:text-sm font-extrabold text-slate-900 font-mono flex-shrink-0">
-                              ₹{price.toLocaleString('en-IN')}
+                              ₹{itemTotal.toFixed(2)}
                             </span>
                           )}
                         </div>
                         
-                        {/* Description / Subtitle */}
-                        <p className="text-[11px] text-slate-400 leading-tight truncate">
-                          {item.unit ? `${item.unit}` : 'Standard Pack'} {item.category ? `• ${item.category}` : ''}
-                        </p>
+                        {/* Variant Option Badge & Unit Price */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {variantLabel ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                              {variantLabel}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              {item.unit || 'Standard Pack'}
+                            </span>
+                          )}
+                          {item.quantity > 1 && (
+                            <span className="text-[10.5px] text-slate-400 font-mono font-medium">
+                              (₹{unitPrice.toFixed(2)} each)
+                            </span>
+                          )}
+                        </div>
 
                         {/* Bottom: Black Pill Quantity Stepper & Red Trash Can */}
                         <div className="flex items-center justify-between pt-0.5">

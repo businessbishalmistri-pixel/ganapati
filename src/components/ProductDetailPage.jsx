@@ -50,11 +50,11 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
 
   // Active pricing & stock calculation
   const currentPrice = selectedVariant 
-    ? parseFloat(selectedVariant.selling_price) 
+    ? parseFloat(selectedVariant.selling_price ?? selectedVariant.price ?? 0) 
     : parseFloat(product.selling_price ?? product.price ?? 0);
   const currentStock = selectedVariant 
-    ? (selectedVariant.stock_quantity || 0) 
-    : (product.stock_quantity ?? product.stock ?? 0);
+    ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 999, 10) 
+    : parseInt(product.stock_quantity ?? product.stock ?? 999, 10);
   const currentSku = selectedVariant 
     ? (selectedVariant.sku || product.sku) 
     : (product.sku || '');
@@ -234,7 +234,7 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
                       >
                         <span className="font-bold">{v.name || v.size}</span>
                         <span className={`text-[11px] ${isVSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
-                          &bull; {settings.currency}{v.selling_price.toFixed(0)}
+                          &bull; {settings.currency}{parseFloat(v.selling_price ?? v.price ?? 0).toFixed(0)}
                         </span>
                       </button>
                     );
