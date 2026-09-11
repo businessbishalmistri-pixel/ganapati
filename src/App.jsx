@@ -316,27 +316,34 @@ export function App() {
               <div className="flex-1 min-w-0 space-y-3">
 
                 {/* Department Header & Sort Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-600" />
-                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700">
-                      {selectedCategory}
-                    </h2>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-200/70 px-1.5 py-0.5 rounded">
-                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                    </span>
-                    {selectedCategory !== 'All Products' && (
-                      <button
-                        onClick={() => setSelectedCategory('All Products')}
-                        className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors"
-                      >
-                        Clear Filter &times;
-                      </button>
-                    )}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200/80">
+                  <div className="flex flex-col gap-1.5 min-w-0">
+                    {/* Top: Category Title with Breathing Room */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0" />
+                      <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 truncate">
+                        {selectedCategory}
+                      </h2>
+                    </div>
+
+                    {/* Bottom: Items Count & Clear Filter Aligned From the Left */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md">
+                        {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+                      </span>
+                      {selectedCategory !== 'All Products' && (
+                        <button
+                          onClick={() => setSelectedCategory('All Products')}
+                          className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
+                        >
+                          Clear Filter &times;
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Sorting dropdown */}
-                  <div className="flex items-center gap-1.5 self-end sm:self-auto bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-xs">
+                  <div className="flex items-center gap-1.5 self-start sm:self-auto bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-xs">
                     <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                     <select
                       value={sortBy}
