@@ -268,30 +268,28 @@ export function App() {
         />
       ) : (
         <>
-          {/* Store Banner Image with Shimmer Skeleton */}
-          <section className="w-full border-b border-slate-200/80">
-            <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-              <div className="relative w-full overflow-hidden rounded-xl bg-slate-100 min-h-[90px] sm:min-h-[140px] shadow-xs">
-                {!bannerLoaded && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse z-0" />
-                )}
-                <img
-                  key={settings?.bannerImageUrl || 'default_banner'}
-                  src={settings?.bannerImageUrl || "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png"}
-                  alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store — Fresh Groceries & Daily Essentials"}
-                  className={`w-full h-auto block rounded-xl relative z-1 transition-opacity duration-300 ${bannerLoaded ? 'opacity-100' : 'opacity-0'}`}
-                  loading="eager"
-                  fetchpriority="high"
-                  onLoad={() => setBannerLoaded(true)}
-                  onError={(e) => {
-                    setBannerLoaded(true);
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png";
-                  }}
-                />
+          {/* Store Banner Image with Shimmer Skeleton (Rendered only when bannerImageUrl is configured) */}
+          {settings?.bannerImageUrl ? (
+            <section className="w-full border-b border-slate-200/80">
+              <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+                <div className="relative w-full overflow-hidden rounded-xl bg-slate-100 min-h-[90px] sm:min-h-[140px] shadow-xs">
+                  {!bannerLoaded && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse z-0" />
+                  )}
+                  <img
+                    key={settings.bannerImageUrl}
+                    src={settings.bannerImageUrl}
+                    alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store"}
+                    className={`w-full h-auto block rounded-xl relative z-1 transition-opacity duration-300 ${bannerLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    loading="eager"
+                    fetchpriority="high"
+                    onLoad={() => setBannerLoaded(true)}
+                    onError={() => setBannerLoaded(true)}
+                  />
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          ) : null}
 
           {/* Catalog Main 2-Column Split Layout Area (Mobile & Desktop) */}
           <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-8 py-2.5 sm:py-4">

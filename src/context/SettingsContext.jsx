@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS = {
   storeHours: 'Mon - Sun: 8:00 AM - 9:00 PM',
   freeShippingThreshold: 200,
   flatShippingFee: 30.00,
-  bannerImageUrl: 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png',
+  bannerImageUrl: '',
   firebaseConfigured: false,
 };
 

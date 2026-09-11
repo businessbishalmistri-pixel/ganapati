@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store, 
-  Megaphone, MapPin, Clock, UploadCloud, Loader2, RefreshCw, Link as LinkIcon 
+  Megaphone, MapPin, Clock, UploadCloud, Loader2, Trash2, Link as LinkIcon 
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useToast } from '../../context/ToastContext';
 import { compressImage } from '../../utils/imageCompressor';
 import { uploadImageToSupabase } from '../../services/imageUploadService';
-
-const DEFAULT_BANNER = 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png';
 
 export function AdminSettingsModal({ isOpen, onClose }) {
   const { settings, updateSettings } = useSettings();
@@ -20,7 +18,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
   const [storeAddress, setStoreAddress] = useState(settings?.storeAddress || 'Main Store Hub');
   const [storeHours, setStoreHours] = useState(settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM');
   const [announcementText, setAnnouncementText] = useState(settings?.announcementText || 'Free delivery on orders over ₹200 • Cash on Delivery');
-  const [bannerImageUrl, setBannerImageUrl] = useState(settings?.bannerImageUrl || DEFAULT_BANNER);
+  const [bannerImageUrl, setBannerImageUrl] = useState(settings?.bannerImageUrl || '');
   const [flatShippingFee, setFlatShippingFee] = useState(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
   
@@ -35,7 +33,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setStoreAddress(settings?.storeAddress || 'Main Store Hub');
       setStoreHours(settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM');
       setAnnouncementText(settings?.announcementText || 'Free delivery on orders over ₹200 • Cash on Delivery');
-      setBannerImageUrl(settings?.bannerImageUrl || DEFAULT_BANNER);
+      setBannerImageUrl(settings?.bannerImageUrl || '');
       setFlatShippingFee(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
       setFreeShippingThreshold(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
       setIsUploadingBanner(false);
@@ -64,12 +62,12 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
     try {
       setIsUploadingBanner(true);
-      showToast('Optimizing & uploading banner image...', 'info');
+      showToast('Compressing & uploading banner image...', 'info');
 
-      // 1. High quality compression for wide banner (1920x1080 max)
-      const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.85 });
+      // 1. High quality compression for wide banner (1920x800 max)
+      const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 800, quality: 0.82 });
 
-      // 2. Upload to Supabase Storage (or persistent dataUrl)
+      // 2. Upload to Supabase Storage bucket
       const uploadedUrl = await uploadImageToSupabase(
         compressed.blob || file, 
         'store_banner', 
@@ -79,12 +77,12 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       if (uploadedUrl) {
         setBannerImageUrl(uploadedUrl);
         
-        // 3. Immediately auto-save to Supabase store_settings table so it appears live instantly
+        // 3. Auto-save to Supabase store_settings table
         await updateSettings({
           bannerImageUrl: uploadedUrl
         });
 
-        showToast('New banner image published to storefront!', 'success');
+        showToast('New banner image uploaded & published live!', 'success');
       } else {
         showToast('Failed to upload banner image', 'error');
       }
@@ -94,6 +92,16 @@ export function AdminSettingsModal({ isOpen, onClose }) {
     } finally {
       setIsUploadingBanner(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveBanner = async () => {
+    setBannerImageUrl('');
+    try {
+      await updateSettings({ bannerImageUrl: '' });
+      showToast('Banner image removed from storefront', 'info');
+    } catch (err) {
+      console.error('Failed to remove banner:', err);
     }
   };
 
@@ -129,7 +137,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
         storeAddress: storeAddress.trim(),
         storeHours: storeHours.trim(),
         announcementText: announcementText.trim(),
-        bannerImageUrl: (bannerImageUrl || DEFAULT_BANNER).trim(),
+        bannerImageUrl: (bannerImageUrl || '').trim(),
         flatShippingFee: Number(flatShippingFee) || 0,
         freeShippingThreshold: Number(freeShippingThreshold) || 0
       });
@@ -265,14 +273,17 @@ export function AdminSettingsModal({ isOpen, onClose }) {
                     src={bannerImageUrl}
                     alt="Storefront Banner Preview"
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = DEFAULT_BANNER;
-                    }}
                   />
                 ) : (
-                  <div className="text-center p-4 text-slate-400 text-xs flex flex-col items-center gap-1">
-                    <Image className="w-6 h-6 text-slate-300" />
-                    <span>No banner selected</span>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-center p-6 text-slate-400 text-xs flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-200/50 transition-colors w-full h-full justify-center"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">
+                      <UploadCloud className="w-5 h-5" />
+                    </div>
+                    <span className="font-semibold text-slate-600">Click to upload storefront banner</span>
+                    <span className="text-[10px] text-slate-400">PNG, JPG, or WebP (auto-compressed)</span>
                   </div>
                 )}
 
@@ -280,7 +291,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
                 {isUploadingBanner && (
                   <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 z-10">
                     <Loader2 className="w-6 h-6 animate-spin text-white" />
-                    <span className="text-xs font-bold">Uploading to Supabase...</span>
+                    <span className="text-xs font-bold">Compressing & Uploading...</span>
                   </div>
                 )}
               </div>
@@ -302,18 +313,20 @@ export function AdminSettingsModal({ isOpen, onClose }) {
                   className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <UploadCloud className="w-3.5 h-3.5" />
-                  <span>{isUploadingBanner ? 'Uploading...' : 'Upload New Banner'}</span>
+                  <span>{isUploadingBanner ? 'Uploading...' : (bannerImageUrl ? 'Change Banner' : 'Upload Banner')}</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setBannerImageUrl(DEFAULT_BANNER)}
-                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Reset to default store banner"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Reset Default</span>
-                </button>
+                {bannerImageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveBanner}
+                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Remove banner from storefront"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Remove</span>
+                  </button>
+                )}
               </div>
             </div>
 

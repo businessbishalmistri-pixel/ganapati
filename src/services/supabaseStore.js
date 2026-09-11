@@ -241,7 +241,7 @@ export function mapDbToStoreSettings(dbRow) {
     storeAddress: dbRow.store_address ?? 'Main Store Hub',
     storeHours: dbRow.store_hours ?? 'Mon - Sun: 8:00 AM - 9:00 PM',
     announcementText: dbRow.announcement_text ?? 'Free delivery on orders over ₹200 • Cash on Delivery',
-    bannerImageUrl: dbRow.banner_image_url ?? 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png',
+    bannerImageUrl: dbRow.banner_image_url || '',
     flatShippingFee: dbRow.flat_shipping_fee !== undefined && dbRow.flat_shipping_fee !== null ? Number(dbRow.flat_shipping_fee) : 30,
     freeShippingThreshold: dbRow.free_shipping_threshold !== undefined && dbRow.free_shipping_threshold !== null ? Number(dbRow.free_shipping_threshold) : 200,
     currency: dbRow.currency ?? '₹'
