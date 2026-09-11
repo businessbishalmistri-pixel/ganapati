@@ -133,7 +133,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               <span>{isOutOfStock ? 'Out' : 'ADD'}</span>
             </button>
           ) : qtyInCart > 0 ? (
-            <div className="flex items-center border border-emerald-600 bg-emerald-600 text-white rounded overflow-hidden shadow-2xs">
+            <div className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-1 py-0.5 shadow-2xs gap-0.5">
               <button
                 type="button"
                 onClick={(e) => {
@@ -141,12 +141,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(product.id, qtyInCart - 1, product.stock);
                 }}
                 title="Decrease"
-                className="w-5.5 h-6 sm:w-6.5 sm:h-6.5 flex items-center justify-center hover:bg-emerald-700 transition-colors font-bold active:scale-90 cursor-pointer"
+                className="p-1 flex items-center justify-center hover:bg-emerald-700 rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
                 <Minus className="w-2.5 h-2.5" />
               </button>
               
-              <span className="w-4.5 sm:w-5.5 text-center text-[11px] font-black select-none">
+              <span className="px-1 text-center text-[11px] sm:text-xs font-black select-none font-mono min-w-[14px]">
                 {qtyInCart}
               </span>
               
@@ -158,7 +158,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(product.id, qtyInCart + 1, product.stock);
                 }}
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
-                className="w-5.5 h-6 sm:w-6.5 sm:h-6.5 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-bold active:scale-90 cursor-pointer"
+                className="p-1 flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
                 <Plus className="w-2.5 h-2.5" />
               </button>
