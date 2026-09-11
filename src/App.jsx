@@ -276,6 +276,7 @@ export function App() {
                   <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse z-0" />
                 )}
                 <img
+                  key={settings?.bannerImageUrl || 'default_banner'}
                   src={settings?.bannerImageUrl || "https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png"}
                   alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store — Fresh Groceries & Daily Essentials"}
                   className={`w-full h-auto block rounded-xl relative z-1 transition-opacity duration-300 ${bannerLoaded ? 'opacity-100' : 'opacity-0'}`}

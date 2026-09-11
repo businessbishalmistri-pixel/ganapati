@@ -69,7 +69,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       // 1. High quality compression for wide banner (1920x1080 max)
       const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.85 });
 
-      // 2. Upload to Supabase Storage
+      // 2. Upload to Supabase Storage (or persistent dataUrl)
       const uploadedUrl = await uploadImageToSupabase(
         compressed.blob || file, 
         'store_banner', 
@@ -78,7 +78,13 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
       if (uploadedUrl) {
         setBannerImageUrl(uploadedUrl);
-        showToast('Banner uploaded! Click "Save Settings" to publish.', 'success');
+        
+        // 3. Immediately auto-save to Supabase store_settings table so it appears live instantly
+        await updateSettings({
+          bannerImageUrl: uploadedUrl
+        });
+
+        showToast('New banner image published to storefront!', 'success');
       } else {
         showToast('Failed to upload banner image', 'error');
       }
