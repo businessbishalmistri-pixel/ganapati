@@ -316,7 +316,7 @@ export function App() {
               <div className="flex-1 min-w-0 space-y-3">
 
                 {/* Department Header & Sort Bar (Adaptive 2-Row Layout) */}
-                <div className="sticky top-0 z-10 bg-[#F9FBFA]/95 backdrop-blur-md flex flex-col gap-1.5 sm:gap-2 py-2 border-b border-slate-200/80 -mx-1 px-1 sm:mx-0 sm:px-0">
+                <div className="flex flex-col gap-1.5 sm:gap-2 py-2 border-b border-slate-200/80 -mx-1 px-1 sm:mx-0 sm:px-0">
                   
                   {/* Row 1: Category Name + Items Badge (Always beside Title) + Clear Filter (if concise) */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
