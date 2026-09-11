@@ -310,42 +310,42 @@ export function App() {
               {/* Right Column: High-Density Product Catalog */}
               <div className="flex-1 min-w-0 space-y-3">
 
-                {/* Department Header & Sort Bar (Clean & Transparent) */}
-                {(selectedCategory !== 'All Products' || searchQuery.trim()) && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-600" />
-                      <h1 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700">
-                        {selectedCategory}
-                      </h1>
-                      <span className="text-[10px] font-bold text-slate-500 bg-slate-200/70 px-1.5 py-0.5 rounded">
-                        {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                      </span>
+                {/* Department Header & Sort Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-600" />
+                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-700">
+                      {selectedCategory}
+                    </h2>
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-200/70 px-1.5 py-0.5 rounded">
+                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+                    </span>
+                    {selectedCategory !== 'All Products' && (
                       <button
                         onClick={() => setSelectedCategory('All Products')}
                         className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors"
                       >
                         Clear Filter &times;
                       </button>
-                    </div>
-
-                    {/* Sorting dropdown */}
-                    <div className="flex items-center gap-1.5 self-end sm:self-auto bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-xs">
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="text-xs font-semibold text-slate-700 bg-transparent outline-none cursor-pointer pr-4 pl-0.5 py-0.5"
-                        style={{ backgroundImage: 'none' }}
-                      >
-                        <option value="featured">Featured First</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                        <option value="stock">Most in Stock</option>
-                      </select>
-                    </div>
+                    )}
                   </div>
-                )}
+
+                  {/* Sorting dropdown */}
+                  <div className="flex items-center gap-1.5 self-end sm:self-auto bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-xs">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="text-xs font-semibold text-slate-700 bg-transparent outline-none cursor-pointer pr-4 pl-0.5 py-0.5"
+                      style={{ backgroundImage: 'none' }}
+                    >
+                      <option value="featured">Featured First</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="stock">Most in Stock</option>
+                    </select>
+                  </div>
+                </div>
 
                 {/* Products Grid Skeleton / Content */}
                 {loading ? (
@@ -390,36 +390,15 @@ export function App() {
                       Reset Filters
                     </button>
                   </div>
-                ) : selectedCategory === 'All Products' && !searchQuery.trim() ? (
-                  /* Multi-Category Shelves View with First-Shelf Priority Loading */
-                  <div className="space-y-4">
-                    {dynamicCategories
-                      .filter((cat) => cat !== 'All Products')
-                      .map((catName, shelfIdx) => {
-                        const catProducts = products.filter(
-                          (p) => p.category && p.category.toLowerCase() === catName.toLowerCase()
-                        );
-                        return (
-                          <CategoryShelf
-                            key={catName}
-                            categoryName={catName}
-                            products={catProducts}
-                            onSelectProduct={handleSelectProduct}
-                            onViewCategory={(cat) => setSelectedCategory(cat)}
-                            isPriorityShelf={shelfIdx === 0}
-                          />
-                        );
-                      })}
-                  </div>
                 ) : (
-                  /* High-Density Compact Product Grid with Above-The-Fold Priority */
+                  /* Unified High-Density Product Grid: All Items Together One After Another */
                   <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
                     {filteredProducts.map((product, idx) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         onSelectProduct={handleSelectProduct}
-                        priority={idx < 6}
+                        priority={idx < 8}
                       />
                     ))}
                   </div>
