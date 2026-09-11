@@ -1,21 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store, Megaphone, MapPin, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store, 
+  Megaphone, MapPin, Clock, UploadCloud, Loader2, RefreshCw, Link as LinkIcon 
+} from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useToast } from '../../context/ToastContext';
+import { compressImage } from '../../utils/imageCompressor';
+import { uploadImageToSupabase } from '../../services/imageUploadService';
+
+const DEFAULT_BANNER = 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png';
 
 export function AdminSettingsModal({ isOpen, onClose }) {
   const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
 
+  const fileInputRef = useRef(null);
   const [whatsappNumber, setWhatsappNumber] = useState(settings?.whatsappNumber || '+91 9147364980');
   const [storeName, setStoreName] = useState(settings?.storeName || 'Ganapati Store');
   const [storeAddress, setStoreAddress] = useState(settings?.storeAddress || 'Main Store Hub');
   const [storeHours, setStoreHours] = useState(settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM');
   const [announcementText, setAnnouncementText] = useState(settings?.announcementText || 'Free delivery on orders over ₹200 • Cash on Delivery');
-  const [bannerImageUrl, setBannerImageUrl] = useState(settings?.bannerImageUrl || 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png');
+  const [bannerImageUrl, setBannerImageUrl] = useState(settings?.bannerImageUrl || DEFAULT_BANNER);
   const [flatShippingFee, setFlatShippingFee] = useState(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
+  
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -24,9 +35,10 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setStoreAddress(settings?.storeAddress || 'Main Store Hub');
       setStoreHours(settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM');
       setAnnouncementText(settings?.announcementText || 'Free delivery on orders over ₹200 • Cash on Delivery');
-      setBannerImageUrl(settings?.bannerImageUrl || 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png');
+      setBannerImageUrl(settings?.bannerImageUrl || DEFAULT_BANNER);
       setFlatShippingFee(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
       setFreeShippingThreshold(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
+      setIsUploadingBanner(false);
     }
   }, [isOpen, settings]);
 
@@ -40,6 +52,44 @@ export function AdminSettingsModal({ isOpen, onClose }) {
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP)', 'error');
+      return;
+    }
+
+    try {
+      setIsUploadingBanner(true);
+      showToast('Optimizing & uploading banner image...', 'info');
+
+      // 1. High quality compression for wide banner (1920x1080 max)
+      const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.85 });
+
+      // 2. Upload to Supabase Storage
+      const uploadedUrl = await uploadImageToSupabase(
+        compressed.blob || file, 
+        'store_banner', 
+        compressed.dataUrl
+      );
+
+      if (uploadedUrl) {
+        setBannerImageUrl(uploadedUrl);
+        showToast('Banner uploaded! Click "Save Settings" to publish.', 'success');
+      } else {
+        showToast('Failed to upload banner image', 'error');
+      }
+    } catch (err) {
+      console.error('Banner upload error:', err);
+      showToast('Error uploading banner: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setIsUploadingBanner(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleTestWhatsApp = () => {
     const cleanPhone = whatsappNumber.replace(/\D/g, '');
@@ -73,12 +123,12 @@ export function AdminSettingsModal({ isOpen, onClose }) {
         storeAddress: storeAddress.trim(),
         storeHours: storeHours.trim(),
         announcementText: announcementText.trim(),
-        bannerImageUrl: bannerImageUrl.trim(),
+        bannerImageUrl: (bannerImageUrl || DEFAULT_BANNER).trim(),
         flatShippingFee: Number(flatShippingFee) || 0,
         freeShippingThreshold: Number(freeShippingThreshold) || 0
       });
 
-      showToast('Store settings saved to Supabase cloud!', 'success');
+      showToast('Store settings & banner saved to Supabase cloud!', 'success');
       setTimeout(() => {
         onClose();
       }, 150);
@@ -184,19 +234,95 @@ export function AdminSettingsModal({ isOpen, onClose }) {
             />
           </div>
 
-          {/* 2. Storefront Banner Cloudinary Link */}
-          <div className="space-y-1.5 pt-1">
-            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Image className="w-4 h-4 text-blue-600" />
-              <span>Storefront Banner Image URL (Cloudinary Link)</span>
-            </label>
-            <input
-              type="url"
-              placeholder="https://res.cloudinary.com/.../banner.png"
-              value={bannerImageUrl}
-              onChange={(e) => setBannerImageUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
-            />
+          {/* 2. Storefront Banner Image Upload & Live Preview Card */}
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Image className="w-4 h-4 text-blue-600" />
+                <span>Storefront Banner Image</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowUrlInput(!showUrlInput)}
+                className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <LinkIcon className="w-3 h-3" />
+                <span>{showUrlInput ? 'Hide URL Link' : 'Edit URL directly'}</span>
+              </button>
+            </div>
+
+            {/* Banner Preview & Upload Area */}
+            <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+              <div className="w-full aspect-[21/9] sm:aspect-[3/1] max-h-36 overflow-hidden relative flex items-center justify-center bg-slate-900/5">
+                {bannerImageUrl ? (
+                  <img
+                    src={bannerImageUrl}
+                    alt="Storefront Banner Preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_BANNER;
+                    }}
+                  />
+                ) : (
+                  <div className="text-center p-4 text-slate-400 text-xs flex flex-col items-center gap-1">
+                    <Image className="w-6 h-6 text-slate-300" />
+                    <span>No banner selected</span>
+                  </div>
+                )}
+
+                {/* Uploading Progress Overlay */}
+                {isUploadingBanner && (
+                  <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-2 z-10">
+                    <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    <span className="text-xs font-bold">Uploading to Supabase...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Controls Bar */}
+              <div className="p-2.5 bg-white border-t border-slate-100 flex items-center justify-between gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleBannerUpload}
+                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                  className="hidden"
+                />
+
+                <button
+                  type="button"
+                  disabled={isUploadingBanner}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <UploadCloud className="w-3.5 h-3.5" />
+                  <span>{isUploadingBanner ? 'Uploading...' : 'Upload New Banner'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBannerImageUrl(DEFAULT_BANNER)}
+                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Reset to default store banner"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Reset Default</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Optional URL input toggle */}
+            {showUrlInput && (
+              <div className="pt-1 animate-fadeIn">
+                <input
+                  type="url"
+                  placeholder="https://.../banner.png or Supabase storage link"
+                  value={bannerImageUrl}
+                  onChange={(e) => setBannerImageUrl(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono shadow-2xs"
+                />
+              </div>
+            )}
           </div>
 
           {/* 3. Minimal WhatsApp Order Number (Icon + Input) */}
@@ -279,8 +405,8 @@ export function AdminSettingsModal({ isOpen, onClose }) {
             </button>
             <button
               type="submit"
-              disabled={isSaving}
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              disabled={isSaving || isUploadingBanner}
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <Check className="w-4 h-4" />
               <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
