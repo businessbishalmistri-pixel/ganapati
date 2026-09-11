@@ -70,9 +70,17 @@ export const LocationPicker = ({ coordinates, onChange, addressHint = '', label 
 
         mapInstanceRef.current = map;
         markerRef.current = marker;
+        setTimeout(() => {
+          try {
+            map.invalidateSize();
+          } catch (e) {}
+        }, 200);
       } else if (mapInstanceRef.current && coordinates?.lat && coordinates?.lng) {
         markerRef.current?.setLatLng([coordinates.lat, coordinates.lng]);
         mapInstanceRef.current?.setView([coordinates.lat, coordinates.lng], mapInstanceRef.current.getZoom());
+        try {
+          mapInstanceRef.current.invalidateSize();
+        } catch (e) {}
       }
     } catch (err) {
       console.warn('Map initialization notice:', err);
