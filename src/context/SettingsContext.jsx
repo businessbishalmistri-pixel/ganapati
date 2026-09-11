@@ -8,6 +8,7 @@ import {
 
 const SettingsContext = createContext();
 
+const SETTINGS_CACHE_KEY = 'ganapati_store_settings_snapshot_v3';
 const BROADCAST_NAME = 'ganapati_store_settings_broadcast';
 
 export const DEFAULT_SETTINGS = {
@@ -25,27 +26,36 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const SettingsProvider = ({ children }) => {
-  // Always initialize from default clean state; fresh data is synced directly from database
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  // ⚡ Fast 0ms SWR Initial Hydration: start with cached snapshot so UI never flashes blank defaults
+  const [settings, setSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem(SETTINGS_CACHE_KEY);
+      if (cached) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(cached) };
+      }
+    } catch (e) {
+      console.warn('Could not read cached settings', e);
+    }
+    return DEFAULT_SETTINGS;
+  });
+
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Purge any legacy browser storage cache to ensure zero admin data stored in browser
-    try {
-      localStorage.removeItem('ganapati_cached_store_settings_v2');
-      localStorage.removeItem('ganapati_cached_store_settings');
-    } catch (e) {
-      // Ignore if localStorage is inaccessible
-    }
-
-    // 1. Fetch fresh store settings directly from Supabase store_settings table
+    // 1. Silent Background Revalidation from Supabase store_settings table
     fetchStoreSettingsFromSupabase().then((dbSettings) => {
       if (isMounted) {
         if (dbSettings) {
-          setSettings((prev) => ({ ...prev, ...dbSettings }));
+          setSettings((prev) => {
+            const next = { ...prev, ...dbSettings };
+            try {
+              localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(next));
+            } catch (err) {}
+            return next;
+          });
         }
         setIsLoadingSettings(false);
       }
@@ -64,14 +74,20 @@ export const SettingsProvider = ({ children }) => {
           if (payload?.new) {
             const fresh = mapDbToStoreSettings(payload.new);
             if (fresh && isMounted) {
-              setSettings((prev) => ({ ...prev, ...fresh }));
+              setSettings((prev) => {
+                const next = { ...prev, ...fresh };
+                try {
+                  localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(next));
+                } catch (err) {}
+                return next;
+              });
             }
           }
         }
       )
       .subscribe();
 
-    // 3. Multi-Tab Instant In-Memory Sync via BroadcastChannel (No disk/browser storage)
+    // 3. Multi-Tab Instant In-Memory Sync via BroadcastChannel
     let bc = null;
     try {
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -86,25 +102,37 @@ export const SettingsProvider = ({ children }) => {
       console.warn('BroadcastChannel not supported', e);
     }
 
+    const handleStorage = (e) => {
+      if (e.key === SETTINGS_CACHE_KEY && e.newValue && isMounted) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
       if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
   const updateSettings = async (newValues) => {
-    // 1. Optimistic in-memory update & instant tab broadcast (no localStorage persistence)
+    // 1. Optimistic update & instant tab broadcast
     setSettings((prev) => {
       const updated = { ...prev, ...newValues };
-      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        try {
+      try {
+        localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(updated));
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
           const bc = new BroadcastChannel(BROADCAST_NAME);
           bc.postMessage(updated);
           bc.close();
-        } catch (e) {
-          console.warn(e);
         }
+      } catch (e) {
+        console.warn(e);
       }
       return updated;
     });
@@ -114,14 +142,15 @@ export const SettingsProvider = ({ children }) => {
     if (res?.success && res.data) {
       setSettings((prev) => {
         const next = { ...prev, ...res.data };
-        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-          try {
+        try {
+          localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(next));
+          if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
             const bc = new BroadcastChannel(BROADCAST_NAME);
             bc.postMessage(next);
             bc.close();
-          } catch (e) {
-            console.warn(e);
           }
+        } catch (e) {
+          console.warn(e);
         }
         return next;
       });
@@ -131,14 +160,15 @@ export const SettingsProvider = ({ children }) => {
 
   const resetSettings = async () => {
     setSettings(DEFAULT_SETTINGS);
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
+    try {
+      localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(DEFAULT_SETTINGS));
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         const bc = new BroadcastChannel(BROADCAST_NAME);
         bc.postMessage(DEFAULT_SETTINGS);
         bc.close();
-      } catch (e) {
-        console.warn(e);
       }
+    } catch (e) {
+      console.warn(e);
     }
     await updateStoreSettingsInSupabase(DEFAULT_SETTINGS);
   };
