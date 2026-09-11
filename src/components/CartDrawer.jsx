@@ -31,7 +31,7 @@ export const CartDrawer = () => {
     totalItemsCount
   } = useCart();
 
-  const { customer, openProfileModal } = useAuth();
+  const { customer, openProfileModal, openPickupModal } = useAuth();
   const { settings } = useSettings();
   const { showToast } = useToast();
 
@@ -57,16 +57,15 @@ export const CartDrawer = () => {
 
   if (!isCartOpen) return null;
 
-  // Subtotal & Delivery Calculation
-  const subtotal = cartItems.reduce((acc, item) => {
-    const price = item.selling_price || item.price || 0;
-    return acc + (price * item.quantity);
-  }, 0);
+  // Delivery calculations
+  const flatFee = Number(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
+  const freeThreshold = Number(settings?.freeShippingThreshold !== undefined ? settings.freeShippingThreshold : 200);
+  const subtotal = cartItems.reduce(
+    (acc, item) => acc + (parseFloat(item.selling_price ?? item.price ?? 0) * item.quantity),
+    0
+  );
 
-  const freeThreshold = settings?.freeShippingThreshold !== undefined ? Number(settings.freeShippingThreshold) : 200;
-  const flatFee = settings?.flatShippingFee !== undefined ? Number(settings.flatShippingFee) : 30;
-  
-  const isFreeDelivery = deliveryMethod === 'pickup' || (subtotal >= freeThreshold);
+  const isFreeDelivery = subtotal >= freeThreshold;
   const deliveryFee = deliveryMethod === 'pickup' ? 0 : (isFreeDelivery ? 0 : flatFee);
   const totalAmount = subtotal + deliveryFee;
 
@@ -80,9 +79,9 @@ export const CartDrawer = () => {
       return;
     }
 
-    // 2. If pickup and customer name/phone missing, prompt
+    // 2. If pickup and customer name/phone missing, prompt dedicated Store Pickup modal
     if (deliveryMethod === 'pickup' && (!customer || !customer.name || !customer.phone)) {
-      openProfileModal('checkout');
+      openPickupModal('checkout');
       return;
     }
 
@@ -441,14 +440,47 @@ Please keep my order ready for store pickup. Thank you!`;
                     </div>
                   )
                 ) : (
-                  <div className="space-y-0.5 py-0.5">
-                    <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                      <Store className="w-3.5 h-3.5 text-slate-700" />
-                      <span>{settings?.storeName || 'Ganapati Store'}</span>
-                    </p>
-                    <p className="text-slate-600 text-[11px] leading-snug">
-                      {settings?.storeAddress || 'Main Store Hub, Habra, West Bengal 743263'}
-                    </p>
+                  <div className="space-y-2 py-0.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                          <Store className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                          <span>{settings?.storeName || 'Ganapati Store'} Hub</span>
+                        </p>
+                        <p className="text-slate-600 text-[11px] leading-snug">
+                          {settings?.storeAddress || 'Main Market Road, Habra, West Bengal 743263'}
+                        </p>
+                      </div>
+                      {customer?.name && (
+                        <button
+                          type="button"
+                          onClick={() => openPickupModal()}
+                          className="text-[10px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      )}
+                    </div>
+
+                    {customer?.name ? (
+                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 font-medium">Pickup Contact:</span>
+                        <span className="font-bold text-slate-900 truncate">
+                          {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => openPickupModal('checkout')}
+                        className="pt-1.5 border-t border-slate-100 flex items-center justify-between cursor-pointer text-slate-700 hover:text-slate-900 transition-colors"
+                      >
+                        <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Click to enter pickup contact (Name & Phone)</span>
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

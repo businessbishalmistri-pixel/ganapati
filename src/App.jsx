@@ -25,6 +25,7 @@ import { CategorySidebar } from './components/CategorySidebar';
 import { CategoryShelf } from './components/CategoryShelf';
 import { MyOrdersModal } from './components/MyOrdersModal';
 import { CustomerProfileModal } from './components/CustomerProfileModal';
+import { StorePickupModal } from './components/StorePickupModal';
 import { fetchSingleProductById } from './services/supabaseStore';
 import { WelcomeConfetti } from './components/WelcomeConfetti';
 import { AdminApp } from './components/admin/AdminApp';
@@ -471,6 +472,7 @@ export function App() {
       <MyOrdersModal />
 
       <CustomerProfileModal />
+      <StorePickupModal />
     </div>
   );
 }

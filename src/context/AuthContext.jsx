@@ -19,6 +19,9 @@ export const AuthProvider = ({ children }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profilePendingAction, setProfilePendingAction] = useState(null); // 'checkout' | null
 
+  const [isPickupModalOpen, setIsPickupModalOpen] = useState(false);
+  const [pickupPendingAction, setPickupPendingAction] = useState(null); // 'checkout' | null
+
   // Keep in sync with localStorage
   useEffect(() => {
     const handleStorage = () => {
@@ -40,15 +43,16 @@ export const AuthProvider = ({ children }) => {
 
   const saveProfile = (profileData) => {
     const standardized = {
-      name: profileData.name || '',
-      fullName: profileData.name || '',
-      phone: profileData.phone || '',
-      address: profileData.address || '',
-      street: profileData.address || '',
-      lat: profileData.lat || null,
-      lng: profileData.lng || null,
-      gpsLocation: profileData.gpsLocation || (profileData.lat && profileData.lng ? `${profileData.lat}, ${profileData.lng}` : ''),
-      gpsUrl: profileData.gpsUrl || (profileData.lat && profileData.lng ? `https://maps.google.com/?q=${profileData.lat},${profileData.lng}` : ''),
+      ...(customer || {}),
+      name: profileData.name || customer?.name || '',
+      fullName: profileData.name || customer?.fullName || '',
+      phone: profileData.phone || customer?.phone || '',
+      address: profileData.address !== undefined ? profileData.address : (customer?.address || ''),
+      street: profileData.street !== undefined ? profileData.street : (customer?.street || ''),
+      lat: profileData.lat !== undefined ? profileData.lat : (customer?.lat || null),
+      lng: profileData.lng !== undefined ? profileData.lng : (customer?.lng || null),
+      gpsLocation: profileData.gpsLocation || (profileData.lat && profileData.lng ? `${profileData.lat}, ${profileData.lng}` : (customer?.gpsLocation || '')),
+      gpsUrl: profileData.gpsUrl || (profileData.lat && profileData.lng ? `https://maps.google.com/?q=${profileData.lat},${profileData.lng}` : (customer?.gpsUrl || '')),
       updatedAt: new Date().toISOString()
     };
 
@@ -73,6 +77,16 @@ export const AuthProvider = ({ children }) => {
     setProfilePendingAction(null);
   };
 
+  const openPickupModal = (pendingAction = null) => {
+    setPickupPendingAction(pendingAction);
+    setIsPickupModalOpen(true);
+  };
+
+  const closePickupModal = () => {
+    setIsPickupModalOpen(false);
+    setPickupPendingAction(null);
+  };
+
   const clearProfile = () => {
     localStorage.removeItem(PROFILE_KEY);
     localStorage.removeItem(LEGACY_SESSION_KEY);
@@ -88,6 +102,12 @@ export const AuthProvider = ({ children }) => {
         setIsProfileOpen,
         openProfileModal,
         closeProfileModal,
+        isPickupModalOpen,
+        setIsPickupModalOpen,
+        openPickupModal,
+        closePickupModal,
+        pickupPendingAction,
+        setPickupPendingAction,
         saveProfile,
         clearProfile,
         profilePendingAction,
