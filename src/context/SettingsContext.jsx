@@ -8,6 +8,8 @@ import {
 
 const SettingsContext = createContext();
 
+const CACHE_KEY = 'ganapati_cached_store_settings_v2';
+
 export const DEFAULT_SETTINGS = {
   storeName: 'Ganapati Store',
   tagline: '',
@@ -23,24 +25,37 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  // Fast initial hydration from local cache to prevent flashing defaults
+  const [settings, setSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(cached) };
+      }
+    } catch (e) {
+      console.warn('Could not read cached settings', e);
+    }
+    return DEFAULT_SETTINGS;
+  });
+
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    // 1. Clean up legacy local storage key to ensure 100% cloud database authority
-    try {
-      localStorage.removeItem('quickcart_store_settings_live');
-    } catch (e) {
-      console.warn('Could not clean up legacy settings storage', e);
-    }
-
-    // 2. Fetch fresh store settings directly from Supabase store_settings table
+    // 1. Fetch fresh store settings directly from Supabase store_settings table
     let isMounted = true;
     fetchStoreSettingsFromSupabase().then((dbSettings) => {
       if (isMounted) {
         if (dbSettings) {
-          setSettings((prev) => ({ ...prev, ...dbSettings }));
+          setSettings((prev) => {
+            const next = { ...prev, ...dbSettings };
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+            } catch (err) {
+              console.warn(err);
+            }
+            return next;
+          });
         }
         setIsLoadingSettings(false);
       }
@@ -49,8 +64,7 @@ export const SettingsProvider = ({ children }) => {
       if (isMounted) setIsLoadingSettings(false);
     });
 
-    // 3. Subscribe to Realtime Postgres Changes on store_settings table
-    // Whenever admin changes settings in Supabase, all connected clients & devices update immediately!
+    // 2. Subscribe to Realtime Postgres Changes on store_settings table
     const channel = supabase
       .channel('realtime:public:store_settings')
       .on(
@@ -60,7 +74,15 @@ export const SettingsProvider = ({ children }) => {
           if (payload?.new) {
             const fresh = mapDbToStoreSettings(payload.new);
             if (fresh) {
-              setSettings((prev) => ({ ...prev, ...fresh }));
+              setSettings((prev) => {
+                const next = { ...prev, ...fresh };
+                try {
+                  localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+                } catch (err) {
+                  console.warn(err);
+                }
+                return next;
+              });
             }
           }
         }
@@ -75,18 +97,39 @@ export const SettingsProvider = ({ children }) => {
 
   const updateSettings = async (newValues) => {
     // 1. Optimistic UI update for instantaneous snappy feedback
-    setSettings((prev) => ({ ...prev, ...newValues }));
+    setSettings((prev) => {
+      const updated = { ...prev, ...newValues };
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+      } catch (err) {
+        console.warn(err);
+      }
+      return updated;
+    });
 
     // 2. Persist 100% directly to Supabase store_settings table
     const res = await updateStoreSettingsInSupabase(newValues);
     if (res?.success && res.data) {
-      setSettings((prev) => ({ ...prev, ...res.data }));
+      setSettings((prev) => {
+        const next = { ...prev, ...res.data };
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+        } catch (err) {
+          console.warn(err);
+        }
+        return next;
+      });
     }
     return res;
   };
 
   const resetSettings = async () => {
     setSettings(DEFAULT_SETTINGS);
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(DEFAULT_SETTINGS));
+    } catch (err) {
+      console.warn(err);
+    }
     await updateStoreSettingsInSupabase(DEFAULT_SETTINGS);
   };
 

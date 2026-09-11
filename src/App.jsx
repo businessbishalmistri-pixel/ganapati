@@ -449,10 +449,20 @@ export function App() {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200/80 mt-16 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">{settings.storeName}</span>
-            <span>&bull;</span>
-            <span>Cash on Delivery (COD) Storefront</span>
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
+            <span className="font-bold text-slate-900">{settings?.storeName || 'Ganapati Store'}</span>
+            {settings?.storeAddress && (
+              <>
+                <span className="hidden sm:inline text-slate-300">&bull;</span>
+                <span className="text-slate-600 font-medium">{settings.storeAddress}</span>
+              </>
+            )}
+            {settings?.storeHours && (
+              <>
+                <span className="hidden sm:inline text-slate-300">&bull;</span>
+                <span className="text-slate-500">{settings.storeHours}</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span>Direct WhatsApp Quick Dispatch</span>
