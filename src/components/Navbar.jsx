@@ -24,10 +24,10 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/70 shadow-2xs">
       {/* Top micro banner */}
       {(settings?.announcementText === undefined || settings?.announcementText?.trim() !== '') && (
-        <div className="bg-emerald-50 border-b border-emerald-100 text-emerald-950 text-[10px] sm:text-xs py-1 px-3 text-center font-medium flex items-center justify-center gap-1.5">
+        <div className="bg-emerald-50/90 border-b border-emerald-100/80 text-emerald-950 text-[10px] sm:text-xs py-1 px-3 text-center font-medium flex items-center justify-center gap-1.5">
           <span className="text-emerald-800 font-bold">
             {settings?.announcementText || `Free delivery on orders over ₹${settings?.freeShippingThreshold || 200} • Cash on Delivery`}
           </span>
@@ -56,7 +56,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
                 placeholder='Search products e.g. "Sattu", "Coconut", "Rice"...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-7 py-1.5 text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-300 focus:border-emerald-600 rounded-lg outline-none transition-all placeholder:text-slate-400"
+                className="w-full pl-8 pr-7 py-1.5 text-xs sm:text-sm bg-white/90 hover:bg-white focus:bg-white border border-slate-200 focus:border-emerald-600 rounded-xl outline-none transition-all placeholder:text-slate-400 shadow-2xs"
               />
               {searchQuery && (
                 <button
@@ -77,7 +77,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
               type="button"
               onClick={() => setIsProfileOpen(true)}
               title={customer?.name ? `Delivery details: ${customer.name}` : 'Enter your delivery details'}
-              className="relative p-1.5 rounded-full hover:bg-slate-100 text-slate-900 transition-all flex items-center justify-center active:scale-95 cursor-pointer"
+              className="relative p-1.5 rounded-full hover:bg-slate-100/80 text-slate-900 transition-all flex items-center justify-center active:scale-95 cursor-pointer"
             >
               {customer?.name ? (
                 <>
@@ -95,7 +95,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
               type="button"
               onClick={() => setIsCartOpen(true)}
               title={`Shopping Cart (${totalItemsCount} items)`}
-              className={`relative p-1.5 rounded-full hover:bg-slate-100 text-slate-900 transition-all flex items-center justify-center active:scale-95 ${
+              className={`relative p-1.5 rounded-full hover:bg-slate-100/80 text-slate-900 transition-all flex items-center justify-center active:scale-95 ${
                 justAddedId ? 'scale-110' : ''
               }`}
             >
@@ -121,7 +121,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-300 focus:border-emerald-600 rounded-lg outline-none transition-all placeholder:text-slate-400"
+              className="w-full pl-8 pr-7 py-2 text-xs bg-white/90 hover:bg-white focus:bg-white border border-slate-200 focus:border-emerald-600 rounded-xl outline-none transition-all placeholder:text-slate-400 shadow-2xs"
             />
             {searchQuery && (
               <button
