@@ -155,7 +155,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
     try {
       setIsSaving(true);
-      await updateSettings({
+      const res = await updateSettings({
         whatsappNumber: whatsappNumber.trim(),
         storeName: storeName.trim(),
         storeAddress: storeAddress.trim(),
@@ -165,6 +165,10 @@ export function AdminSettingsModal({ isOpen, onClose }) {
         flatShippingFee: Number(flatShippingFee) || 0,
         freeShippingThreshold: Number(freeShippingThreshold) || 0
       });
+
+      if (res && res.success === false) {
+        throw new Error(res.error?.message || 'Failed to update database');
+      }
 
       showToast('Store settings & banner saved to Supabase cloud!', 'success');
       setTimeout(() => {
