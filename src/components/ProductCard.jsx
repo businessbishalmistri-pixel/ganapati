@@ -81,7 +81,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
 
         {/* 🛒 Action Button / Stepper Overlay on Bottom-Right of Image (Blue Marked Area) */}
         <div 
-          className="absolute bottom-1.5 right-1.5 z-10"
+          className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {hasVariants ? (
@@ -97,7 +97,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Select Variant & Add'}
-              className={`min-h-[26px] px-2.5 py-1 rounded text-[10.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center gap-1 ${
+              className={`min-h-[22px] sm:min-h-[26px] px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded text-[9.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center gap-0.5 sm:gap-1 ${
                 isOutOfStock
                   ? 'bg-white/90 backdrop-blur-xs text-slate-400 cursor-not-allowed border-slate-200'
                   : totalQtyInCart > 0
@@ -109,7 +109,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
             </button>
           ) : totalQtyInCart > 0 ? (
             <div 
-              className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-1 py-0.5 shadow-md gap-0.5 min-h-[26px]"
+              className="inline-flex items-center border border-emerald-600 bg-emerald-600 text-white rounded px-0.5 py-0.5 sm:px-1 shadow-md gap-0.5 min-h-[22px] sm:min-h-[26px]"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
@@ -122,12 +122,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(primaryCartKey, totalQtyInCart - 1, maxStock);
                 }}
                 title="Decrease"
-                className="p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 rounded transition-colors font-bold active:scale-90 cursor-pointer"
+                className="p-0.5 sm:p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
-                <Minus className="w-2.5 h-2.5" />
+                <Minus className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
               </button>
               
-              <span className="px-1 text-center text-[11px] sm:text-xs font-black select-none font-mono min-w-[14px]">
+              <span className="px-0.5 text-center text-[10px] sm:text-xs font-black select-none font-mono min-w-[12px]">
                 {totalQtyInCart}
               </span>
               
@@ -141,9 +141,9 @@ export const ProductCard = ({ product, onSelectProduct }) => {
                   updateQuantity(primaryCartKey, totalQtyInCart + 1, maxStock);
                 }}
                 title={isMaxInCart ? "Stock limit reached" : "Increase"}
-                className="p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
+                className="p-0.5 sm:p-1 flex items-center justify-center hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors font-bold active:scale-90 cursor-pointer"
               >
-                <Plus className="w-2.5 h-2.5" />
+                <Plus className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
               </button>
             </div>
           ) : (
@@ -157,7 +157,7 @@ export const ProductCard = ({ product, onSelectProduct }) => {
               }}
               disabled={isOutOfStock}
               title={isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-              className={`min-h-[26px] px-2.5 py-1 rounded text-[10.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center ${
+              className={`min-h-[22px] sm:min-h-[26px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded text-[9.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 border cursor-pointer flex items-center justify-center ${
                 isOutOfStock
                   ? 'bg-white/90 backdrop-blur-xs text-slate-400 cursor-not-allowed border-slate-200'
                   : 'bg-white hover:bg-emerald-600 text-emerald-700 hover:text-white border-emerald-600 shadow-emerald-900/10'
@@ -170,13 +170,13 @@ export const ProductCard = ({ product, onSelectProduct }) => {
       </div>
 
 
-      {/* Product Details Area (Compact Density) */}
-      <div className="p-2 sm:p-2.5 flex-1 flex flex-col justify-between space-y-1">
+      {/* Product Details Area (Compact 3-Column Density) */}
+      <div className="p-1.5 sm:p-2.5 flex-1 flex flex-col justify-between space-y-1">
         <div>
-          {/* Title */}
+          {/* Title with 3-line clamp */}
           <h3 
             onClick={() => onSelectProduct(product)}
-            className="font-bold text-slate-900 text-[11.5px] sm:text-[12.5px] line-clamp-2 hover:text-emerald-600 transition-colors cursor-pointer leading-snug"
+            className="font-bold text-slate-900 text-[10.5px] sm:text-[12.5px] line-clamp-3 hover:text-emerald-600 transition-colors cursor-pointer leading-snug"
             title={product.title || product.name}
           >
             {product.title || product.name}
@@ -185,15 +185,15 @@ export const ProductCard = ({ product, onSelectProduct }) => {
           {/* Unit / Options / Category Info */}
           <div className="flex items-center gap-1 mt-0.5">
             {hasVariants ? (
-              <span className="text-[9.5px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">
+              <span className="text-[9px] sm:text-[9.5px] text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded font-bold">
                 {variantsList.length} Options
               </span>
             ) : product.unit ? (
-              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
+              <span className="text-[9.5px] sm:text-[11px] text-slate-500 font-medium truncate">
                 {product.unit}
               </span>
             ) : (
-              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
+              <span className="text-[9.5px] sm:text-[11px] text-slate-500 font-medium truncate">
                 {product.category || 'Item'}
               </span>
             )}
@@ -201,12 +201,12 @@ export const ProductCard = ({ product, onSelectProduct }) => {
         </div>
 
         {/* Price Row */}
-        <div className="pt-1 flex items-baseline gap-1.5">
-          <span className="text-[12px] sm:text-[13px] font-black text-slate-900">
+        <div className="pt-0.5 flex items-baseline gap-1">
+          <span className="text-[11.5px] sm:text-[13px] font-black text-slate-900">
             {settings.currency}{displayPrice.toFixed(0)}
           </span>
           {displayMrp > displayPrice && (
-            <span className="text-[9.5px] text-slate-400 line-through">
+            <span className="text-[9px] sm:text-[9.5px] text-slate-400 line-through">
               {settings.currency}{displayMrp.toFixed(0)}
             </span>
           )}

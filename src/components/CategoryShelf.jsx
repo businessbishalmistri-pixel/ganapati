@@ -36,8 +36,8 @@ export const CategoryShelf = ({
         )}
       </div>
 
-      {/* Products Grid (High Density) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
+      {/* Products Grid (3 Columns on Mobile, 3+ on Tablet/Desktop) */}
+      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
         {products.map((product) => (
           <ProductCard
             key={product.id}

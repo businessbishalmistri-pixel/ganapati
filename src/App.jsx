@@ -337,13 +337,13 @@ export function App() {
 
                 {/* Products Grid */}
                 {loading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-2.5">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className="bg-white rounded p-3 border border-slate-100 space-y-2 animate-pulse">
+                  <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
+                    {[...Array(12)].map((_, i) => (
+                      <div key={i} className="bg-white rounded p-2 sm:p-3 border border-slate-100 space-y-1.5 sm:space-y-2 animate-pulse">
                         <div className="aspect-square bg-slate-200 rounded" />
-                        <div className="h-3 bg-slate-200 rounded w-2/3" />
-                        <div className="h-3 bg-slate-200 rounded w-1/2" />
-                        <div className="h-6 bg-slate-200 rounded w-full pt-1" />
+                        <div className="h-2.5 sm:h-3 bg-slate-200 rounded w-4/5" />
+                        <div className="h-2 sm:h-3 bg-slate-200 rounded w-1/2" />
+                        <div className="h-4 sm:h-5 bg-slate-200 rounded w-full pt-1" />
                       </div>
                     ))}
                   </div>
@@ -390,7 +390,7 @@ export function App() {
                   </div>
                 ) : (
                   /* High-Density Compact Product Grid */
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
                     {filteredProducts.map((product) => (
                       <ProductCard
                         key={product.id}
