@@ -445,10 +445,10 @@ Please keep my order ready for store pickup. Thank you!`;
                       <div className="space-y-0.5 min-w-0">
                         <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                           <Store className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-                          <span>{settings?.storeName || 'Ganapati Store'} Hub</span>
+                          <span>{settings?.storeName || 'Ganapati Store'}</span>
                         </p>
                         <p className="text-slate-600 text-[11px] leading-snug">
-                          {settings?.storeAddress || 'Main Market Road, Habra, West Bengal 743263'}
+                          {settings?.storeAddress || 'Main Store Hub'}
                         </p>
                       </div>
                       {customer?.name && (

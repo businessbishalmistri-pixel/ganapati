@@ -76,64 +76,64 @@ export const saveOrder = async (orderData) => {
  * Generate formatted WhatsApp message
  */
 export const formatWhatsAppMessage = (order, storeSettings = {}) => {
-  const currency = storeSettings.currency || '$';
   const divider = '━━━━━━━━━━━━━━━━━━━━';
   
-  let msg = `🛍️ *NEW ORDER: ${order.orderId}*\n`;
+  let msg = `🛍️ *NEW ORDER: ${order.orderId || order.invoice_number || 'ORDER'}*\n`;
   msg += `${divider}\n\n`;
 
   // Customer Info
+  const customerName = order.customer?.name || order.customer_name || 'Customer';
+  const customerPhone = order.customer?.phone || order.customer_phone || '';
+  const customerEmail = order.customer?.email || order.customer_email || '';
+
   msg += `👤 *Customer Details:*\n`;
-  msg += `• *Name:* ${order.customer.name}\n`;
-  msg += `• *Phone:* ${order.customer.phone}\n`;
-  if (order.customer.email) {
-    msg += `• *Email:* ${order.customer.email}\n`;
+  msg += `• *Name:* ${customerName}\n`;
+  if (customerPhone) {
+    msg += `• *Phone:* ${customerPhone}\n`;
+  }
+  if (customerEmail) {
+    msg += `• *Email:* ${customerEmail}\n`;
   }
   msg += `\n`;
 
   // Delivery Method
-  msg += `📦 *Fulfillment Method:* ${order.deliveryMethod === 'shipping' ? '🚚 Home Delivery / Shipping' : '🏪 Store Pickup'}\n`;
+  const isShipping = order.deliveryMethod === 'shipping';
+  msg += `📦 *Fulfillment Method:* ${isShipping ? '🚚 Home Delivery' : '🏪 Store Pickup'}\n`;
 
-  if (order.deliveryMethod === 'shipping') {
-    const addr = order.shippingAddress;
-    msg += `📍 *Delivery Address:*\n`;
-    msg += `${addr.street}\n${addr.city}, ${addr.state} ${addr.postalCode}\n`;
+  if (isShipping) {
+    const addr = order.shippingAddress || {};
+    const deliveryAddressStr = order.delivery_address || (addr.street ? `${addr.street}\n${addr.city || ''}, ${addr.state || ''} ${addr.postalCode || ''}` : '');
     
-    if (addr.coordinates && addr.coordinates.lat && addr.coordinates.lng) {
-      const { lat, lng } = addr.coordinates;
+    if (deliveryAddressStr) {
+      msg += `📍 *Delivery Address:*\n${deliveryAddressStr.trim()}\n`;
+    }
+    
+    const lat = addr.coordinates?.lat ?? order.gps_lat;
+    const lng = addr.coordinates?.lng ?? order.gps_lng;
+    if (lat && lng) {
       const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
       msg += `🗺️ *Pin Location (Google Maps):*\n${mapsUrl}\n`;
     }
   } else {
-    msg += `🏢 *Pickup Store:* ${storeSettings.storeAddress || 'Main Central Hub'}\n`;
+    msg += `🏢 *Pickup Store:* ${storeSettings.storeAddress || 'Main Store Hub'}\n`;
     msg += `ℹ️ *Pickup Time:* Will be confirmed via WhatsApp reply\n`;
   }
 
   msg += `\n${divider}\n`;
-  msg += `🛒 *Itemized Cart:*\n`;
+  msg += `🛒 *Items to Dispatch:*\n`;
 
-  order.items.forEach((item, index) => {
-    const itemTotal = (item.price * item.quantity).toFixed(2);
+  const items = order.items || [];
+  items.forEach((item, index) => {
     const vLabel = item.selectedVariant ? ` (${item.selectedVariant.name || item.selectedVariant.size})` : (item.variant_name ? ` (${item.variant_name})` : '');
-    msg += `${index + 1}. *${item.title || item.product_name || 'Product'}*${vLabel}\n`;
-    msg += `   └ ${item.quantity} x ${currency}${item.price.toFixed(2)} = *${currency}${itemTotal}*\n`;
+    const title = item.title || item.product_name || 'Product';
+    const qty = item.quantity || 1;
+    msg += `${index + 1}. *${title}${vLabel}* × ${qty}\n`;
   });
 
-  msg += `${divider}\n`;
+  msg += `${divider}\n\n`;
   
-  const subtotal = order.subtotal.toFixed(2);
-  const deliveryFee = order.deliveryFee ? order.deliveryFee.toFixed(2) : '0.00';
-  const total = order.total.toFixed(2);
-
-  msg += `Subtotal: ${currency}${subtotal}\n`;
-  if (order.deliveryMethod === 'shipping') {
-    msg += `Delivery Fee: ${order.deliveryFee === 0 ? 'FREE' : `${currency}${deliveryFee}`}\n`;
-  }
-  msg += `💰 *TOTAL AMOUNT:* *${currency}${total}*\n\n`;
-
-  msg += `💳 *Payment:* Cash on Delivery / Direct Confirmation\n`;
-  msg += `🕒 *Order Time:* ${new Date(order.createdAt).toLocaleString()}\n`;
-  msg += `\n_Thank you for ordering with ${storeSettings.storeName || 'QuickOrder Store'}!_`;
+  msg += `💳 *Payment:* ${isShipping ? 'Cash on Delivery (COD)' : 'Pay on Store Pickup (COD / Cash / UPI)'}\n\n`;
+  msg += `_Thank you for ordering with ${storeSettings.storeName || 'Ganapati Store'}!_`;
 
   return msg;
 };

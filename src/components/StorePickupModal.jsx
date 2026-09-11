@@ -132,9 +132,9 @@ export function StorePickupModal({ onConfirmPickup }) {
                 <Store className="w-3.5 h-3.5 text-slate-900" />
               </div>
               <div className="space-y-0.5 text-xs">
-                <span className="font-bold text-slate-900 block">{settings?.storeName || 'Ganapati Store'} Hub</span>
+                <span className="font-bold text-slate-900 block">{settings?.storeName || 'Ganapati Store'}</span>
                 <span className="text-[11px] text-slate-600 block leading-snug">
-                  {settings?.storeAddress || 'Main Market Road, Habra, West Bengal 743263'}
+                  {settings?.storeAddress || 'Main Store Hub'}
                 </span>
                 <span className="text-[10.5px] text-emerald-700 font-semibold block pt-0.5">
                   Store Hours: {settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM'}
