@@ -26,8 +26,11 @@ export function AdminSettingsModal({ isOpen, onClose }) {
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  const prevIsOpenRef = useRef(false);
+
   useEffect(() => {
-    if (isOpen) {
+    // Only re-initialize values when the modal is freshly opened
+    if (isOpen && !prevIsOpenRef.current) {
       setWhatsappNumber(settings?.whatsappNumber || '+91 9147364980');
       setStoreName(settings?.storeName || 'Ganapati Store');
       setStoreAddress(settings?.storeAddress || 'Main Store Hub');
@@ -39,6 +42,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setIsUploadingBanner(false);
       setIsDragging(false);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, settings]);
 
   useEffect(() => {

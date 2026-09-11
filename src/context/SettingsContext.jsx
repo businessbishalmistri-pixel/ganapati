@@ -9,6 +9,7 @@ import {
 const SettingsContext = createContext();
 
 const CACHE_KEY = 'ganapati_cached_store_settings_v2';
+const BROADCAST_NAME = 'ganapati_store_settings_broadcast';
 
 export const DEFAULT_SETTINGS = {
   storeName: 'Ganapati Store',
@@ -42,8 +43,9 @@ export const SettingsProvider = ({ children }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    // 1. Fetch fresh store settings directly from Supabase store_settings table
     let isMounted = true;
+
+    // 1. Fetch fresh store settings directly from Supabase store_settings table
     fetchStoreSettingsFromSupabase().then((dbSettings) => {
       if (isMounted) {
         if (dbSettings) {
@@ -73,7 +75,7 @@ export const SettingsProvider = ({ children }) => {
         (payload) => {
           if (payload?.new) {
             const fresh = mapDbToStoreSettings(payload.new);
-            if (fresh) {
+            if (fresh && isMounted) {
               setSettings((prev) => {
                 const next = { ...prev, ...fresh };
                 try {
@@ -89,9 +91,38 @@ export const SettingsProvider = ({ children }) => {
       )
       .subscribe();
 
+    // 3. Multi-Tab Instant Sync (BroadcastChannel + storage event)
+    let bc = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel(BROADCAST_NAME);
+        bc.onmessage = (event) => {
+          if (event?.data && isMounted) {
+            setSettings((prev) => ({ ...prev, ...event.data }));
+          }
+        };
+      }
+    } catch (e) {
+      console.warn('BroadcastChannel not supported', e);
+    }
+
+    const handleStorage = (e) => {
+      if (e.key === CACHE_KEY && e.newValue && isMounted) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -101,6 +132,11 @@ export const SettingsProvider = ({ children }) => {
       const updated = { ...prev, ...newValues };
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel(BROADCAST_NAME);
+          bc.postMessage(updated);
+          bc.close();
+        }
       } catch (err) {
         console.warn(err);
       }
@@ -114,6 +150,11 @@ export const SettingsProvider = ({ children }) => {
         const next = { ...prev, ...res.data };
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+          if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+            const bc = new BroadcastChannel(BROADCAST_NAME);
+            bc.postMessage(next);
+            bc.close();
+          }
         } catch (err) {
           console.warn(err);
         }
@@ -127,6 +168,11 @@ export const SettingsProvider = ({ children }) => {
     setSettings(DEFAULT_SETTINGS);
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(DEFAULT_SETTINGS));
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel(BROADCAST_NAME);
+        bc.postMessage(DEFAULT_SETTINGS);
+        bc.close();
+      }
     } catch (err) {
       console.warn(err);
     }

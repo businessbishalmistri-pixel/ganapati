@@ -313,6 +313,21 @@ export async function updateStoreSettingsInSupabase(newSettings = {}) {
       return { success: false, error };
     }
 
+    // Also sync organizations table in backend
+    try {
+      const orgUpdates = {};
+      if (newSettings.storeName) orgUpdates.name = newSettings.storeName;
+      if (newSettings.whatsappNumber) orgUpdates.owner_phone = newSettings.whatsappNumber;
+      if (Object.keys(orgUpdates).length > 0) {
+        const { data: orgs } = await supabase.from('organizations').select('id').limit(1);
+        if (orgs && orgs.length > 0) {
+          await supabase.from('organizations').update(orgUpdates).eq('id', orgs[0].id);
+        }
+      }
+    } catch (orgErr) {
+      console.warn('Could not sync to organizations table:', orgErr);
+    }
+
     return { success: true, data: mapDbToStoreSettings(data) };
   } catch (err) {
     console.error('Exception updating store_settings:', err);
