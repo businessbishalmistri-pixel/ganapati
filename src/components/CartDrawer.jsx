@@ -73,6 +73,8 @@ export const CartDrawer = () => {
   );
 
   const isFreeDelivery = subtotal >= freeThreshold;
+  const deliveryFee = deliveryMethod === 'shipping' ? (isFreeDelivery ? 0 : flatFee) : 0;
+  const totalAmount = subtotal + deliveryFee;
   const freeShippingProgress = freeThreshold > 0 ? Math.min(100, Math.round((subtotal / freeThreshold) * 100)) : 100;
   const amountNeededForFreeShipping = Math.max(0, freeThreshold - subtotal);
 
@@ -166,6 +168,8 @@ Please keep my order ready for store pickup. Thank you!`;
     clearCart();
     setIsCartOpen(false);
   };
+
+  const handleProceedToWhatsApp = handleCheckoutWhatsApp;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
