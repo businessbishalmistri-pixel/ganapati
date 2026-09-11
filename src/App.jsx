@@ -315,38 +315,29 @@ export function App() {
               {/* Right Column: High-Density Product Catalog */}
               <div className="flex-1 min-w-0 space-y-3">
 
-                {/* Department Header & Sort Bar */}
-                <div className="flex items-center justify-between gap-2 py-1.5 sm:py-2 border-b border-slate-200/80 -mx-1 px-1 sm:mx-0 sm:px-0">
+                {/* Department Filter & Sort Bar (Single-Line Horizontal Scroll) */}
+                <div className="flex items-center gap-2 py-1.5 sm:py-2 border-b border-slate-200/80 -mx-1 px-1 sm:mx-0 sm:px-0 overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap">
                   
-                  {/* Left: Category Title (desktop only) + Items Badge + Clear Filter */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 flex-wrap">
-                    
-                    {/* Category Title: hidden on mobile, shown on desktop */}
-                    <div className="hidden sm:flex items-center gap-1.5 min-w-0">
-                      <div className="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0" />
-                      <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 leading-snug truncate">
-                        {selectedCategory}
-                      </h2>
-                    </div>
-
-                    {/* Items Badge */}
-                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">
-                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                    </span>
-
-                    {/* Clear Filter Button */}
-                    {selectedCategory !== 'All Products' && (
-                      <button
-                        onClick={() => setSelectedCategory('All Products')}
-                        className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 px-2 py-0.5 rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-2xs flex-shrink-0"
-                      >
-                        Clear Filter &times;
-                      </button>
-                    )}
+                  {/* Category Title: hidden on mobile, shown on desktop */}
+                  <div className="hidden sm:flex items-center gap-1.5 min-w-0 flex-shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0" />
+                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 leading-snug truncate">
+                      {selectedCategory}
+                    </h2>
                   </div>
 
-                  {/* Right: Sorting dropdown */}
-                  <div className="flex items-center gap-1.5 ml-auto bg-white border border-slate-200 rounded-lg px-2 py-0.5 sm:px-2.5 sm:py-1 shadow-xs flex-shrink-0">
+                  {/* Clear Filter Button */}
+                  {selectedCategory !== 'All Products' && (
+                    <button
+                      onClick={() => setSelectedCategory('All Products')}
+                      className="text-[10.5px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 px-2.5 py-1 rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-2xs flex-shrink-0"
+                    >
+                      Clear Filter &times;
+                    </button>
+                  )}
+
+                  {/* Sorting dropdown */}
+                  <div className="flex items-center gap-1.5 sm:ml-auto bg-white border border-slate-200 rounded-lg px-2 py-0.5 sm:px-2.5 sm:py-1 shadow-xs flex-shrink-0">
                     <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                     <select
                       value={sortBy}
