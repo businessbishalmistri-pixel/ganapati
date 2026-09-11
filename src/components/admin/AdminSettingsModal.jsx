@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store, Megaphone, MapPin } from 'lucide-react';
+import { X, Bolt, Check, ExternalLink, MessageCircle, Image, Truck, Store, Megaphone, MapPin, Clock } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -10,6 +10,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
   const [whatsappNumber, setWhatsappNumber] = useState(settings?.whatsappNumber || '+91 9147364980');
   const [storeName, setStoreName] = useState(settings?.storeName || 'Ganapati Store');
   const [storeAddress, setStoreAddress] = useState(settings?.storeAddress || 'Main Store Hub');
+  const [storeHours, setStoreHours] = useState(settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM');
   const [announcementText, setAnnouncementText] = useState(settings?.announcementText || 'Free delivery on orders over ₹200 • Cash on Delivery');
   const [bannerImageUrl, setBannerImageUrl] = useState(settings?.bannerImageUrl || 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png');
   const [flatShippingFee, setFlatShippingFee] = useState(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
@@ -21,6 +22,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setWhatsappNumber(settings?.whatsappNumber || '+91 9147364980');
       setStoreName(settings?.storeName || 'Ganapati Store');
       setStoreAddress(settings?.storeAddress || 'Main Store Hub');
+      setStoreHours(settings?.storeHours || 'Mon - Sun: 8:00 AM - 9:00 PM');
       setAnnouncementText(settings?.announcementText || 'Free delivery on orders over ₹200 • Cash on Delivery');
       setBannerImageUrl(settings?.bannerImageUrl || 'https://res.cloudinary.com/ovj5ffsn/image/upload/v1788725847/freepik-flat-professional-supermarket-green-facebook-header-20260906190851o7W2.png');
       setFlatShippingFee(settings?.flatShippingFee !== undefined ? settings.flatShippingFee : 30);
@@ -67,6 +69,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       whatsappNumber: whatsappNumber.trim(),
       storeName: storeName.trim(),
       storeAddress: storeAddress.trim(),
+      storeHours: storeHours.trim(),
       announcementText: announcementText.trim(),
       bannerImageUrl: bannerImageUrl.trim(),
       flatShippingFee: Number(flatShippingFee) || 0,
@@ -140,6 +143,21 @@ export function AdminSettingsModal({ isOpen, onClose }) {
               value={storeAddress}
               onChange={(e) => setStoreAddress(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium shadow-2xs resize-none"
+            />
+          </div>
+
+          {/* Store Operating Hours & Working Days */}
+          <div className="space-y-1 pt-0.5">
+            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-emerald-600" />
+              <span>Store Operating Hours & Days</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Mon - Sun: 8:00 AM - 9:00 PM"
+              value={storeHours}
+              onChange={(e) => setStoreHours(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium shadow-2xs"
             />
           </div>
 
