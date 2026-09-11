@@ -103,12 +103,12 @@ export function CustomerProfileModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={closeProfileModal} />
 
       {/* Sheet / Modal Container */}
-      <div className="relative bg-white w-full max-w-3xl lg:max-w-4xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
+      <div className="relative bg-white w-full max-w-3xl lg:max-w-4xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
         
         {/* Mobile Drag Indicator Pill */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden flex-shrink-0" />
@@ -140,7 +140,7 @@ export function CustomerProfileModal() {
 
         {/* Form Body with 2-Column Split Layout */}
         <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden min-h-0">
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 overscroll-contain">
             {profilePendingAction === 'checkout' && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2.5">
                 <ShoppingBag className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />

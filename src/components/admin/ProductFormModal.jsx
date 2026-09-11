@@ -70,6 +70,13 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  useEffect(() => {
     if (productToEdit) {
       setFormData({
         title: productToEdit.title || productToEdit.name || '',
@@ -315,7 +322,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4">
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={onClose} />
 
@@ -323,10 +330,10 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       <div className="relative bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
         
         {/* Mobile Drag Indicator Pill */}
-        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden" />
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden flex-shrink-0" />
 
         {/* Modal Header */}
-        <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
               <Box className="w-4 h-4" />
@@ -346,7 +353,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         </div>
 
         {/* Modal Scrollable Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3.5 overscroll-contain">
           
           {/* Top Row: Product Name & Category */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">

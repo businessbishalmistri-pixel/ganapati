@@ -26,6 +26,15 @@ export function AdminSettingsModal({ isOpen, onClose }) {
     }
   }, [isOpen, settings]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleTestWhatsApp = () => {
@@ -47,36 +56,28 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
   const handleSave = (e) => {
     e.preventDefault();
-    setIsSaving(true);
+    if (!whatsappNumber.trim()) {
+      showToast('WhatsApp number cannot be empty', 'error');
+      return;
+    }
 
-    const updated = {
-      ...settings,
+    updateSettings({
       whatsappNumber: whatsappNumber.trim(),
       storeName: storeName.trim(),
       announcementText: announcementText.trim(),
       bannerImageUrl: bannerImageUrl.trim(),
       flatShippingFee: Number(flatShippingFee) || 0,
-      freeShippingThreshold: Number(freeShippingThreshold) || 0,
-    };
+      freeShippingThreshold: Number(freeShippingThreshold) || 0
+    });
 
-    updateSettings(updated);
-
-    // Save directly to localStorage for instant synchronous persistence
-    try {
-      localStorage.setItem('quickcart_store_settings_live', JSON.stringify(updated));
-    } catch (err) {
-      console.warn('Could not persist settings to storage', err);
-    }
-
+    showToast('Store settings updated successfully!', 'success');
     setTimeout(() => {
-      setIsSaving(false);
-      showToast('Store settings saved successfully!', 'success');
       onClose();
     }, 150);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 animate-fadeIn">
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={onClose} />
 
@@ -84,7 +85,7 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
         
         {/* Mobile Drag Pill */}
-        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden" />
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden flex-shrink-0" />
 
         {/* Modal Header */}
         <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
