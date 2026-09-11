@@ -33,9 +33,9 @@ export const CategorySidebar = ({
   });
 
   return (
-    <aside className="w-[64px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-16 sm:top-20 z-20 self-start">
+    <aside className="w-[64px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-2 sm:top-3 z-20 self-start">
       {/* Container */}
-      <div className="bg-white rounded border border-slate-200/90 shadow-xs overflow-hidden max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-none">
+      <div className="bg-white rounded border border-slate-200/90 shadow-xs overflow-hidden max-h-[calc(100dvh-1rem)] overflow-y-auto scrollbar-none">
         
         {/* Desktop Sidebar Header */}
         <div className="hidden lg:block p-2.5 bg-slate-50 border-b border-slate-200/80">

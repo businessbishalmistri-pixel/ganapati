@@ -315,8 +315,8 @@ export function App() {
               {/* Right Column: High-Density Product Catalog */}
               <div className="flex-1 min-w-0 space-y-3">
 
-                {/* Department Header & Sort Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200/80">
+                {/* Department Header & Sort Bar (Sticky at top when scrolling) */}
+                <div className="sticky top-0 z-10 bg-[#F9FBFA]/95 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2 border-b border-slate-200/80 -mx-1 px-1 sm:mx-0 sm:px-0">
                   <div className="flex flex-col gap-1.5 min-w-0">
                     {/* Top: Category Title with Breathing Room */}
                     <div className="flex items-center gap-2">
