@@ -10,9 +10,15 @@ function sanitizeSupabaseUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== 'string') return fallback;
   const trimmed = rawUrl.trim();
   if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  if (!trimmed.includes('.')) return `https://${trimmed}.supabase.co`;
-  return `https://${trimmed}`;
+  // Guard against API keys or publishable tokens mistakenly configured as VITE_SUPABASE_URL
+  if (trimmed.startsWith('sb_') || trimmed.startsWith('eyJ') || trimmed.includes('_')) return fallback;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    if (trimmed.includes('sb_publishable') || !trimmed.includes('.')) return fallback;
+    return trimmed;
+  }
+  if (/^[a-z0-9-]{15,30}$/i.test(trimmed)) return `https://${trimmed}.supabase.co`;
+  if (trimmed.includes('.')) return `https://${trimmed}`;
+  return fallback;
 }
 
 function sanitizeSupabaseKey(rawKey) {
@@ -20,6 +26,7 @@ function sanitizeSupabaseKey(rawKey) {
   if (!rawKey || typeof rawKey !== 'string') return fallback;
   const trimmed = rawKey.trim();
   if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
+  if (!trimmed.startsWith('eyJ')) return fallback;
   return trimmed;
 }
 
