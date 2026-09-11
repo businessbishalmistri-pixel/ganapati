@@ -13,7 +13,8 @@ import {
   User,
   Store,
   Truck,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -410,10 +411,10 @@ Please keep my order ready for store pickup. Thank you!`;
                 </label>
               </div>
 
-              {/* 2. Address / Location Box */}
-              <div className="p-3 bg-white border border-slate-800 rounded-xl text-xs">
-                {deliveryMethod === 'shipping' ? (
-                  customer?.address ? (
+              {/* 2. Address / Location / Store Pickup Section */}
+              {deliveryMethod === 'shipping' ? (
+                <div className="p-3 bg-white border border-slate-800 rounded-xl text-xs">
+                  {customer?.address ? (
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-0.5 min-w-0">
                         <p className="font-bold text-slate-900 text-xs truncate">
@@ -441,24 +442,43 @@ Please keep my order ready for store pickup. Thank you!`;
                       </span>
                       <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                     </div>
-                  )
-                ) : (
-                  (() => {
-                    const pickupDisplayName = customer?.pickupName || customer?.name || customer?.fullName;
-                    const pickupDisplayPhone = customer?.pickupPhone || customer?.phone;
-                    return (
-                      <div className="space-y-2 py-0.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                              <Store className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-                              <span>{settings?.storeName || 'Ganapati Store'}</span>
-                            </p>
-                            <p className="text-slate-600 text-[11px] leading-snug">
-                              {settings?.storeAddress || 'Main Store Hub'}
-                            </p>
-                          </div>
-                          {pickupDisplayName && (
+                  )}
+                </div>
+              ) : (
+                (() => {
+                  const pickupDisplayName = customer?.pickupName || customer?.name || customer?.fullName;
+                  const pickupDisplayPhone = customer?.pickupPhone || customer?.phone;
+                  return (
+                    <div className="space-y-2.5">
+                      {/* Separate Card 1: Store Pickup Location Details */}
+                      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs space-y-0.5">
+                        <p className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                          <Store className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                          <span>{settings?.storeName || 'Ganapati Store'}</span>
+                        </p>
+                        <p className="text-slate-600 text-[11px] leading-snug">
+                          {settings?.storeAddress || 'Main Store Hub'}
+                        </p>
+                        {settings?.storeHours && (
+                          <p className="text-[10.5px] text-emerald-700 font-semibold pt-0.5 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{settings.storeHours}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Separate Card 2: Pickup Contact Details */}
+                      <div className="p-3 bg-white border border-slate-800 rounded-xl text-xs">
+                        {pickupDisplayName ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="space-y-0.5 min-w-0">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                Pickup Person
+                              </p>
+                              <p className="font-bold text-slate-900 text-xs truncate">
+                                {pickupDisplayName} {pickupDisplayPhone ? `(${pickupDisplayPhone})` : ''}
+                              </p>
+                            </div>
                             <button
                               type="button"
                               onClick={() => openPickupModal()}
@@ -466,20 +486,11 @@ Please keep my order ready for store pickup. Thank you!`;
                             >
                               Change
                             </button>
-                          )}
-                        </div>
-
-                        {pickupDisplayName ? (
-                          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                            <span className="text-slate-500 font-medium">Pickup Contact:</span>
-                            <span className="font-bold text-slate-900 truncate">
-                              {pickupDisplayName} {pickupDisplayPhone ? `(${pickupDisplayPhone})` : ''}
-                            </span>
                           </div>
                         ) : (
                           <div
                             onClick={() => openPickupModal('checkout')}
-                            className="pt-1.5 border-t border-slate-100 flex items-center justify-between cursor-pointer text-slate-700 hover:text-slate-900 transition-colors"
+                            className="flex items-center justify-between cursor-pointer text-slate-700 hover:text-slate-900 transition-colors py-0.5"
                           >
                             <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
                               <User className="w-3.5 h-3.5 text-slate-600" />
@@ -489,10 +500,10 @@ Please keep my order ready for store pickup. Thank you!`;
                           </div>
                         )}
                       </div>
-                    );
-                  })()
-                )}
-              </div>
+                    </div>
+                  );
+                })()
+              )}
 
               {/* 3. Detailed Bill Breakdown Card */}
               <div className="p-3 bg-slate-100/90 border border-slate-200/80 rounded-2xl space-y-1.5 text-xs text-slate-700">
