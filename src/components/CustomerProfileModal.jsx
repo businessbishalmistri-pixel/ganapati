@@ -32,6 +32,15 @@ export function CustomerProfileModal() {
 
   useEffect(() => {
     if (isProfileOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isProfileOpen]);
+
+  useEffect(() => {
+    if (isProfileOpen) {
       if (customer) {
         setName(customer.name || customer.fullName || '');
         setPhone(customer.phone || '');
@@ -94,31 +103,38 @@ export function CustomerProfileModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex flex-col sm:items-center sm:justify-center p-0 sm:p-6 animate-fadeIn sm:overflow-y-auto">
-      <div className="bg-white w-full h-[100dvh] sm:h-auto max-w-3xl lg:max-w-4xl rounded-none sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-100 flex flex-col sm:max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div 
-          className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0"
-          style={{ paddingTop: 'max(14px, env(safe-area-inset-top, 14px))' }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 flex-shrink-0">
-              <User className="w-4 h-4 sm:w-5 sm:h-5" />
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Backdrop */}
+      <div className="fixed inset-0" onClick={closeProfileModal} />
+
+      {/* Sheet / Modal Container */}
+      <div className="relative bg-white w-full max-w-3xl lg:max-w-4xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden z-10 animate-slide-up sm:animate-fadeIn">
+        
+        {/* Mobile Drag Indicator Pill */}
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-2.5 sm:hidden flex-shrink-0" />
+
+        {/* Modal Header */}
+        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+              <User className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-lg font-bold text-slate-900 leading-tight">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
                 Delivery & Map Details
               </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500">
                 Fill in your details and pinpoint your location on the map
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={closeProfileModal}
-            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
+            title="Close modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 

@@ -39,6 +39,15 @@ export const CartDrawer = () => {
   const [deliveryMethod, setDeliveryMethod] = useState('shipping');
 
   useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isCartOpen]);
+
+  useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isCartOpen) setIsCartOpen(false);
     };
