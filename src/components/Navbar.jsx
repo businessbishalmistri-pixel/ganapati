@@ -24,7 +24,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/70 shadow-2xs">
+    <header className="relative z-40 bg-white/90 border-b border-slate-200/70 shadow-2xs">
       {/* Top micro banner */}
       {(settings?.announcementText === undefined || settings?.announcementText?.trim() !== '') && (
         <div className="bg-emerald-50/90 border-b border-emerald-100/80 text-emerald-950 text-[10px] sm:text-xs py-1 px-3 text-center font-medium flex items-center justify-center gap-1.5">
