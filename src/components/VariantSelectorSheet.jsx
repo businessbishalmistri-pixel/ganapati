@@ -188,50 +188,51 @@ export function VariantSelectorSheet({ isOpen, onClose, product }) {
           </div>
         </div>
 
-        {/* Sticky Bottom Footer: Quantity Stepper (Centered & Thumb-Friendly) + Add to Cart Button */}
+        {/* Sticky Bottom Footer: Quantity Stepper (Centered) + Total on Right + Add to Cart Button */}
         <div className="p-3.5 sm:p-4 border-t border-slate-100 bg-white space-y-3 flex-shrink-0">
           
-          {/* Centered Quantity Controls */}
-          <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="flex items-center justify-between w-full max-w-xs px-1">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Quantity
-              </span>
-              <div className="text-right">
-                <span className="text-[10px] text-slate-400 font-bold uppercase mr-1">Total:</span>
-                <span className="text-sm sm:text-base font-black text-slate-900 font-mono">
-                  {settings.currency}{totalPrice.toLocaleString('en-IN')}
+          {/* Row: Centered Stepper & Right Total matching reference */}
+          <div className="grid grid-cols-3 items-center w-full">
+            {/* Left Col: Spacer to keep center column mathematically centered */}
+            <div className="flex items-center justify-start" />
+
+            {/* Center Col: Quantity Stepper */}
+            <div className="flex items-center justify-center">
+              <div className="inline-flex items-center justify-between border border-slate-200 bg-slate-50/70 rounded-xl w-32 h-10 px-1 select-none shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                  disabled={quantity <= 1 || isCurrentOutOfStock}
+                  className="flex-1 h-full flex items-center justify-center text-slate-400 hover:text-slate-700 active:scale-90 disabled:opacity-25 transition-all cursor-pointer font-bold"
+                  title="Decrease"
+                >
+                  <Minus className="w-4 h-4 stroke-[2]" />
+                </button>
+
+                <span className="px-2 text-center text-sm font-bold text-slate-900 font-mono select-none">
+                  {quantity}
                 </span>
+
+                <button
+                  type="button"
+                  onClick={() => setQuantity(q => Math.min(99, q + 1))}
+                  disabled={quantity >= 99 || isCurrentOutOfStock}
+                  className="flex-1 h-full flex items-center justify-center text-slate-400 hover:text-slate-700 active:scale-90 disabled:opacity-25 transition-all cursor-pointer font-bold"
+                  title="Increase"
+                >
+                  <Plus className="w-4 h-4 stroke-[2]" />
+                </button>
               </div>
             </div>
 
-            {/* Large Thumb-Friendly Centered Stepper Pill */}
-            <div className="inline-flex items-center justify-between border border-emerald-600/90 bg-emerald-50/70 rounded-xl shadow-xs w-full max-w-xs h-10 overflow-hidden select-none">
-              <button
-                type="button"
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                disabled={quantity <= 1 || isCurrentOutOfStock}
-                className="flex-1 h-full flex items-center justify-center text-emerald-800 hover:bg-emerald-100 active:bg-emerald-200 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent transition-all font-bold cursor-pointer"
-                title="Decrease"
-              >
-                <Minus className="w-4 h-4 stroke-[2.5]" />
-              </button>
-              
-              <div className="px-4 text-center min-w-[36px]">
-                <span className="text-base font-black text-emerald-950 select-none font-mono">
-                  {quantity}
-                </span>
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => setQuantity(q => Math.min(99, q + 1))}
-                disabled={quantity >= 99 || isCurrentOutOfStock}
-                className="flex-1 h-full flex items-center justify-center text-emerald-800 hover:bg-emerald-100 active:bg-emerald-200 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent transition-all font-bold cursor-pointer"
-                title="Increase"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-              </button>
+            {/* Right Col: Total Price */}
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider leading-none mb-0.5">
+                TOTAL
+              </span>
+              <span className="text-base sm:text-lg font-black text-slate-900 font-mono leading-tight">
+                {settings.currency}{totalPrice.toLocaleString('en-IN')}
+              </span>
             </div>
           </div>
 
@@ -247,7 +248,7 @@ export function VariantSelectorSheet({ isOpen, onClose, product }) {
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>{isCurrentOutOfStock ? 'Currently Unavailable' : `Add to Cart • ${settings.currency}${totalPrice.toLocaleString('en-IN')}`}</span>
+            <span>{isCurrentOutOfStock ? 'Currently Unavailable' : 'Add to Cart'}</span>
           </button>
         </div>
 
