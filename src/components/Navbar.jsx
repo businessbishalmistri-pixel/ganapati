@@ -36,9 +36,9 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-[10px]">
         <div className="flex items-center justify-between gap-2.5">
-          
+
           {/* Store Brand Name Only */}
-          <div 
+          <div
             onClick={onHomeClick}
             className="cursor-pointer group flex-shrink-0 py-0.5"
           >
@@ -71,7 +71,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
 
           {/* Actions: User Profile Icon & Shopping Cart Icon */}
           <div className="flex items-center gap-2 sm:gap-3">
-            
+
             {/* 1. Customer Details Avatar (Opens delivery info modal) */}
             <button
               type="button"
@@ -95,12 +95,11 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
               type="button"
               onClick={() => setIsCartOpen(true)}
               title={`Shopping Cart (${totalItemsCount} items)`}
-              className={`relative p-1.5 rounded-full hover:bg-slate-100/80 text-slate-900 transition-all flex items-center justify-center active:scale-95 ${
-                justAddedId ? 'scale-110' : ''
-              }`}
+              className={`relative p-1.5 rounded-full hover:bg-slate-100/80 text-slate-900 transition-all flex items-center justify-center active:scale-95 ${justAddedId ? 'scale-110' : ''
+                }`}
             >
               <ShoppingCart className="w-5 h-5 stroke-[1.8] text-slate-900" />
-              
+
               {totalItemsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold px-1.5 min-w-[17px] h-[17px] rounded-full flex items-center justify-center leading-none shadow-xs animate-scale-in">
                   {totalItemsCount}
