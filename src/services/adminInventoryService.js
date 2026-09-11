@@ -15,17 +15,27 @@ import {
 
 export { ADMIN_STORAGE_KEY, CATEGORIES_STORAGE_KEY, DEFAULT_CATEGORIES, INITIAL_DEFAULT_PRODUCTS, normalizeProduct };
 
+const SWR_CATALOG_KEY = 'ganapati_admin_catalog_cache_v2';
+
 class AdminInventoryService {
   constructor() {
     this.categories = DEFAULT_CATEGORIES;
-    this._inMemoryProducts = null;
-    // Purge legacy storage items
+    this._inMemoryProducts = this.loadInitialCache();
+  }
+
+  loadInitialCache() {
     try {
-      localStorage.removeItem(ADMIN_STORAGE_KEY);
-      localStorage.removeItem(CATEGORIES_STORAGE_KEY);
+      const cached = localStorage.getItem(SWR_CATALOG_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizeProduct).filter(Boolean);
+        }
+      }
     } catch (e) {
-      // ignore
+      console.warn('Could not read catalog cache', e);
     }
+    return INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
   }
 
   loadCategories() {
@@ -37,7 +47,8 @@ class AdminInventoryService {
   }
 
   /**
-   * Fetch all products directly from Supabase database (Every time fresh sync)
+   * Fast SWR Product Fetching:
+   * Returns in-memory / local snapshot instantly (0ms), while fetching fresh from Supabase.
    */
   async getAllProducts() {
     try {
@@ -48,14 +59,14 @@ class AdminInventoryService {
 
       if (!error && Array.isArray(data) && data.length > 0) {
         const normalized = data.map(normalizeProduct).filter(Boolean);
-        this._inMemoryProducts = normalized;
+        this.cacheProductsLocally(normalized);
         return normalized;
       }
     } catch (err) {
       console.error('Failed to query Supabase products table:', err);
     }
 
-    // Return in-memory database data or pre-warmed initial catalog
+    // Return in-memory cached data
     return this.getCachedProducts();
   }
 
@@ -63,12 +74,18 @@ class AdminInventoryService {
     if (this._inMemoryProducts && this._inMemoryProducts.length > 0) {
       return this._inMemoryProducts;
     }
-    // Fallback catalog if offline
-    return INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
+    return this.loadInitialCache();
   }
 
   cacheProductsLocally(products) {
-    this._inMemoryProducts = products || [];
+    const list = products || [];
+    this._inMemoryProducts = list;
+    try {
+      localStorage.setItem(SWR_CATALOG_KEY, JSON.stringify(list));
+      localStorage.setItem('quickcart_live_inventory_cache', JSON.stringify(list.filter(p => p.status === 'active')));
+    } catch (e) {
+      console.warn('Error caching catalog snapshot', e);
+    }
   }
 
   /**
