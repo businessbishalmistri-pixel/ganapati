@@ -45,21 +45,6 @@ export async function fetchLiveProductsFromBackend() {
     if (!error && Array.isArray(data) && data.length > 0) {
       productsList = data;
     } else {
-      // Check admin products cache
-      try {
-        const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
-        if (cachedAdmin) {
-          const parsed = JSON.parse(cachedAdmin);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            productsList = parsed;
-          }
-        }
-      } catch (e) {
-        console.warn('Could not read admin products cache', e);
-      }
-    }
-
-    if (!productsList || productsList.length === 0) {
       productsList = INITIAL_DEFAULT_PRODUCTS;
     }
 
@@ -146,12 +131,6 @@ export async function fetchLiveProductsFromBackend() {
     });
   } catch (err) {
     console.error('Error fetching live products:', err);
-    try {
-      const cachedAdmin = localStorage.getItem('ganapati_admin_products_v1');
-      if (cachedAdmin) {
-        return JSON.parse(cachedAdmin).filter(p => p.status !== 'draft');
-      }
-    } catch (e) {}
     return INITIAL_DEFAULT_PRODUCTS.filter(p => p.status !== 'draft');
   }
 }

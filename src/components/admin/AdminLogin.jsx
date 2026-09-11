@@ -32,7 +32,6 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
           token: `ganapati_adm_${Date.now()}`,
           loginTime: new Date().toISOString()
         };
-        localStorage.setItem('ganapati_admin_session', JSON.stringify(session));
         setIsLoading(false);
         onLoginSuccess(session);
       } else {

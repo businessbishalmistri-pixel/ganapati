@@ -3,22 +3,23 @@ import { AdminLogin } from './AdminLogin';
 import { AdminDashboard } from './AdminDashboard';
 
 export function AdminApp({ onNavigateToStore }) {
-  const [session, setSession] = useState(() => {
+  // Admin session is kept strictly in React memory — never stored on browser disk/storage
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    // Purge any legacy admin session from browser storage
     try {
-      const saved = localStorage.getItem('ganapati_admin_session');
-      if (saved) return JSON.parse(saved);
+      localStorage.removeItem('ganapati_admin_session');
     } catch (e) {
-      console.warn('Could not read admin session', e);
+      // ignore
     }
-    return null;
-  });
+  }, []);
 
   const handleLoginSuccess = (newSession) => {
     setSession(newSession);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('ganapati_admin_session');
     setSession(null);
   };
 

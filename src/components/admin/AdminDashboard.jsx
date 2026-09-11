@@ -22,9 +22,9 @@ import { AdminSettingsModal } from './AdminSettingsModal';
 
 export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'categories'
-  const [products, setProducts] = useState(() => adminInventoryService.getCachedProducts() || []);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(() => adminInventoryService.getCategories() || []);
-  const [isLoading, setIsLoading] = useState(() => (!adminInventoryService.getCachedProducts() || adminInventoryService.getCachedProducts().length === 0));
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   // Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
