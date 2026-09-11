@@ -318,23 +318,21 @@ export function App() {
                 {/* Department Header & Sort Bar (Adaptive 2-Row Layout) */}
                 <div className="sticky top-0 z-10 bg-[#F9FBFA]/95 backdrop-blur-md flex flex-col gap-1.5 sm:gap-2 py-2 border-b border-slate-200/80 -mx-1 px-1 sm:mx-0 sm:px-0">
                   
-                  {/* Row 1: Category Name + Items / Clear Filter depending on length */}
+                  {/* Row 1: Category Name + Items Badge (Always beside Title) + Clear Filter (if concise) */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
                       <div className="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0" />
                       <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 leading-snug break-words">
                         {selectedCategory}
                       </h2>
 
-                      {/* For concise categories (<=14 chars e.g. Personal Care), item badge sits beside title on the left */}
-                      {selectedCategory.length <= 14 && (
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">
-                          {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                        </span>
-                      )}
+                      {/* Items badge sits right after category name on Row 1 whenever space allows */}
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">
+                        {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+                      </span>
                     </div>
 
-                    {/* For concise categories: Clear Filter stays on Row 1 on the right */}
+                    {/* For concise categories (<=14 chars e.g. Personal Care): Clear Filter stays on Row 1 on the far right */}
                     {selectedCategory.length <= 14 && selectedCategory !== 'All Products' && (
                       <button
                         onClick={() => setSelectedCategory('All Products')}
@@ -343,26 +341,12 @@ export function App() {
                         Clear Filter &times;
                       </button>
                     )}
-
-                    {/* For medium categories (>14 and <=18 chars): Item badge sits on the right of Row 1 */}
-                    {selectedCategory.length > 14 && selectedCategory.length <= 18 && (
-                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">
-                        {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                      </span>
-                    )}
                   </div>
 
                   {/* Row 2: Secondary controls & Sorting */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                      {/* For long categories (>18 chars e.g. Household Essentials): item badge sits before Clear Filter on Row 2 */}
-                      {selectedCategory.length > 18 && (
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">
-                          {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                        </span>
-                      )}
-
-                      {/* For medium and long categories (>14 chars): Clear Filter is placed on Row 2 */}
+                      {/* For longer categories (>14 chars e.g. Groceries & Staples, Household Essentials): Clear Filter is placed on Row 2 */}
                       {selectedCategory.length > 14 && selectedCategory !== 'All Products' && (
                         <button
                           onClick={() => setSelectedCategory('All Products')}
