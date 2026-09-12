@@ -39,15 +39,13 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const loadData = async (silent = false) => {
     if (!silent) setIsRefreshing(true);
     try {
-      const [prods, cats] = await Promise.all([
-        adminInventoryService.getAllProducts(),
-        adminInventoryService.getCategories()
-      ]);
+      const prods = await adminInventoryService.getAllProducts();
+      const cats = adminInventoryService.getCategories();
       if (Array.isArray(prods) && prods.length > 0) {
         setProducts(prods);
       }
       if (Array.isArray(cats) && cats.length > 0) {
-        setCategories(cats);
+        setCategories([...cats]);
       }
     } catch (err) {
       console.error('Failed to load admin data:', err);
