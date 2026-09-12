@@ -6,35 +6,14 @@ import {
   Trash2, 
   Check, 
   X, 
-  Package, 
-  AlertTriangle,
-  ArrowRight,
-  Sparkles,
-  ShoppingBag,
-  Coffee,
-  Home,
-  Milk,
-  Flame,
-  Layers
+  AlertTriangle
 } from 'lucide-react';
-
-const ICON_OPTIONS = [
-  { name: 'ShoppingBag', label: 'Bag' },
-  { name: 'Package', label: 'Box' },
-  { name: 'Coffee', label: 'Coffee/Snack' },
-  { name: 'Milk', label: 'Dairy' },
-  { name: 'Flame', label: 'Spices' },
-  { name: 'Home', label: 'Household' },
-  { name: 'Sparkles', label: 'Care' }
-];
 
 export function CategoryManager({ categories = [], products = [], onAddCategory, onUpdateCategory, onDeleteCategory }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [newCatName, setNewCatName] = useState('');
-  const [newCatIcon, setNewCatIcon] = useState('ShoppingBag');
   const [editName, setEditName] = useState('');
-  const [editIcon, setEditIcon] = useState('ShoppingBag');
 
   // Reassign Modal State for non-empty categories
   const [reassignModalCat, setReassignModalCat] = useState(null);
@@ -49,13 +28,12 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
   const handleStartAdd = () => {
     setIsAdding(true);
     setNewCatName('');
-    setNewCatIcon('ShoppingBag');
   };
 
   const handleSaveAdd = (e) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
-    onAddCategory({ name: newCatName.trim(), icon: newCatIcon });
+    onAddCategory({ name: newCatName.trim() });
     setIsAdding(false);
     setNewCatName('');
   };
@@ -63,12 +41,11 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
   const handleStartEdit = (cat) => {
     setEditingId(cat.id);
     setEditName(cat.name);
-    setEditIcon(cat.icon || 'ShoppingBag');
   };
 
   const handleSaveEdit = (id) => {
     if (!editName.trim()) return;
-    onUpdateCategory(id, { name: editName.trim(), icon: editIcon });
+    onUpdateCategory(id, { name: editName.trim() });
     setEditingId(null);
   };
 
@@ -131,36 +108,19 @@ export function CategoryManager({ categories = [], products = [], onAddCategory,
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Category Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                autoFocus
-                required
-                placeholder="e.g. Organic Pulses & Dals"
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Icon Representation
-              </label>
-              <select
-                value={newCatIcon}
-                onChange={(e) => setNewCatIcon(e.target.value)}
-                className="w-full pl-3.5 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs"
-              >
-                {ICON_OPTIONS.map((opt) => (
-                  <option key={opt.name} value={opt.name}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Category Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              autoFocus
+              required
+              placeholder="e.g. Organic Pulses & Dals"
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-1">
