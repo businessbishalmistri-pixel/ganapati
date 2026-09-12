@@ -19,8 +19,9 @@ const SWR_CATALOG_KEY = 'ganapati_admin_catalog_cache_v2';
 
 class AdminInventoryService {
   constructor() {
-    this.categories = DEFAULT_CATEGORIES;
+    this.categories = this.loadCategories();
     this._inMemoryProducts = this.loadInitialCache();
+    this.syncCategoriesWithProducts(this._inMemoryProducts);
   }
 
   loadInitialCache() {
@@ -39,11 +40,53 @@ class AdminInventoryService {
   }
 
   loadCategories() {
-    return this.categories || DEFAULT_CATEGORIES;
+    try {
+      const saved = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read categories cache', e);
+    }
+    return DEFAULT_CATEGORIES;
   }
 
   saveCategories(cats) {
     this.categories = cats;
+    try {
+      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(cats));
+    } catch (e) {
+      console.warn('Could not save categories cache', e);
+    }
+  }
+
+  syncCategoriesWithProducts(products) {
+    if (!Array.isArray(products) || products.length === 0) return;
+    let hasNew = false;
+    const currentCats = [...(this.categories || [])];
+    const existingNames = new Set(currentCats.map(c => (c.name || '').trim().toLowerCase()));
+
+    products.forEach(p => {
+      const catName = (p.category || '').trim();
+      if (catName && !existingNames.has(catName.toLowerCase())) {
+        existingNames.add(catName.toLowerCase());
+        currentCats.push({
+          id: `cat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          name: catName,
+          slug: catName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          icon: 'Package',
+          count: 0
+        });
+        hasNew = true;
+      }
+    });
+
+    if (hasNew) {
+      this.saveCategories(currentCats);
+    }
   }
 
   /**
@@ -60,6 +103,7 @@ class AdminInventoryService {
       if (!error && Array.isArray(data) && data.length > 0) {
         const normalized = data.map(normalizeProduct).filter(Boolean);
         this.cacheProductsLocally(normalized);
+        this.syncCategoriesWithProducts(normalized);
         return normalized;
       }
     } catch (err) {
