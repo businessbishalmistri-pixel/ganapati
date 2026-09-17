@@ -42,7 +42,7 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick, onSearchFocus
             onClick={onHomeClick}
             className="cursor-pointer group flex-shrink-0 py-0.5"
           >
-            <h1 className="font-black text-base sm:text-xl tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">
+            <h1 className="font-black text-base sm:text-xl tracking-tight text-emerald-800 hover:text-emerald-900 transition-colors">
               {settings?.storeName || 'Ganapati Store'}
             </h1>
           </div>

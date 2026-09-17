@@ -70,7 +70,7 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 sm:p-10 backdrop-blur-sm">
           {/* Header */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ganapati Stores</h1>
+            <h1 className="text-2xl font-black text-emerald-800 tracking-tight">Ganapati Stores</h1>
             <p className="text-xs font-medium text-slate-500 mt-1">
               Store Catalog & Product Management
             </p>
