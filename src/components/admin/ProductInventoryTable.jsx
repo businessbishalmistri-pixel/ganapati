@@ -73,13 +73,8 @@ export function ProductInventoryTable({
       ? smartSearchProducts(baseFiltered, searchQuery)
       : baseFiltered;
 
-    // 3. Default sort: Starred/pinned items first, then by created_at (stable added order, prevents jumping on edit/stock toggle)
+    // 3. Stable sort strictly by created_at (items maintain fixed position by added date, no jumping on star/edit/stock toggle)
     return [...searched].sort((a, b) => {
-      const aPinned = Boolean(a.is_pinned || a.is_starred || a.sub_category === 'pinned');
-      const bPinned = Boolean(b.is_pinned || b.is_starred || b.sub_category === 'pinned');
-      if (aPinned && !bPinned) return -1;
-      if (!aPinned && bPinned) return 1;
-
       const dateA = new Date(a.created_at || 0).getTime();
       const dateB = new Date(b.created_at || 0).getTime();
       return dateB - dateA;
@@ -428,7 +423,7 @@ export function ProductInventoryTable({
                             ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' 
                             : 'text-slate-300 hover:text-amber-400 hover:bg-slate-100'
                         }`}
-                        title={product.is_pinned ? "Starred (Shown at top)" : "Star product (Pin to top)"}
+                        title={product.is_pinned ? "Starred" : "Star product"}
                       >
                         <Star className={`w-3.5 h-3.5 transition-colors ${product.is_pinned ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />
                       </button>
@@ -537,7 +532,7 @@ export function ProductInventoryTable({
                                 className={`p-0.5 rounded hover:bg-slate-100 transition-colors inline-flex items-center justify-center cursor-pointer flex-shrink-0 ${
                                   product.is_pinned ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'
                                 }`}
-                                title={product.is_pinned ? "Starred (Shown at top)" : "Star product (Pin to top)"}
+                                title={product.is_pinned ? "Starred" : "Star product"}
                               >
                                 <Star className={`w-3.5 h-3.5 transition-colors ${product.is_pinned ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />
                               </button>

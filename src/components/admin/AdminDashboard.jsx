@@ -170,7 +170,7 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     if (updated) {
       showToast(
         updated.is_pinned 
-          ? `⭐ "${updated.title}" pinned to top of store!` 
+          ? `⭐ "${updated.title}" starred!` 
           : `"${updated.title}" unstarred`,
         'info'
       );
