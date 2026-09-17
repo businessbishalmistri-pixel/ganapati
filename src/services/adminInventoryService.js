@@ -3,7 +3,12 @@
  * Comprehensive Inventory Management & Admin CRUD Service
  * Synchronized directly with Supabase Database and local realtime caches.
  */
-import { supabase } from './supabaseStore';
+import { 
+  supabase, 
+  fetchCategoriesFromSupabase, 
+  upsertCategoryToSupabase, 
+  deleteCategoryFromSupabase 
+} from './supabaseStore';
 import { inventoryApi } from './inventoryApi';
 import { deleteImageFromSupabase } from './imageUploadService';
 import { 
@@ -24,6 +29,8 @@ class AdminInventoryService {
     this.categories = this.loadCategories();
     this._inMemoryProducts = this.loadInitialCache();
     this.syncCategoriesWithProducts(this._inMemoryProducts);
+    this.fetchCategoriesFromBackend();
+    this.setupCategoriesRealtime();
 
     if (typeof window !== 'undefined') {
       try {
@@ -47,6 +54,58 @@ class AdminInventoryService {
           } catch (err) {}
         }
       });
+    }
+  }
+
+  async fetchCategoriesFromBackend() {
+    try {
+      const dbCats = await fetchCategoriesFromSupabase();
+      if (Array.isArray(dbCats) && dbCats.length > 0) {
+        // Merge DB categories with any local products
+        const current = this.categories || [];
+        const mergedMap = new Map();
+        
+        // Add DB categories
+        dbCats.forEach(c => {
+          if (c && c.name) mergedMap.set(c.name.toLowerCase().trim(), c);
+        });
+
+        // Add local categories if not yet in DB
+        current.forEach(c => {
+          const lower = (c.name || '').toLowerCase().trim();
+          if (!mergedMap.has(lower)) {
+            mergedMap.set(lower, c);
+            upsertCategoryToSupabase(c).catch(console.warn);
+          }
+        });
+
+        const merged = Array.from(mergedMap.values());
+        this.saveCategories(merged, false);
+      } else {
+        // If DB is empty, seed defaults to Supabase
+        (this.categories || DEFAULT_CATEGORIES).forEach(c => {
+          upsertCategoryToSupabase(c).catch(console.warn);
+        });
+      }
+    } catch (e) {
+      console.warn('Error fetching categories from Supabase backend:', e);
+    }
+  }
+
+  setupCategoriesRealtime() {
+    try {
+      supabase
+        .channel('public:categories')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+          fetchCategoriesFromSupabase().then(fresh => {
+            if (Array.isArray(fresh) && fresh.length > 0) {
+              this.saveCategories(fresh, false);
+            }
+          }).catch(console.warn);
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Categories realtime subscription notice:', err);
     }
   }
 
@@ -403,7 +462,7 @@ class AdminInventoryService {
     return this.categories;
   }
 
-  addCategory(category) {
+  async addCategory(category) {
     const newCat = {
       id: category.id || `cat_${Date.now()}`,
       name: category.name.trim(),
@@ -415,10 +474,18 @@ class AdminInventoryService {
     };
     const updated = [...this.categories, newCat];
     this.saveCategories(updated);
+
+    // Save directly to Supabase Database
+    try {
+      await upsertCategoryToSupabase(newCat);
+    } catch (err) {
+      console.warn('Supabase category database save notice:', err);
+    }
+
     return newCat;
   }
 
-  updateCategory(id, updates) {
+  async updateCategory(id, updates) {
     const targetCat = this.categories.find(c => c.id === id);
     const newImg = updates.image_url !== undefined ? updates.image_url : updates.image;
     
@@ -434,10 +501,22 @@ class AdminInventoryService {
       image: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : c.image)
     } : c);
     this.saveCategories(updated);
-    return updated.find(c => c.id === id);
+
+    const savedCat = updated.find(c => c.id === id);
+    
+    // Update directly in Supabase Database
+    if (savedCat) {
+      try {
+        await upsertCategoryToSupabase(savedCat);
+      } catch (err) {
+        console.warn('Supabase category database update notice:', err);
+      }
+    }
+
+    return savedCat;
   }
 
-  deleteCategory(id) {
+  async deleteCategory(id) {
     const targetCat = this.categories.find(c => c.id === id);
     
     // Auto-clean category cover image from Supabase Storage
@@ -447,6 +526,14 @@ class AdminInventoryService {
 
     const updated = this.categories.filter(c => c.id !== id);
     this.saveCategories(updated);
+
+    // Delete directly from Supabase Database
+    try {
+      await deleteCategoryFromSupabase(id);
+    } catch (err) {
+      console.warn('Supabase category database delete notice:', err);
+    }
+
     return true;
   }
 

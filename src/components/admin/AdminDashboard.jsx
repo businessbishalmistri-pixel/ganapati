@@ -167,14 +167,17 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     }
   };
 
-  // Category Handlers
-  const handleAddCategory = (cat) => {
-    adminInventoryService.addCategory(cat);
+  // Category Handlers (Instant optimistic state + Supabase Database Sync)
+  const handleAddCategory = async (cat) => {
+    const newCat = { ...cat, id: cat.id || `cat_${Date.now()}` };
+    setCategories((prev) => [...prev, newCat]);
+    await adminInventoryService.addCategory(cat);
     setCategories([...adminInventoryService.getCategories()]);
   };
 
-  const handleUpdateCategory = (id, updates) => {
-    adminInventoryService.updateCategory(id, updates);
+  const handleUpdateCategory = async (id, updates) => {
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    await adminInventoryService.updateCategory(id, updates);
     setCategories([...adminInventoryService.getCategories()]);
   };
 

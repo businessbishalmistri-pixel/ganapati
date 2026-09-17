@@ -316,36 +316,113 @@ export async function fetchStoreInfoFromBackend() {
   return await fetchStoreSettingsFromSupabase();
 }
 
-export async function updateStoreInfoInBackend(newSettings = {}) {
-  return await updateStoreSettingsInSupabase(newSettings);
-}
-
 /**
- * Submit real order to backend sales_orders table
+ * Categories Database Persistence in Supabase
  */
-export async function submitBackendOrder(orderPayload) {
+export async function fetchCategoriesFromSupabase() {
   try {
-    const invNumber = `INV-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    const payload = {
-      invoice_number: invNumber,
-      customer_name: orderPayload.customer.name,
-      customer_email: orderPayload.customer.email || null,
-      subtotal: orderPayload.subtotal,
-      discount_pct: 0,
-      discount_amount: 0,
-      taxable_amount: orderPayload.subtotal,
-      gst_amount: 0,
-      total_amount: orderPayload.total,
-      payment_method: 'COD / WhatsApp',
-      items: orderPayload.items
-    };
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('created_at', { ascending: true });
 
-    const { data, error } = await supabase.from('sales_orders').insert([payload]).select();
-    if (!error && data && data.length > 0) {
-      return { success: true, orderId: data[0].id, invoiceNumber: invNumber };
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug || (c.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        image_url: c.image_url || c.image || '',
+        image: c.image_url || c.image || '',
+        icon: c.icon || 'Package',
+        created_at: c.created_at,
+        updated_at: c.updated_at
+      }));
     }
   } catch (err) {
-    console.warn('Could not record order in backend sales_orders:', err);
+    console.warn('Could not query Supabase categories table:', err);
   }
-  return { success: false };
+  return null;
 }
+
+export async function upsertCategoryToSupabase(category) {
+  if (!category || !category.name) return null;
+  const cleanId = category.id || `cat_${Date.now()}`;
+  const payload = {
+    id: cleanId,
+    name: category.name.trim(),
+    slug: category.slug || category.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    image_url: category.image_url || category.image || '',
+    icon: category.icon || 'Package',
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .upsert([payload], { onConflict: 'id' })
+      .select()
+      .maybeSingle();
+
+    if (!error && data) {
+      return {
+        ...data,
+        image_url: data.image_url || data.image || '',
+        image: data.image_url || data.image || ''
+      };
+    }
+    if (error) {
+      console.warn('Supabase category upsert warning:', error.message);
+    }
+  } catch (err) {
+    console.warn('Failed to upsert category to Supabase:', err);
+  }
+  return payload;
+}
+
+export async function deleteCategoryFromSupabase(id) {
+  if (!id) return false;
+  try {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+
+    if (!error) return true;
+    console.warn('Supabase category delete warning:', error.message);
+  } catch (err) {
+    console.warn('Failed to delete category from Supabase:', err);
+  }
+  return false;
+}
+
+export async function submitBackendOrder(order) {
+  if (!order) return null;
+  try {
+    const payload = {
+      order_id: order.orderId || order.invoice_number || `ORD-${Date.now()}`,
+      customer_name: order.customer?.name || order.customer_name || 'Customer',
+      customer_phone: order.customer?.phone || order.customer_phone || '',
+      customer_email: order.customer?.email || order.customer_email || '',
+      delivery_method: order.deliveryMethod || 'pickup',
+      delivery_address: order.shippingAddress ? JSON.stringify(order.shippingAddress) : (order.delivery_address || ''),
+      items: Array.isArray(order.items) ? order.items : [],
+      status: order.status || 'pending',
+      created_at: order.createdAt || new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([payload])
+      .select()
+      .maybeSingle();
+
+    if (!error && data) return data;
+    if (error) {
+      console.warn('Supabase order insert note:', error.message);
+    }
+  } catch (err) {
+    console.warn('Could not submit order to Supabase:', err);
+  }
+  return null;
+}
+
