@@ -5,6 +5,7 @@
  */
 import { supabase } from './supabaseStore';
 import { inventoryApi } from './inventoryApi';
+import { deleteImageFromSupabase } from './imageUploadService';
 import { 
   ADMIN_STORAGE_KEY, 
   CATEGORIES_STORAGE_KEY, 
@@ -238,6 +239,12 @@ class AdminInventoryService {
   async updateProduct(id, updates) {
     const currentList = this.getCachedProducts();
     const existing = currentList.find(p => p.id === id) || {};
+
+    // Auto-clean old image from Supabase if a new image was provided and differs
+    if (existing.image_url && updates.image_url && existing.image_url !== updates.image_url) {
+      deleteImageFromSupabase(existing.image_url).catch(console.warn);
+    }
+
     const updated = normalizeProduct({
       ...existing,
       ...updates,
@@ -346,17 +353,33 @@ class AdminInventoryService {
   }
 
   /**
-   * Delete product
+   * Delete product (also purges associated images from Supabase Storage)
    */
   async deleteProduct(id) {
+    const currentList = this.getCachedProducts();
+    const targetProd = currentList.find(p => p.id === id);
+
+    // 1. Purge product images from Supabase Storage
+    if (targetProd?.image_url) {
+      deleteImageFromSupabase(targetProd.image_url).catch(console.warn);
+    }
+    if (Array.isArray(targetProd?.images)) {
+      targetProd.images.forEach(img => {
+        if (img && img !== targetProd.image_url) {
+          deleteImageFromSupabase(img).catch(console.warn);
+        }
+      });
+    }
+
+    // 2. Delete from Supabase Database
     try {
       await supabase.from('products').delete().eq('id', id);
     } catch (err) {
       console.warn('Supabase delete error', err);
     }
 
-    const currentList = this.getCachedProducts().filter(p => p.id !== id);
-    this.cacheProductsLocally(currentList);
+    const nextList = currentList.filter(p => p.id !== id);
+    this.cacheProductsLocally(nextList);
     inventoryApi.products = inventoryApi.products.filter(p => p.id !== id);
     inventoryApi.notify();
     return true;
@@ -396,6 +419,14 @@ class AdminInventoryService {
   }
 
   updateCategory(id, updates) {
+    const targetCat = this.categories.find(c => c.id === id);
+    const newImg = updates.image_url !== undefined ? updates.image_url : updates.image;
+    
+    // Auto-clean old image if updated or removed
+    if (targetCat && targetCat.image_url && newImg !== undefined && targetCat.image_url !== newImg) {
+      deleteImageFromSupabase(targetCat.image_url).catch(console.warn);
+    }
+
     const updated = this.categories.map(c => c.id === id ? { 
       ...c, 
       ...updates,
@@ -407,6 +438,13 @@ class AdminInventoryService {
   }
 
   deleteCategory(id) {
+    const targetCat = this.categories.find(c => c.id === id);
+    
+    // Auto-clean category cover image from Supabase Storage
+    if (targetCat?.image_url) {
+      deleteImageFromSupabase(targetCat.image_url).catch(console.warn);
+    }
+
     const updated = this.categories.filter(c => c.id !== id);
     this.saveCategories(updated);
     return true;

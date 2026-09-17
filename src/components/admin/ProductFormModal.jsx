@@ -24,7 +24,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadImageToSupabase } from '../../services/imageUploadService';
+import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
 
 const PRESET_IMAGES = [
   { label: 'Rice / Grains', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80' },
@@ -154,6 +154,8 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     setIsUploadingImage(true);
     setUploadStatusText('Processing image...');
     try {
+      const previousUrl = formData.image_url;
+
       // 1. High-speed client-side compression with HTML5 Canvas -> WebP
       const compressed = await compressImage(file, { maxWidth: 1080, maxHeight: 1080, quality: 0.82 });
       
@@ -170,6 +172,11 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       if (compressed?.file) {
         const publicUrl = await uploadImageToSupabase(compressed.file, formData.title || 'product', persistentUrl);
         if (publicUrl && publicUrl !== persistentUrl) {
+          // Auto-clean previous image from Supabase storage
+          if (previousUrl && previousUrl !== publicUrl) {
+            deleteImageFromSupabase(previousUrl).catch(console.warn);
+          }
+
           setFormData(prev => ({
             ...prev,
             image_url: publicUrl,
@@ -743,7 +750,10 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setFormData((prev) => ({ ...prev, image_url: '' }));
+                        if (formData.image_url) {
+                          deleteImageFromSupabase(formData.image_url).catch(console.warn);
+                        }
+                        setFormData((prev) => ({ ...prev, image_url: '', image: '' }));
                         setCompressionStats(null);
                       }}
                       className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 text-xs font-bold text-slate-500 hover:text-red-600 shadow-xs flex items-center justify-center cursor-pointer"

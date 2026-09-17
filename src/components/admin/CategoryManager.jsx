@@ -14,7 +14,7 @@ import {
   Package
 } from 'lucide-react';
 import { compressProductImage } from '../../utils/imageCompressor';
-import { uploadImageToSupabase } from '../../services/imageUploadService';
+import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
 import { QUICK_COMMERCE_CATEGORIES } from '../../data/categoryCatalog';
 
 export function CategoryManager({ 
@@ -69,12 +69,17 @@ export function CategoryManager({
       setIsUploadingNew(true);
       setNewUploadStatus('Compressing category image...');
       
+      const previousImage = newCatImage;
       const compressed = await compressProductImage(file);
       setNewUploadStatus('Saving to Supabase Storage...');
       
       const cleanName = (newCatName || file.name.split('.')[0] || 'category').trim();
       const uploadedUrl = await uploadImageToSupabase(compressed.blob, `categories/${cleanName}`, compressed.dataUrl);
       
+      if (uploadedUrl && previousImage && previousImage !== uploadedUrl) {
+        deleteImageFromSupabase(previousImage).catch(console.warn);
+      }
+
       setNewCatImage(uploadedUrl || compressed.dataUrl);
     } catch (err) {
       console.warn('Category image upload notice:', err);
@@ -110,12 +115,17 @@ export function CategoryManager({
       setIsUploadingEdit(true);
       setEditUploadStatus('Compressing image...');
       
+      const previousImage = editImage;
       const compressed = await compressProductImage(file);
       setEditUploadStatus('Saving to Supabase...');
       
       const cleanName = (editName || file.name.split('.')[0] || 'category').trim();
       const uploadedUrl = await uploadImageToSupabase(compressed.blob, `categories/${cleanName}`, compressed.dataUrl);
       
+      if (uploadedUrl && previousImage && previousImage !== uploadedUrl) {
+        deleteImageFromSupabase(previousImage).catch(console.warn);
+      }
+
       setEditImage(uploadedUrl || compressed.dataUrl);
     } catch (err) {
       console.warn('Edit category image upload notice:', err);
@@ -270,7 +280,12 @@ export function CategoryManager({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setNewCatImage('')}
+                    onClick={() => {
+                      if (newCatImage) {
+                        deleteImageFromSupabase(newCatImage).catch(console.warn);
+                      }
+                      setNewCatImage('');
+                    }}
                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
                     title="Remove Image"
                   >
@@ -411,7 +426,12 @@ export function CategoryManager({
                         </button>
                         <button
                           type="button"
-                          onClick={() => setEditImage('')}
+                          onClick={() => {
+                            if (editImage) {
+                              deleteImageFromSupabase(editImage).catch(console.warn);
+                            }
+                            setEditImage('');
+                          }}
                           className="p-1 text-slate-400 hover:text-red-600"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
