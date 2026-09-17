@@ -447,14 +447,14 @@ export function App() {
                       </h2>
                     </div>
 
-                    {/* Products Grid */}
-                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-2.5">
+                    {/* Products Grid (8 Items per line on Desktop) */}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8 gap-1.5 sm:gap-2.5">
                       {starredProducts.map((product, idx) => (
                         <ProductCard
                           key={product.id}
                           product={product}
                           onSelectProduct={handleSelectProduct}
-                          priority={idx < 6}
+                          priority={idx < 8}
                         />
                       ))}
                     </div>
