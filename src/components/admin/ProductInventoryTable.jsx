@@ -73,11 +73,13 @@ export function ProductInventoryTable({
       ? smartSearchProducts(baseFiltered, searchQuery)
       : baseFiltered;
 
-    // 3. Stable sort strictly by created_at (items maintain fixed position by added date, no jumping on star/edit/stock toggle)
+    // 3. Stable sort strictly by created_at with deterministic id tie-breaker (items maintain fixed position by added date, no jumping on star/edit/stock toggle)
     return [...searched].sort((a, b) => {
       const dateA = new Date(a.created_at || 0).getTime();
       const dateB = new Date(b.created_at || 0).getTime();
-      return dateB - dateA;
+      const dateDiff = dateB - dateA;
+      if (dateDiff !== 0) return dateDiff;
+      return String(b.id || '').localeCompare(String(a.id || ''));
     });
   }, [products, searchQuery, selectedCategory, stockFilter]);
 
