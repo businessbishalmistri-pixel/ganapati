@@ -256,7 +256,7 @@ export function CategoryManager({
                     alt="Category Preview"
                     className="w-12 h-12 rounded-lg object-cover bg-slate-100 flex-shrink-0"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                   <div className="flex-1 min-w-0">
@@ -303,7 +303,7 @@ export function CategoryManager({
               {showNewUrlInput && (
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://example.com/category-image.webp"
                   value={newCatImage}
                   onChange={(e) => setNewCatImage(e.target.value)}
                   className="w-full mt-1.5 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
@@ -406,7 +406,7 @@ export function CategoryManager({
                           alt={editName}
                           className="w-10 h-10 rounded-lg object-cover bg-slate-200 flex-shrink-0"
                           onError={(e) => {
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                            e.currentTarget.style.display = 'none';
                           }}
                         />
                         <div className="flex-1 min-w-0">

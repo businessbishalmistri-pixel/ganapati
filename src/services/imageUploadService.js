@@ -73,7 +73,7 @@ export function extractStoragePath(url) {
   if (!url || typeof url !== 'string') return null;
   const cleanUrl = url.trim();
 
-  // If it is a base64 Data URL, blob:, or external domain (Unsplash, etc.), ignore
+  // If it is a base64 Data URL, blob:, or external domain, ignore
   if (cleanUrl.startsWith('data:') || cleanUrl.startsWith('blob:') || !cleanUrl.includes('supabase.co')) {
     return null;
   }
