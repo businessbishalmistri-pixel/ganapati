@@ -86,20 +86,30 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
   const outOfStockCount = totalProductsCount - inStockCount;
 
-  // Product CRUD Handlers (0ms Optimistic UI)
+  // Product CRUD Handlers (0ms Optimistic UI + Guaranteed DB Sync)
   const handleSaveProduct = async (productData) => {
     if (productData.id) {
       setProducts(prev => prev.map(p => p.id === productData.id ? { ...p, ...productData } : p));
-      adminInventoryService.updateProduct(productData.id, productData).catch(console.error);
+      try {
+        const saved = await adminInventoryService.updateProduct(productData.id, productData);
+        if (saved) {
+          setProducts(prev => prev.map(p => p.id === productData.id ? saved : p));
+        }
+      } catch (err) {
+        console.error('Error updating product in database:', err);
+      }
     } else {
       const tempId = productData.id || `prod_${Date.now()}`;
       const optimisticProd = { ...productData, id: tempId };
       setProducts(prev => [optimisticProd, ...prev]);
-      adminInventoryService.addProduct(productData).then(created => {
+      try {
+        const created = await adminInventoryService.addProduct(productData);
         if (created) {
           setProducts(prev => prev.map(p => p.id === tempId ? created : p));
         }
-      }).catch(console.error);
+      } catch (err) {
+        console.error('Error adding product to database:', err);
+      }
     }
   };
 
