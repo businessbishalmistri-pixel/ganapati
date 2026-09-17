@@ -219,18 +219,27 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handle Mobile Bottom Nav Search Click: focuses mobile search input smoothly
-  const handleMobileSearchClick = () => {
+  // Shift user directly to search/catalog view when clicking or focusing search
+  const handleSearchFocus = () => {
     if (selectedProduct) {
       setSelectedProduct(null);
     }
+    if (!selectedCategory) {
+      setSelectedCategory('All Products');
+      setSelectedCategoryKeywords([]);
+    }
+  };
+
+  // Handle Mobile Bottom Nav Search Click: focuses mobile search input and shifts to catalog view directly
+  const handleMobileSearchClick = () => {
+    handleSearchFocus();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
       const input = document.getElementById('mobile-search-input');
       if (input) {
         input.focus();
       }
-    }, 150);
+    }, 100);
   };
 
   // Dynamic back button label depending on where the user clicked the product
@@ -328,6 +337,7 @@ export function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onHomeClick={handleBackToShop}
+        onSearchFocus={handleSearchFocus}
       />
 
       {/* Main View: Full Product Detail Page OR Store Catalog */}

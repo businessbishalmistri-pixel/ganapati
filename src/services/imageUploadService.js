@@ -24,6 +24,9 @@ export async function uploadImageToSupabase(fileOrBlob, customFileName = '', fal
       if (customFileName.startsWith('banners/') || customFileName.includes('banner')) {
         const cleanName = customFileName.replace(/[^a-zA-Z0-9_-]/g, '_');
         filePath = `banners/${cleanName}_${timestamp}.${fileExt}`;
+      } else if (customFileName.startsWith('categories/') || customFileName.includes('category')) {
+        const cleanName = customFileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        filePath = `categories/${cleanName}_${timestamp}.${fileExt}`;
       } else if (customFileName) {
         const cleanName = customFileName.replace(/[^a-zA-Z0-9_-]/g, '_');
         filePath = `products/${cleanName}_${timestamp}.${fileExt}`;

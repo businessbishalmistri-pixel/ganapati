@@ -8,13 +8,13 @@ export const ADMIN_STORAGE_KEY = 'ganapati_admin_products_v1';
 export const CATEGORIES_STORAGE_KEY = 'ganapati_admin_categories_v1';
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'cat-1', name: 'Groceries & Staples', slug: 'groceries-staples', count: 0, icon: 'ShoppingBag' },
-  { id: 'cat-2', name: 'Snacks & Beverages', slug: 'snacks-beverages', count: 0, icon: 'Coffee' },
-  { id: 'cat-3', name: 'Packaged Foods', slug: 'packaged-foods', count: 0, icon: 'Package' },
-  { id: 'cat-4', name: 'Dairy & Bakery', slug: 'dairy-bakery', count: 0, icon: 'Milk' },
-  { id: 'cat-5', name: 'Spices & Masalas', slug: 'spices-masalas', count: 0, icon: 'Flame' },
-  { id: 'cat-6', name: 'Personal Care', slug: 'personal-care', count: 0, icon: 'Sparkles' },
-  { id: 'cat-7', name: 'Household Essentials', slug: 'household-essentials', count: 0, icon: 'Home' },
+  { id: 'cat-1', name: 'Groceries & Staples', slug: 'groceries-staples', count: 0, icon: 'ShoppingBag', image_url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80' },
+  { id: 'cat-2', name: 'Snacks & Beverages', slug: 'snacks-beverages', count: 0, icon: 'Coffee', image_url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=300&q=80' },
+  { id: 'cat-3', name: 'Packaged Foods', slug: 'packaged-foods', count: 0, icon: 'Package', image_url: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?auto=format&fit=crop&w=300&q=80' },
+  { id: 'cat-4', name: 'Dairy & Bakery', slug: 'dairy-bakery', count: 0, icon: 'Milk', image_url: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=300&q=80' },
+  { id: 'cat-5', name: 'Spices & Masalas', slug: 'spices-masalas', count: 0, icon: 'Flame', image_url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=300&q=80' },
+  { id: 'cat-6', name: 'Personal Care', slug: 'personal-care', count: 0, icon: 'Sparkles', image_url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=300&q=80' },
+  { id: 'cat-7', name: 'Household Essentials', slug: 'household-essentials', count: 0, icon: 'Home', image_url: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?auto=format&fit=crop&w=300&q=80' },
 ];
 
 export const INITIAL_DEFAULT_PRODUCTS = [

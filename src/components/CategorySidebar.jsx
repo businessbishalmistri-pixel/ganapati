@@ -1,5 +1,6 @@
 import React from 'react';
 import { LayoutGrid, Package } from 'lucide-react';
+import { QUICK_COMMERCE_CATEGORIES } from '../data/categoryCatalog';
 
 export const CategorySidebar = ({ 
   categories, 
@@ -7,8 +8,9 @@ export const CategorySidebar = ({
   selectedCategory, 
   onSelectCategory 
 }) => {
-  const categoryData = categories.map((cat) => {
-    if (cat === 'All Products') {
+  const categoryData = categories.map((catItem) => {
+    const catName = typeof catItem === 'object' && catItem?.name ? catItem.name : String(catItem);
+    if (catName === 'All Products') {
       return {
         name: 'All Products',
         displayName: 'All Items',
@@ -19,15 +21,20 @@ export const CategorySidebar = ({
     }
 
     const catProds = products.filter(
-      (p) => p.category && p.category.toLowerCase() === cat.toLowerCase()
+      (p) => p.category && p.category.toLowerCase() === catName.toLowerCase()
     );
-    const firstImage = catProds.find((p) => p.image)?.image || null;
+
+    const lower = catName.toLowerCase();
+    const customImage = typeof catItem === 'object' ? (catItem?.image_url || catItem?.image) : null;
+    const preset = QUICK_COMMERCE_CATEGORIES.find(
+      (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
+    );
 
     return {
-      name: cat,
-      displayName: cat,
+      name: catName,
+      displayName: catName,
       count: catProds.length,
-      image: firstImage,
+      image: customImage || (preset ? preset.image : null),
       isAll: false
     };
   });
