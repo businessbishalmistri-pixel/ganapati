@@ -43,12 +43,12 @@ export function App() {
   const { customer, currentCustomer } = useAuth();
   const activeCustomer = currentCustomer || customer;
 
-  // Admin Route Detection
+  // Admin Route Detection (Secret custom path: /amit)
   const checkIsAdmin = () => {
     if (typeof window === 'undefined') return false;
     const path = window.location.pathname.toLowerCase();
     const hash = window.location.hash.toLowerCase();
-    return path === '/admin' || path.startsWith('/admin/') || hash === '#/admin' || hash === '#admin';
+    return path === '/amit' || path.startsWith('/amit/') || hash === '#/amit' || hash === '#amit';
   };
 
   const [isAdminView, setIsAdminView] = useState(checkIsAdmin);
@@ -169,7 +169,7 @@ export function App() {
 
   // Navigate to Admin
   const handleNavigateToAdmin = () => {
-    window.history.pushState({ view: 'admin' }, '', '/admin');
+    window.history.pushState({ view: 'admin' }, '', '/amit');
     setIsAdminView(true);
     document.title = 'Ganapati Stores — Admin Dashboard';
     window.scrollTo({ top: 0, behavior: 'smooth' });
