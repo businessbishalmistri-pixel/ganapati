@@ -41,11 +41,11 @@ export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
   const isMaxInCart = maxStock > 0 && totalQtyInCart >= maxStock;
 
   return (
-    <div className="group relative bg-white rounded border border-slate-200/90 hover:border-emerald-400 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
+    <div className="group relative bg-white rounded-[16px] hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden">
       
       {/* Product Image Area with Shimmer Skeleton */}
       <div 
-        className="relative aspect-square w-full bg-slate-100 overflow-hidden cursor-pointer"
+        className="relative aspect-square w-full bg-slate-100 rounded-[16px] overflow-hidden cursor-pointer"
         onClick={() => onSelectProduct(product)}
       >
         {/* Shimmer Skeleton Placeholder while image is loading */}
