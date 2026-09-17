@@ -33,8 +33,7 @@ class InventoryService {
     } catch (e) {
       console.warn('Could not read cached inventory', e);
     }
-    // Pre-warmed initial catalog for 0ms first-paint on any device
-    return INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
+    return [];
   }
 
   saveData() {

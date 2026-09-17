@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Package } from 'lucide-react';
-import { QUICK_COMMERCE_CATEGORIES } from '../data/categoryCatalog';
 
 export const CategoryGrid = ({ 
   categories = [], 
@@ -18,7 +17,7 @@ export const CategoryGrid = ({
       if (!catMap.has(catName)) {
         const lower = catName.toLowerCase();
 
-        // 1. Priority #1: Custom Admin Category Image (Uploaded / edited via Admin Panel)
+        // Custom Admin / DB Category Image
         const customCat = Array.isArray(categories) 
           ? categories.find((c) => {
               if (!c) return false;
@@ -28,16 +27,11 @@ export const CategoryGrid = ({
           : null;
         const customImage = typeof customCat === 'object' && customCat ? (customCat.image_url || customCat.image) : null;
 
-        // 2. Priority #2: Quick Commerce Category Collage Preset (if no custom uploaded artwork)
-        const preset = QUICK_COMMERCE_CATEGORIES.find(
-          (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
-        );
-
         catMap.set(catName, {
           name: catName,
           count: 1,
-          image: customImage && customImage.trim() ? customImage.trim() : (preset ? preset.image : null),
-          keywords: preset ? preset.keywords : [lower]
+          image: customImage && customImage.trim() ? customImage.trim() : null,
+          keywords: [lower]
         });
       } else {
         const item = catMap.get(catName);

@@ -66,8 +66,7 @@ export const ProductModal = ({ product, onClose }) => {
                 src={selectedImage}
                 alt={product.title}
                 onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80';
+                  e.currentTarget.style.display = 'none';
                 }}
                 className="w-full h-full object-cover object-center transition-all duration-300"
               />
@@ -95,8 +94,7 @@ export const ProductModal = ({ product, onClose }) => {
                       src={img}
                       alt=""
                       onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                        e.currentTarget.style.display = 'none';
                       }}
                       className="w-full h-full object-cover"
                     />
