@@ -73,6 +73,10 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
 
   useEffect(() => {
     if (productToEdit) {
+      let initialImg = productToEdit.image_url !== undefined ? productToEdit.image_url : (productToEdit.image || '');
+      initialImg = initialImg ? String(initialImg).trim() : '';
+      if (initialImg.includes('unsplash.com')) initialImg = '';
+
       setFormData({
         title: productToEdit.title || productToEdit.name || '',
         category: productToEdit.category || (categories[0]?.name || 'Groceries & Staples'),
@@ -81,7 +85,9 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         selling_price: productToEdit.selling_price ?? productToEdit.price ?? '',
         mrp: productToEdit.mrp ?? productToEdit.original_price ?? '',
         in_stock: productToEdit.in_stock !== false && (productToEdit.stock > 0 || productToEdit.stock === undefined),
-        image_url: productToEdit.image_url || productToEdit.image || '',
+        image_url: initialImg,
+        image: initialImg,
+        images: initialImg ? [initialImg] : [],
         unit: productToEdit.unit || '1 kg',
         status: productToEdit.status || 'active'
       });
@@ -301,8 +307,14 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       const anyInStock = variants.length > 0 ? variants.some(v => v.in_stock !== false) : true;
       const primaryUnit = variants.length > 0 ? (variants[0].name || variants[0].unit || '1 unit') : '1 unit';
 
+      const cleanImg = formData.image_url ? String(formData.image_url).trim() : '';
+      const finalImg = cleanImg.includes('unsplash.com') ? '' : cleanImg;
+
       const payload = {
         ...formData,
+        image_url: finalImg,
+        image: finalImg,
+        images: finalImg ? [finalImg] : [],
         selling_price: firstVariantPrice,
         price: firstVariantPrice,
         mrp: firstVariantMrp,

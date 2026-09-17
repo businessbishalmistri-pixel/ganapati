@@ -238,8 +238,15 @@ class AdminInventoryService {
    * Add a new product to Supabase & Store
    */
   async addProduct(productInput) {
+    const rawImg = productInput.image_url !== undefined ? productInput.image_url : (productInput.image || '');
+    const cleanImg = rawImg ? String(rawImg).trim() : '';
+    const finalImg = cleanImg.includes('unsplash.com') ? '' : cleanImg;
+
     const newProd = normalizeProduct({
       ...productInput,
+      image_url: finalImg,
+      image: finalImg,
+      images: finalImg ? [finalImg] : [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
@@ -259,23 +266,28 @@ class AdminInventoryService {
           selling_price: newProd.selling_price,
           original_price: newProd.mrp,
           mrp: newProd.mrp,
-          stock: newProd.stock || (newProd.in_stock ? 999 : 0),
-          stock_quantity: newProd.stock_quantity || (newProd.in_stock ? 999 : 0),
+          stock: newProd.stock,
+          stock_quantity: newProd.stock_quantity,
           status: newProd.status,
-          image_url: newProd.image_url,
-          image: newProd.image_url,
+          image_url: newProd.image_url || null,
+          image: newProd.image_url || null,
+          images: newProd.image_url ? [newProd.image_url] : [],
           sku: newProd.sku,
           unit: newProd.unit,
           brand: newProd.brand,
-          variants: newProd.variants
+          variants: newProd.variants,
+          is_pinned: newProd.is_pinned,
+          is_starred: newProd.is_starred,
+          created_at: newProd.created_at,
+          updated_at: newProd.updated_at
         }])
         .select();
 
       if (!error && data && data.length > 0) {
-        const created = normalizeProduct(data[0]);
-        this.updateLocalList(created, 'add');
+        const saved = normalizeProduct(data[0]);
+        this.updateLocalList(saved, 'add');
         inventoryApi.fetchCatalog();
-        return created;
+        return saved;
       }
     } catch (err) {
       console.warn('Supabase insert failed, maintaining local sync', err);
@@ -294,14 +306,24 @@ class AdminInventoryService {
     const currentList = this.getCachedProducts();
     const existing = currentList.find(p => p.id === id) || {};
 
-    // Auto-clean old image from Supabase if a new image was provided and differs
-    if (existing.image_url && updates.image_url && existing.image_url !== updates.image_url) {
+    const cleanUpdates = { ...updates };
+    if (cleanUpdates.image_url !== undefined || cleanUpdates.image !== undefined) {
+      const raw = cleanUpdates.image_url !== undefined ? cleanUpdates.image_url : cleanUpdates.image;
+      const cleanStr = raw ? String(raw).trim() : '';
+      const finalImg = cleanStr.includes('unsplash.com') ? '' : cleanStr;
+      cleanUpdates.image_url = finalImg;
+      cleanUpdates.image = finalImg;
+      cleanUpdates.images = finalImg ? [finalImg] : [];
+    }
+
+    // Auto-clean old image from Supabase Storage if image was removed or changed
+    if (existing.image_url && (!cleanUpdates.image_url || existing.image_url !== cleanUpdates.image_url)) {
       deleteImageFromSupabase(existing.image_url).catch(console.warn);
     }
 
     const updated = normalizeProduct({
       ...existing,
-      ...updates,
+      ...cleanUpdates,
       updated_at: new Date().toISOString()
     });
 
@@ -322,8 +344,9 @@ class AdminInventoryService {
           stock: updated.stock,
           stock_quantity: updated.stock_quantity,
           status: updated.status,
-          image_url: updated.image_url,
-          image: updated.image_url,
+          image_url: updated.image_url || null,
+          image: updated.image_url || null,
+          images: updated.image_url ? [updated.image_url] : [],
           sku: updated.sku,
           unit: updated.unit,
           brand: updated.brand,
