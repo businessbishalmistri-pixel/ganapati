@@ -67,15 +67,15 @@ export function ProductInventoryTable({
       ? smartSearchProducts(baseFiltered, searchQuery)
       : baseFiltered;
 
-    // 3. Default sort: Starred/pinned items first, then by latest updated
+    // 3. Default sort: Starred/pinned items first, then by created_at (stable added order, prevents jumping on edit/stock toggle)
     return [...searched].sort((a, b) => {
       const aPinned = Boolean(a.is_pinned || a.is_starred || a.sub_category === 'pinned');
       const bPinned = Boolean(b.is_pinned || b.is_starred || b.sub_category === 'pinned');
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
 
-      const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
-      const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
       return dateB - dateA;
     });
   }, [products, searchQuery, selectedCategory, stockFilter]);
@@ -126,6 +126,7 @@ export function ProductInventoryTable({
             <button
               type="button"
               onClick={() => setStockFilter('all')}
+              title={`All (${categoryProducts.length})`}
               className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer text-xs ${
                 stockFilter === 'all'
                   ? 'bg-slate-900 text-white shadow-xs'
@@ -138,27 +139,29 @@ export function ProductInventoryTable({
             <button
               type="button"
               onClick={() => setStockFilter('in-stock')}
-              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+              title={`In Stock (${inStockCount})`}
+              className={`px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
                 stockFilter === 'in-stock'
                   ? 'bg-[#005f56] text-white shadow-xs'
                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>In Stock ({inStockCount})</span>
+              <span className={`w-2 h-2 rounded-full ${stockFilter === 'in-stock' ? 'bg-emerald-300' : 'bg-emerald-500'}`}></span>
+              <span>{inStockCount}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setStockFilter('out-of-stock')}
-              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+              title={`Out of Stock (${outOfStockCount})`}
+              className={`px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
                 stockFilter === 'out-of-stock'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-              <span>Out of Stock ({outOfStockCount})</span>
+              <span className={`w-2 h-2 rounded-full ${stockFilter === 'out-of-stock' ? 'bg-rose-200' : 'bg-rose-500'}`}></span>
+              <span>{outOfStockCount}</span>
             </button>
           </div>
         </div>
@@ -171,6 +174,7 @@ export function ProductInventoryTable({
             <button
               type="button"
               onClick={() => setStockFilter('all')}
+              title={`All (${categoryProducts.length})`}
               className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer text-xs ${
                 stockFilter === 'all'
                   ? 'bg-slate-900 text-white shadow-xs'
@@ -183,27 +187,29 @@ export function ProductInventoryTable({
             <button
               type="button"
               onClick={() => setStockFilter('in-stock')}
-              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+              title={`In Stock (${inStockCount})`}
+              className={`px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
                 stockFilter === 'in-stock'
                   ? 'bg-[#005f56] text-white shadow-xs'
                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>In Stock ({inStockCount})</span>
+              <span className={`w-2 h-2 rounded-full ${stockFilter === 'in-stock' ? 'bg-emerald-300' : 'bg-emerald-500'}`}></span>
+              <span>{inStockCount}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setStockFilter('out-of-stock')}
-              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+              title={`Out of Stock (${outOfStockCount})`}
+              className={`px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
                 stockFilter === 'out-of-stock'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-              <span>Out of Stock ({outOfStockCount})</span>
+              <span className={`w-2 h-2 rounded-full ${stockFilter === 'out-of-stock' ? 'bg-rose-200' : 'bg-rose-500'}`}></span>
+              <span>{outOfStockCount}</span>
             </button>
           </div>
 
