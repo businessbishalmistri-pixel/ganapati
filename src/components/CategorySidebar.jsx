@@ -58,10 +58,10 @@ export const CategorySidebar = ({
                 key={cat.name}
                 type="button"
                 onClick={() => onSelectCategory(cat.name)}
-                className={`flex flex-col lg:flex-row items-center lg:items-center gap-1 sm:gap-1.5 lg:gap-3 p-1.5 sm:p-2 lg:px-3 lg:py-2.5 text-center lg:text-left rounded-xl transition-all duration-150 relative cursor-pointer group ${
+                className={`flex flex-col lg:flex-row items-center lg:items-center gap-1 sm:gap-1.5 lg:gap-3 px-1 py-1.5 sm:p-2 lg:px-3 lg:py-2.5 text-center lg:text-left rounded-xl transition-all duration-150 relative cursor-pointer group ${
                   isSelected
-                    ? 'bg-emerald-50 text-emerald-950 font-bold'
-                    : 'bg-transparent hover:bg-slate-50 text-slate-700 font-medium'
+                    ? 'bg-emerald-50/90 text-emerald-950 font-medium'
+                    : 'bg-transparent hover:bg-slate-50 text-slate-700 font-normal'
                 }`}
               >
                 {/* Category Thumbnail (Borderless) */}
@@ -86,13 +86,13 @@ export const CategorySidebar = ({
                 </div>
 
                 {/* Info */}
-                <div className="min-w-0 flex-1 w-full">
-                  <span className={`block text-[10px] sm:text-[10.5px] lg:text-[12px] leading-[1.2] line-clamp-3 break-words text-center lg:text-left ${
-                    isSelected ? 'text-emerald-900 font-black' : 'text-slate-800 font-semibold'
+                <div className="min-w-0 flex-1 w-full px-0.5">
+                  <span className={`block text-[10px] sm:text-[10.5px] lg:text-[12px] leading-[1.2] line-clamp-2 text-center lg:text-left ${
+                    isSelected ? 'text-emerald-950 font-medium' : 'text-slate-700 font-normal'
                   }`}>
                     {cat.displayName}
                   </span>
-                  <span className="hidden lg:block text-[10px] text-slate-400 font-medium mt-0.5">
+                  <span className="hidden lg:block text-[10px] text-slate-400 font-normal mt-0.5">
                     {cat.count} {cat.count === 1 ? 'item' : 'items'}
                   </span>
                 </div>
