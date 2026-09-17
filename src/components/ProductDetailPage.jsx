@@ -337,8 +337,8 @@ export const ProductDetailPage = ({
               </button>
             </div>
 
-            {/* Products Grid (3 Columns on Mobile, 3+ on Tablet/Desktop identical to Home Screen) */}
-            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
+            {/* Products Grid (3 Columns on Mobile, 6 on Tablet/Desktop) */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-1.5 sm:gap-2.5">
               {fallbackProducts.map((simProd, idx) => (
                 <ProductCard
                   key={simProd.id}
