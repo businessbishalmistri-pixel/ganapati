@@ -33,6 +33,7 @@ import { StorePickupModal } from './components/StorePickupModal';
 import { fetchSingleProductById } from './services/supabaseStore';
 import { WelcomeConfetti } from './components/WelcomeConfetti';
 import { AdminApp } from './components/admin/AdminApp';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 export function App() {
   const { settings } = useSettings();
@@ -216,6 +217,20 @@ export function App() {
     window.history.pushState({}, '', '/');
     document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle Mobile Bottom Nav Search Click: focuses mobile search input smoothly
+  const handleMobileSearchClick = () => {
+    if (selectedProduct) {
+      setSelectedProduct(null);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      const input = document.getElementById('mobile-search-input');
+      if (input) {
+        input.focus();
+      }
+    }, 150);
   };
 
   // Dynamic back button label depending on where the user clicked the product
@@ -415,10 +430,10 @@ export function App() {
                   <div className="flex items-center justify-between gap-2 py-2 -mx-1 px-1 sm:mx-0 sm:px-0">
                     
                     <div className="flex items-center gap-2 min-w-0">
-                      {/* Back to All Categories Home Button */}
+                      {/* Back to All Categories Home Button (Shown on Tablet & Desktop, hidden on Mobile) */}
                       <button
                         onClick={handleBackToShop}
-                        className="p-1.5 -ml-1 rounded-full text-slate-700 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center flex-shrink-0"
+                        className="hidden sm:flex p-1.5 -ml-1 rounded-full text-slate-700 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer items-center justify-center flex-shrink-0"
                         title="Back to Categories"
                         aria-label="Back to Categories"
                       >
@@ -520,21 +535,16 @@ export function App() {
         </>
       )}
 
-      {/* Floating Cart Button on Mobile */}
-      {totalItemsCount > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 sm:hidden animate-slide-up">
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded font-bold text-xs uppercase tracking-wider shadow-xl shadow-emerald-600/30 active:scale-95"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>View Cart ({totalItemsCount})</span>
-          </button>
-        </div>
-      )}
+      {/* Dedicated Mobile Bottom Navigation (Visible strictly on mobile screens, hidden on tablet & desktop) */}
+      <MobileBottomNav
+        isHomeView={isHomeView}
+        onHomeClick={handleBackToShop}
+        onSearchClick={handleMobileSearchClick}
+        searchQuery={searchQuery}
+      />
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200/80 mt-16 py-8 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-white border-t border-slate-200/80 mt-16 py-8 px-4 sm:px-6 lg:px-8 mb-16 sm:mb-0">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
             <span className="font-bold text-slate-900">{settings?.storeName || 'Ganapati Store'}</span>
