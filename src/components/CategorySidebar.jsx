@@ -37,7 +37,7 @@ export const CategorySidebar = ({
   });
 
   return (
-    <aside className="w-[62px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-1 sm:top-2 z-20 self-start">
+    <aside className="w-[74px] sm:w-[84px] lg:w-52 flex-shrink-0 sticky top-1 sm:top-2 z-20 self-start">
       {/* Borderless Container */}
       <div className="bg-white rounded-2xl p-1 sm:p-1.5 max-h-[calc(100dvh-0.5rem)] overflow-y-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         
@@ -87,8 +87,8 @@ export const CategorySidebar = ({
 
                 {/* Info */}
                 <div className="min-w-0 flex-1 w-full">
-                  <span className={`block text-[9.5px] sm:text-[10px] lg:text-[12px] leading-tight line-clamp-2 ${
-                    isSelected ? 'text-emerald-900 font-black' : 'text-slate-800'
+                  <span className={`block text-[10px] sm:text-[10.5px] lg:text-[12px] leading-[1.2] line-clamp-3 break-words text-center lg:text-left ${
+                    isSelected ? 'text-emerald-900 font-black' : 'text-slate-800 font-semibold'
                   }`}>
                     {cat.displayName}
                   </span>
