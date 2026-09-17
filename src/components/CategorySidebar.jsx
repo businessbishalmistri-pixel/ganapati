@@ -44,7 +44,7 @@ export const CategorySidebar = ({
   return (
     <aside className="w-[62px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-1 sm:top-2 z-20 self-start">
       {/* Borderless Container */}
-      <div className="bg-white rounded-2xl p-1 sm:p-1.5 max-h-[calc(100dvh-0.5rem)] overflow-y-auto scrollbar-none">
+      <div className="bg-white rounded-2xl p-1 sm:p-1.5 max-h-[calc(100dvh-0.5rem)] overflow-y-auto no-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         
         {/* Desktop Sidebar Header */}
         <div className="hidden lg:block px-3 py-2.5 mb-1">
@@ -69,14 +69,6 @@ export const CategorySidebar = ({
                     : 'bg-transparent hover:bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
-                {/* Active Indicator Bar */}
-                {isSelected && (
-                  <>
-                    <div className="lg:hidden absolute right-0.5 top-2 bottom-2 w-1 bg-emerald-600 rounded-full" />
-                    <div className="hidden lg:block absolute left-0.5 top-2 bottom-2 w-1 bg-emerald-600 rounded-full" />
-                  </>
-                )}
-
                 {/* Category Thumbnail (Borderless) */}
                 <div 
                   className={`w-9 h-9 sm:w-10 sm:h-10 lg:w-9 lg:h-9 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center transition-all ${

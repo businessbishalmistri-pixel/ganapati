@@ -47,15 +47,21 @@
   background: #94a3b8;
 }
 
-/* Hide scrollbar for clean carousels and tabs */
-.no-scrollbar::-webkit-scrollbar {
+/* Hide scrollbar for clean carousels, tabs, and sidebars while preserving full scrollability */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+*::-webkit-scrollbar.no-scrollbar,
+*::-webkit-scrollbar.scrollbar-none {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+  background: transparent !important;
 }
-.no-scrollbar {
+.no-scrollbar,
+.scrollbar-none {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* Glassmorphism helpers */

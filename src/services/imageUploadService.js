@@ -63,3 +63,58 @@ export async function uploadImageToSupabase(fileOrBlob, customFileName = '', fal
 
   return '';
 }
+
+/**
+ * Extracts storage path from a Supabase Storage URL
+ * @param {string} url 
+ * @returns {string|null}
+ */
+export function extractStoragePath(url) {
+  if (!url || typeof url !== 'string') return null;
+  const cleanUrl = url.trim();
+
+  // If it is a base64 Data URL, blob:, or external domain (Unsplash, etc.), ignore
+  if (cleanUrl.startsWith('data:') || cleanUrl.startsWith('blob:') || !cleanUrl.includes('supabase.co')) {
+    return null;
+  }
+
+  try {
+    if (cleanUrl.includes(`/${BUCKET_NAME}/`)) {
+      const parts = cleanUrl.split(`/${BUCKET_NAME}/`);
+      if (parts[1]) {
+        return decodeURIComponent(parts[1].split('?')[0]);
+      }
+    }
+    if (cleanUrl.startsWith('categories/') || cleanUrl.startsWith('products/') || cleanUrl.startsWith('banners/')) {
+      return cleanUrl.split('?')[0];
+    }
+  } catch (e) {
+    console.warn('Error extracting Supabase storage path:', e);
+  }
+  return null;
+}
+
+/**
+ * Deletes an old image file from Supabase Storage bucket to avoid unused file accumulation
+ * @param {string} imageUrlOrPath 
+ * @returns {Promise<boolean>}
+ */
+export async function deleteImageFromSupabase(imageUrlOrPath) {
+  const filePath = extractStoragePath(imageUrlOrPath);
+  if (!filePath) return false;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove([filePath]);
+
+    if (error) {
+      console.warn(`Supabase Storage remove warning for [${filePath}]:`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Failed to delete old image from Supabase storage:', err);
+    return false;
+  }
+}

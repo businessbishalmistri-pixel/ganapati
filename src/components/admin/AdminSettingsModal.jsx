@@ -6,7 +6,7 @@ import {
 import { useSettings } from '../../context/SettingsContext';
 import { useToast } from '../../context/ToastContext';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadImageToSupabase } from '../../services/imageUploadService';
+import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
 
 export function AdminSettingsModal({ isOpen, onClose }) {
   const { settings, updateSettings } = useSettings();
@@ -64,6 +64,8 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setIsUploadingBanner(true);
       showToast('Compressing & uploading banner image...', 'info');
 
+      const previousBanner = settings?.bannerImageUrl || bannerImageUrl;
+
       // 1. High quality compression for wide banner (1920x800 max)
       const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 800, quality: 0.82 });
 
@@ -75,6 +77,11 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       );
 
       if (uploadedUrl) {
+        // Auto-clean previous banner from Supabase storage
+        if (previousBanner && previousBanner !== uploadedUrl) {
+          deleteImageFromSupabase(previousBanner).catch(console.warn);
+        }
+
         setBannerImageUrl(uploadedUrl);
         
         // 3. Auto-save to Supabase store_settings table
@@ -120,6 +127,10 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
   const handleRemoveBanner = async (e) => {
     if (e) e.stopPropagation();
+    const oldBanner = bannerImageUrl || settings?.bannerImageUrl;
+    if (oldBanner) {
+      deleteImageFromSupabase(oldBanner).catch(console.warn);
+    }
     setBannerImageUrl('');
     try {
       await updateSettings({ bannerImageUrl: '' });

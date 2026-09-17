@@ -540,8 +540,8 @@ export function App() {
 
                   {/* Products Grid Skeleton / Content */}
                   {loading ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-2.5">
-                      {[...Array(12)].map((_, i) => (
+                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-7 gap-1.5 sm:gap-2.5">
+                      {[...Array(14)].map((_, i) => (
                         <div key={i} className="bg-white rounded-2xl p-1.5 sm:p-2 flex flex-col justify-between overflow-hidden shadow-2xs space-y-1.5">
                           <div className="aspect-square bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse rounded-2xl relative overflow-hidden" />
                           <div className="space-y-1 pt-1">
@@ -571,14 +571,14 @@ export function App() {
                       </button>
                     </div>
                   ) : (
-                    /* Products Grid */
-                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-2.5">
+                    /* Products Grid (7 Items per Line on Desktop) */
+                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-7 gap-1.5 sm:gap-2.5">
                       {filteredProducts.map((product, idx) => (
                         <ProductCard
                           key={product.id}
                           product={product}
                           onSelectProduct={handleSelectProduct}
-                          priority={idx < 8}
+                          priority={idx < 7}
                         />
                       ))}
                     </div>
