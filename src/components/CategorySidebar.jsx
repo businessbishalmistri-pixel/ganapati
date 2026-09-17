@@ -25,7 +25,9 @@ export const CategorySidebar = ({
     );
 
     const lower = catName.toLowerCase();
-    const customImage = typeof catItem === 'object' ? (catItem?.image_url || catItem?.image) : null;
+    const customImage = typeof catItem === 'object' && (catItem?.image_url || catItem?.image)
+      ? (catItem.image_url || catItem.image).trim()
+      : null;
     const preset = QUICK_COMMERCE_CATEGORIES.find(
       (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
     );
@@ -34,7 +36,7 @@ export const CategorySidebar = ({
       name: catName,
       displayName: catName,
       count: catProds.length,
-      image: customImage || (preset ? preset.image : null),
+      image: customImage && customImage.trim() ? customImage.trim() : (preset ? preset.image : null),
       isAll: false
     };
   });

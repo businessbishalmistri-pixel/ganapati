@@ -6,6 +6,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { OrderSuccessModal } from './components/OrderSuccessModal';
 import { ToastContainer } from './components/Toast';
 import { inventoryApi } from './services/inventoryApi';
+import { adminInventoryService } from './services/adminInventoryService';
 import { useSettings } from './context/SettingsContext';
 import { useCart } from './context/CartContext';
 import { useToast } from './context/ToastContext';
@@ -53,6 +54,7 @@ export function App() {
   const [isAdminView, setIsAdminView] = useState(checkIsAdmin);
 
   const [products, setProducts] = useState(() => inventoryApi.products || []);
+  const [categories, setCategories] = useState(() => adminInventoryService.getCategories() || []);
   const [loading, setLoading] = useState(() => (!inventoryApi.products || inventoryApi.products.length === 0));
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [bannerLoaded, setBannerLoaded] = useState(false);
@@ -253,24 +255,69 @@ export function App() {
     return 'Back to Home';
   }, [searchQuery, selectedCategory]);
 
-  // Dynamically extract unique categories from actual products
-  const dynamicCategories = useMemo(() => {
-    const cats = new Set();
-    products.forEach((p) => {
-      if (p.category && typeof p.category === 'string' && p.category.trim()) {
-        cats.add(p.category.trim());
+  // Dynamically extract and enrich categories with custom metadata, custom artwork, and Supabase image_urls
+  const enrichedCategories = useMemo(() => {
+    const map = new Map();
+
+    // 1. Initialize with custom categories from admin / database
+    (categories || []).forEach((c) => {
+      if (c && c.name) {
+        const lower = c.name.toLowerCase().trim();
+        map.set(lower, {
+          id: c.id,
+          name: c.name.trim(),
+          slug: c.slug || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          image_url: c.image_url || c.image || '',
+          image: c.image_url || c.image || '',
+          icon: c.icon || 'Package'
+        });
       }
     });
-    return ['All Products', ...Array.from(cats)];
-  }, [products]);
 
-  // Subscribe to real-time inventory updates
+    // 2. Discover any additional categories present in products
+    products.forEach((p) => {
+      if (p.category && typeof p.category === 'string' && p.category.trim()) {
+        const catName = p.category.trim();
+        const lower = catName.toLowerCase();
+        if (!map.has(lower) && lower !== 'all products') {
+          map.set(lower, {
+            id: `cat_${lower.replace(/[^a-z0-9]+/g, '_')}`,
+            name: catName,
+            slug: lower.replace(/[^a-z0-9]+/g, '-'),
+            image_url: '',
+            image: '',
+            icon: 'Package'
+          });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [categories, products]);
+
+  // Sidebar categories with All Products at top
+  const sidebarCategories = useMemo(() => {
+    return [
+      { name: 'All Products', displayName: 'All Items', isAll: true },
+      ...enrichedCategories
+    ];
+  }, [enrichedCategories]);
+
+  // Subscribe to real-time inventory and category updates
   useEffect(() => {
-    const unsubscribe = inventoryApi.subscribe((updatedProducts) => {
+    const unsubscribeProducts = inventoryApi.subscribe((updatedProducts) => {
       setProducts(updatedProducts);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    const unsubscribeCategories = adminInventoryService.subscribeCategories((updatedCategories) => {
+      setCategories(updatedCategories);
+    });
+
+    return () => {
+      unsubscribeProducts();
+      unsubscribeCategories();
+    };
   }, []);
 
   // Filter & Sort computation with Smart Typo-Tolerant Search
@@ -381,7 +428,7 @@ export function App() {
               <div className="py-2 space-y-6 sm:space-y-8">
                 {/* Categories Grid */}
                 <CategoryGrid
-                  categories={dynamicCategories}
+                  categories={enrichedCategories}
                   products={products}
                   onSelectCategory={(catName, catKeywords = []) => {
                     setSelectedCategory(catName);
@@ -420,7 +467,7 @@ export function App() {
 
                 {/* Left Column: Category Rail */}
                 <CategorySidebar
-                  categories={dynamicCategories}
+                  categories={sidebarCategories}
                   products={products}
                   selectedCategory={selectedCategory || 'All Products'}
                   onSelectCategory={(cat) => {

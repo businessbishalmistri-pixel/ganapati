@@ -19,9 +19,55 @@ const SWR_CATALOG_KEY = 'ganapati_admin_catalog_cache_v2';
 
 class AdminInventoryService {
   constructor() {
+    this.categoryListeners = new Set();
     this.categories = this.loadCategories();
     this._inMemoryProducts = this.loadInitialCache();
     this.syncCategoriesWithProducts(this._inMemoryProducts);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const bc = new BroadcastChannel('ganapati_categories_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'CATEGORIES_UPDATED' && Array.isArray(event.data.categories)) {
+            this.categories = event.data.categories;
+            this.categoryListeners.forEach(cb => cb(this.categories));
+          }
+        };
+      } catch (e) {}
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === CATEGORIES_STORAGE_KEY && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (Array.isArray(parsed)) {
+              this.categories = parsed;
+              this.categoryListeners.forEach(cb => cb(this.categories));
+            }
+          } catch (err) {}
+        }
+      });
+    }
+  }
+
+  subscribeCategories(callback) {
+    this.categoryListeners.add(callback);
+    callback([...this.categories]);
+    return () => this.categoryListeners.delete(callback);
+  }
+
+  notifyCategories() {
+    const cats = [...this.categories];
+    this.categoryListeners.forEach(cb => {
+      try { cb(cats); } catch (e) {}
+    });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ganapati:categories:updated', { detail: cats }));
+      try {
+        const bc = new BroadcastChannel('ganapati_categories_channel');
+        bc.postMessage({ type: 'CATEGORIES_UPDATED', categories: cats });
+        bc.close();
+      } catch (e) {}
+    }
   }
 
   loadInitialCache() {
@@ -61,6 +107,7 @@ class AdminInventoryService {
     } catch (e) {
       console.warn('Could not save categories cache', e);
     }
+    this.notifyCategories();
   }
 
   syncCategoriesWithProducts(products) {
