@@ -18,13 +18,17 @@ export const CategoryGrid = ({
       if (!catMap.has(catName)) {
         const lower = catName.toLowerCase();
 
-        // 1. Priority #1: Custom Admin Category Image
+        // 1. Priority #1: Custom Admin Category Image (Uploaded / edited via Admin Panel)
         const customCat = Array.isArray(categories) 
-          ? categories.find((c) => (typeof c === 'object' && c?.name && c.name.toLowerCase() === lower) || String(c).toLowerCase() === lower)
+          ? categories.find((c) => {
+              if (!c) return false;
+              const cName = typeof c === 'object' ? (c.name || '') : String(c);
+              return cName.trim().toLowerCase() === lower;
+            })
           : null;
-        const customImage = typeof customCat === 'object' ? (customCat?.image_url || customCat?.image) : null;
+        const customImage = typeof customCat === 'object' && customCat ? (customCat.image_url || customCat.image) : null;
 
-        // 2. Priority #2: Quick Commerce Category Collage Preset
+        // 2. Priority #2: Quick Commerce Category Collage Preset (if no custom uploaded artwork)
         const preset = QUICK_COMMERCE_CATEGORIES.find(
           (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
         );
@@ -32,7 +36,7 @@ export const CategoryGrid = ({
         catMap.set(catName, {
           name: catName,
           count: 1,
-          image: customImage || (preset ? preset.image : null),
+          image: customImage && customImage.trim() ? customImage.trim() : (preset ? preset.image : null),
           keywords: preset ? preset.keywords : [lower]
         });
       } else {
