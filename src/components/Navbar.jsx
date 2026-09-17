@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 
-export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
+export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick, onSearchFocus }) => {
   const { totalItemsCount, setIsCartOpen, justAddedId } = useCart();
   const { settings } = useSettings();
   const { customer, setIsAuthOpen, setIsOrdersOpen, setIsProfileOpen, logout } = useAuth();
@@ -55,6 +55,8 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
                 type="text"
                 placeholder='Search products e.g. "Sattu", "Coconut", "Rice"...'
                 value={searchQuery}
+                onFocus={onSearchFocus}
+                onClick={onSearchFocus}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-7 py-1.5 text-xs sm:text-sm bg-slate-50/80 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-600 rounded-xl outline-none transition-all placeholder:text-slate-400 shadow-2xs"
               />
@@ -120,6 +122,8 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick }) => {
               type="text"
               placeholder="Search products..."
               value={searchQuery}
+              onFocus={onSearchFocus}
+              onClick={onSearchFocus}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-7 py-2 text-xs bg-slate-50/80 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-600 rounded-xl outline-none transition-all placeholder:text-slate-400 shadow-2xs"
             />

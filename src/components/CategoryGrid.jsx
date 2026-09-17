@@ -16,32 +16,33 @@ export const CategoryGrid = ({
       if (!catName || catName.toLowerCase() === 'all products') return;
 
       if (!catMap.has(catName)) {
-        // Check if there is preset high-res imagery for this category
         const lower = catName.toLowerCase();
+
+        // 1. Priority #1: Custom Admin Category Image
+        const customCat = Array.isArray(categories) 
+          ? categories.find((c) => (typeof c === 'object' && c?.name && c.name.toLowerCase() === lower) || String(c).toLowerCase() === lower)
+          : null;
+        const customImage = typeof customCat === 'object' ? (customCat?.image_url || customCat?.image) : null;
+
+        // 2. Priority #2: Quick Commerce Category Collage Preset
         const preset = QUICK_COMMERCE_CATEGORIES.find(
           (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
         );
 
-        const prodImg = prod.image || prod.image_url || (Array.isArray(prod.images) && prod.images[0]);
-
         catMap.set(catName, {
           name: catName,
           count: 1,
-          image: prodImg || (preset ? preset.image : null),
+          image: customImage || (preset ? preset.image : null),
           keywords: preset ? preset.keywords : [lower]
         });
       } else {
         const item = catMap.get(catName);
         item.count += 1;
-        const prodImg = prod.image || prod.image_url || (Array.isArray(prod.images) && prod.images[0]);
-        if (!item.image && prodImg) {
-          item.image = prodImg;
-        }
       }
     });
 
     return Array.from(catMap.values());
-  }, [products]);
+  }, [products, categories]);
 
   if (activeCategories.length === 0) {
     return (

@@ -110,3 +110,5 @@ export async function compressImage(file, { maxWidth = 1080, maxHeight = 1080, q
     reader.readAsDataURL(file);
   });
 }
+
+export const compressProductImage = compressImage;

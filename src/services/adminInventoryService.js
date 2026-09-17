@@ -335,10 +335,12 @@ class AdminInventoryService {
 
   addCategory(category) {
     const newCat = {
-      id: `cat_${Date.now()}`,
+      id: category.id || `cat_${Date.now()}`,
       name: category.name.trim(),
-      slug: category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      slug: category.slug || category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       icon: category.icon || 'Package',
+      image_url: category.image_url || category.image || '',
+      image: category.image_url || category.image || '',
       count: 0
     };
     const updated = [...this.categories, newCat];
@@ -347,7 +349,12 @@ class AdminInventoryService {
   }
 
   updateCategory(id, updates) {
-    const updated = this.categories.map(c => c.id === id ? { ...c, ...updates } : c);
+    const updated = this.categories.map(c => c.id === id ? { 
+      ...c, 
+      ...updates,
+      image_url: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : c.image_url),
+      image: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : c.image)
+    } : c);
     this.saveCategories(updated);
     return updated.find(c => c.id === id);
   }
