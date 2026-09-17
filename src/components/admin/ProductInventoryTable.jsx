@@ -28,7 +28,7 @@ export function ProductInventoryTable({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [stockFilter, setStockFilter] = useState('all'); // 'all' | 'in-stock' | 'out-of-stock'
+  const [stockFilter, setStockFilter] = useState('all'); // 'all' | 'in-stock' | 'out-of-stock' | 'starred'
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const searchInputRef = React.useRef(null);
 
@@ -46,11 +46,16 @@ export function ProductInventoryTable({
     return categoryProducts.filter(p => p.in_stock === false || p.stock === 0).length;
   }, [categoryProducts]);
 
+  const starredCount = useMemo(() => {
+    return categoryProducts.filter(p => Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned')).length;
+  }, [categoryProducts]);
+
   // Filter Pipeline with Smart Search
   const filteredProducts = useMemo(() => {
-    // 1. Filter by Category & Stock status first
+    // 1. Filter by Category & Stock status / Starred first
     const baseFiltered = products.filter((p) => {
       const isInStock = p.in_stock !== false && (p.stock > 0 || p.stock === undefined);
+      const isStarred = Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned');
 
       if (selectedCategory !== 'All' && p.category !== selectedCategory) {
         return false;
@@ -58,6 +63,7 @@ export function ProductInventoryTable({
 
       if (stockFilter === 'in-stock' && !isInStock) return false;
       if (stockFilter === 'out-of-stock' && isInStock) return false;
+      if (stockFilter === 'starred' && !isStarred) return false;
 
       return true;
     });
@@ -163,6 +169,20 @@ export function ProductInventoryTable({
               <span className={`w-2 h-2 rounded-full ${stockFilter === 'out-of-stock' ? 'bg-rose-200' : 'bg-rose-500'}`}></span>
               <span>{outOfStockCount}</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setStockFilter('starred')}
+              title={`Starred (${starredCount})`}
+              className={`px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer text-xs ${
+                stockFilter === 'starred'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60'
+              }`}
+            >
+              <Star className={`w-3.5 h-3.5 ${stockFilter === 'starred' ? 'fill-white text-white' : 'fill-amber-400 text-amber-500'}`} />
+              <span>{starredCount}</span>
+            </button>
           </div>
         </div>
 
@@ -210,6 +230,20 @@ export function ProductInventoryTable({
             >
               <span className={`w-2 h-2 rounded-full ${stockFilter === 'out-of-stock' ? 'bg-rose-200' : 'bg-rose-500'}`}></span>
               <span>{outOfStockCount}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStockFilter('starred')}
+              title={`Starred (${starredCount})`}
+              className={`px-2.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer text-xs ${
+                stockFilter === 'starred'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60'
+              }`}
+            >
+              <Star className={`w-3.5 h-3.5 ${stockFilter === 'starred' ? 'fill-white text-white' : 'fill-amber-400 text-amber-500'}`} />
+              <span>{starredCount}</span>
             </button>
           </div>
 
