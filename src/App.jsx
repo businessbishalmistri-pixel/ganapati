@@ -458,8 +458,8 @@ export function App() {
                       </h2>
                     </div>
 
-                    {/* Products Grid (8 Items per line on Desktop) */}
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8 gap-1.5 sm:gap-2.5">
+                    {/* Products Grid (6 Items per line on Tablet, 8 on Desktop) */}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8 gap-1.5 sm:gap-2.5">
                       {starredProducts.map((product, idx) => (
                         <ProductCard
                           key={product.id}
@@ -551,7 +551,7 @@ export function App() {
 
                   {/* Products Grid Skeleton / Content */}
                   {loading ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-7 gap-1.5 sm:gap-2.5">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-7 gap-1.5 sm:gap-2.5">
                       {[...Array(14)].map((_, i) => (
                         <div key={i} className="bg-white rounded-2xl p-1.5 sm:p-2 flex flex-col justify-between overflow-hidden shadow-2xs space-y-1.5">
                           <div className="aspect-square bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse rounded-2xl relative overflow-hidden" />
@@ -582,8 +582,8 @@ export function App() {
                       </button>
                     </div>
                   ) : (
-                    /* Products Grid (7 Items per Line on Desktop) */
-                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-7 gap-1.5 sm:gap-2.5">
+                    /* Products Grid (6 Items per Line on Tablet, 7 on Desktop) */
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-7 gap-1.5 sm:gap-2.5">
                       {filteredProducts.map((product, idx) => (
                         <ProductCard
                           key={product.id}

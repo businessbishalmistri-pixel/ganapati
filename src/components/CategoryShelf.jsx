@@ -37,8 +37,8 @@ export const CategoryShelf = ({
         )}
       </div>
 
-      {/* Products Grid (3 Columns on Mobile, 3+ on Tablet/Desktop) */}
-      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-2.5">
+      {/* Products Grid (3 Columns on Mobile, 6 on Tablet, 6+ on Desktop) */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6 gap-1.5 sm:gap-2.5">
         {products.map((product, idx) => (
           <ProductCard
             key={product.id}
