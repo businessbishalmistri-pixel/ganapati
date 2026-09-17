@@ -295,6 +295,17 @@ export function App() {
     return Array.from(map.values());
   }, [categories, products]);
 
+  // Only products that are active and in-stock are shown on the customer storefront
+  const activeProducts = useMemo(() => {
+    return (products || []).filter((p) => {
+      if (p.status === 'draft' || p.status === 'inactive' || p.status === 'archived' || p.status === 'out_of_stock') {
+        return false;
+      }
+      const inStock = p.in_stock !== false && (p.stock > 0 || p.stock === undefined) && (p.stock_quantity === undefined || p.stock_quantity > 0);
+      return inStock;
+    });
+  }, [products]);
+
   // Sidebar categories with All Products at top
   const sidebarCategories = useMemo(() => {
     return [
@@ -320,10 +331,10 @@ export function App() {
     };
   }, []);
 
-  // Filter & Sort computation with Smart Typo-Tolerant Search
+  // Filter & Sort computation with Smart Typo-Tolerant Search (Applied on active/in-stock products only)
   const filteredProducts = useMemo(() => {
     // 1. Filter by category (if selected and not 'All Products')
-    const categoryFiltered = products.filter((p) => {
+    const categoryFiltered = activeProducts.filter((p) => {
       if (!selectedCategory || selectedCategory === 'All Products') return true;
       const catLower = (p.category || '').toLowerCase();
       const targetLower = selectedCategory.toLowerCase();
@@ -338,7 +349,7 @@ export function App() {
 
     // 2. Apply smart typo-tolerant fuzzy search
     const searched = searchQuery.trim()
-      ? smartSearchProducts(selectedCategory ? categoryFiltered : products, searchQuery)
+      ? smartSearchProducts(selectedCategory ? categoryFiltered : activeProducts, searchQuery)
       : categoryFiltered;
 
     // 3. Apply sorting: Starred/pinned products always float to the top
@@ -354,14 +365,14 @@ export function App() {
       if (sortBy === 'stock') return b.stock - a.stock;
       return 0; // relevance / featured default
     });
-  }, [products, selectedCategory, selectedCategoryKeywords, searchQuery, sortBy]);
+  }, [activeProducts, selectedCategory, selectedCategoryKeywords, searchQuery, sortBy]);
 
   const starredProducts = useMemo(() => {
-    const list = products.filter((p) => Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned' || p.featured));
-    return list.length > 0 ? list : products.slice(0, 10);
-  }, [products]);
+    const list = activeProducts.filter((p) => Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned' || p.featured));
+    return list.length > 0 ? list : activeProducts.slice(0, 10);
+  }, [activeProducts]);
 
-  const inStockCount = products.filter((p) => p.stock > 0).length;
+  const inStockCount = activeProducts.length;
   const isHomeView = !searchQuery.trim() && !selectedCategory;
 
   // Render Admin View if on /admin
@@ -429,7 +440,7 @@ export function App() {
                 {/* Categories Grid */}
                 <CategoryGrid
                   categories={enrichedCategories}
-                  products={products}
+                  products={activeProducts}
                   onSelectCategory={(catName, catKeywords = []) => {
                     setSelectedCategory(catName);
                     setSelectedCategoryKeywords(catKeywords || []);
@@ -468,7 +479,7 @@ export function App() {
                 {/* Left Column: Category Rail */}
                 <CategorySidebar
                   categories={sidebarCategories}
-                  products={products}
+                  products={activeProducts}
                   selectedCategory={selectedCategory || 'All Products'}
                   onSelectCategory={(cat) => {
                     if (cat === 'All Products') {
