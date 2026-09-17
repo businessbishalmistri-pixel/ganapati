@@ -34,18 +34,18 @@ export const CategorySidebar = ({
 
   return (
     <aside className="w-[62px] sm:w-[72px] lg:w-52 flex-shrink-0 sticky top-1 sm:top-2 z-20 self-start">
-      {/* Container */}
-      <div className="bg-white rounded border border-slate-200/90 shadow-xs overflow-hidden max-h-[calc(100dvh-0.5rem)] overflow-y-auto scrollbar-none">
+      {/* Borderless Container */}
+      <div className="bg-white rounded-2xl p-1 sm:p-1.5 max-h-[calc(100dvh-0.5rem)] overflow-y-auto scrollbar-none">
         
         {/* Desktop Sidebar Header */}
-        <div className="hidden lg:block p-2.5 bg-slate-50 border-b border-slate-200/80">
-          <h2 className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+        <div className="hidden lg:block px-3 py-2.5 mb-1">
+          <h2 className="text-[11px] font-black uppercase tracking-wider text-slate-400">
             Departments
           </h2>
         </div>
 
-        {/* Category Items List (Vertical Rail on both mobile & desktop) */}
-        <div className="flex flex-col divide-y divide-slate-100">
+        {/* Category Items List with Clean Whitespace (No Divider Lines) */}
+        <div className="flex flex-col space-y-1 sm:space-y-1.5">
           {categoryData.map((cat) => {
             const isSelected = selectedCategory === cat.name;
 
@@ -54,26 +54,26 @@ export const CategorySidebar = ({
                 key={cat.name}
                 type="button"
                 onClick={() => onSelectCategory(cat.name)}
-                className={`flex flex-col lg:flex-row items-center lg:items-center gap-0.5 sm:gap-1 lg:gap-2.5 p-1 sm:p-2 lg:p-2.5 text-center lg:text-left transition-all duration-150 relative cursor-pointer group ${
+                className={`flex flex-col lg:flex-row items-center lg:items-center gap-1 sm:gap-1.5 lg:gap-3 p-1.5 sm:p-2 lg:px-3 lg:py-2.5 text-center lg:text-left rounded-xl transition-all duration-150 relative cursor-pointer group ${
                   isSelected
-                    ? 'bg-emerald-50/90 text-emerald-950 font-bold'
-                    : 'bg-white hover:bg-slate-50 text-slate-700 font-medium'
+                    ? 'bg-emerald-50 text-emerald-950 font-bold'
+                    : 'bg-transparent hover:bg-slate-50 text-slate-700 font-medium'
                 }`}
               >
-                {/* Active Indicator Bar (Right side on mobile, left side on desktop) */}
+                {/* Active Indicator Bar */}
                 {isSelected && (
                   <>
-                    <div className="lg:hidden absolute right-0 top-1 bottom-1 w-1 bg-emerald-600 rounded-l" />
-                    <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-1 bg-emerald-600 rounded-r" />
+                    <div className="lg:hidden absolute right-0.5 top-2 bottom-2 w-1 bg-emerald-600 rounded-full" />
+                    <div className="hidden lg:block absolute left-0.5 top-2 bottom-2 w-1 bg-emerald-600 rounded-full" />
                   </>
                 )}
 
-                {/* Category Thumbnail */}
+                {/* Category Thumbnail (Borderless) */}
                 <div 
-                  className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-9 lg:h-9 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center border transition-all ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 lg:w-9 lg:h-9 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'border-emerald-500 bg-white shadow-xs'
-                      : 'border-slate-200 bg-slate-50 group-hover:border-slate-300'
+                      ? 'bg-emerald-100/70 shadow-2xs'
+                      : 'bg-slate-100 group-hover:bg-slate-200/70'
                   }`}
                 >
                   {cat.isAll ? (
@@ -91,12 +91,12 @@ export const CategorySidebar = ({
 
                 {/* Info */}
                 <div className="min-w-0 flex-1 w-full">
-                  <span className={`block text-[9.5px] sm:text-[10px] lg:text-[11.5px] leading-tight line-clamp-2 ${
+                  <span className={`block text-[9.5px] sm:text-[10px] lg:text-[12px] leading-tight line-clamp-2 ${
                     isSelected ? 'text-emerald-900 font-black' : 'text-slate-800'
                   }`}>
                     {cat.displayName}
                   </span>
-                  <span className="hidden lg:block text-[9.5px] text-slate-400 font-medium mt-0.5">
+                  <span className="hidden lg:block text-[10px] text-slate-400 font-medium mt-0.5">
                     {cat.count} {cat.count === 1 ? 'item' : 'items'}
                   </span>
                 </div>

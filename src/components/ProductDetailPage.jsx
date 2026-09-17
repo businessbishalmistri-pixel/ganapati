@@ -12,7 +12,13 @@ import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 import { ProductCard } from './ProductCard';
 
-export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduct }) => {
+export const ProductDetailPage = ({ 
+  product, 
+  allProducts, 
+  onBack, 
+  backLabel = 'Back to Shop',
+  onSelectProduct 
+}) => {
   const { addToCart, cartItems } = useCart();
   const { settings } = useSettings();
   const [selectedImage, setSelectedImage] = useState(product?.image || '');
@@ -84,16 +90,15 @@ export const ProductDetailPage = ({ product, allProducts, onBack, onSelectProduc
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between text-xs text-slate-500 font-medium">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+            className="p-1.5 -ml-1.5 rounded-full text-slate-700 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center"
+            title="Go back"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Shop</span>
+            <ArrowLeft className="w-4.5 h-4.5" />
           </button>
 
           <div className="flex items-center gap-1.5 text-slate-400">
             <span className="hover:text-slate-700 cursor-pointer" onClick={onBack}>Home</span>
-            <span>/</span>
-            <span className="hover:text-slate-700 cursor-pointer" onClick={onBack}>Shop</span>
             {product.category && (
               <>
                 <span>/</span>
