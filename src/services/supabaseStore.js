@@ -100,10 +100,11 @@ export async function fetchLiveProductsFromBackend() {
       const effectiveStock = isNaN(totalVariantStock) ? 0 : totalVariantStock;
 
       // Pure database image
-      const primaryImage = p.image_url || p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
-      const imageList = Array.isArray(p.images) && p.images.length > 0 
-        ? p.images 
-        : (primaryImage ? [primaryImage] : []);
+      let primaryImage = p.image_url !== undefined ? p.image_url : (p.image !== undefined ? p.image : (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null));
+      if (typeof primaryImage === 'string' && (primaryImage.includes('unsplash.com') || !primaryImage.trim())) {
+        primaryImage = null;
+      }
+      const imageList = primaryImage ? [primaryImage] : [];
 
       return {
         id: p.id,
@@ -189,7 +190,10 @@ export async function fetchSingleProductById(productId) {
       const totalVariantStock = hasVariants ? cleanVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0) : rawStock;
       const effectivePrice = isNaN(minVariantPrice) ? 0 : minVariantPrice;
       const effectiveStock = isNaN(totalVariantStock) ? 0 : totalVariantStock;
-      const primaryImage = p.image_url || p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null);
+      let primaryImage = p.image_url !== undefined ? p.image_url : (p.image !== undefined ? p.image : (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null));
+      if (typeof primaryImage === 'string' && (primaryImage.includes('unsplash.com') || !primaryImage.trim())) {
+        primaryImage = null;
+      }
 
       return {
         id: p.id,

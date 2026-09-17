@@ -19,7 +19,19 @@ export function normalizeProduct(p) {
   if (!p) return null;
   const sellingPrice = parseFloat(p.selling_price ?? p.price ?? p.unit_price ?? 0) || 0;
   const mrp = parseFloat(p.mrp ?? p.original_price ?? sellingPrice) || sellingPrice;
-  const primaryImage = p.image_url || p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '');
+  let primaryImage = '';
+  if (p.image_url !== undefined && p.image_url !== null) {
+    primaryImage = String(p.image_url).trim();
+  } else if (p.image !== undefined && p.image !== null) {
+    primaryImage = String(p.image).trim();
+  } else if (Array.isArray(p.images) && p.images.length > 0 && p.images[0]) {
+    primaryImage = String(p.images[0]).trim();
+  }
+
+  // Strip any legacy unsplash URLs
+  if (primaryImage.includes('unsplash.com')) {
+    primaryImage = '';
+  }
 
   // In Stock status: boolean
   let inStock = true;
@@ -60,7 +72,7 @@ export function normalizeProduct(p) {
     status: status, // 'active' | 'draft'
     image_url: primaryImage,
     image: primaryImage,
-    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (primaryImage ? [primaryImage] : []),
+    images: primaryImage ? [primaryImage] : [],
     sku: p.sku || `GP-${String(Math.floor(100000 + Math.random() * 900000))}`,
     unit: p.unit || p.weight || '1 unit',
     brand: p.brand || 'Ganapati Stores',
