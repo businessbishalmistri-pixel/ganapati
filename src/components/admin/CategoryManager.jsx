@@ -29,6 +29,7 @@ export function CategoryManager({
   const [isUploadingNew, setIsUploadingNew] = useState(false);
   const [newUploadStatus, setNewUploadStatus] = useState('');
   const [showNewUrlInput, setShowNewUrlInput] = useState(false);
+  const [isDraggingNew, setIsDraggingNew] = useState(false);
   const addFileInputRef = useRef(null);
 
   // Edit State
@@ -38,6 +39,7 @@ export function CategoryManager({
   const [isUploadingEdit, setIsUploadingEdit] = useState(false);
   const [editUploadStatus, setEditUploadStatus] = useState('');
   const [showEditUrlInput, setShowEditUrlInput] = useState(false);
+  const [isDraggingEdit, setIsDraggingEdit] = useState(false);
   const editFileInputRef = useRef(null);
 
   // Reassign Modal State for non-empty categories
@@ -250,7 +252,35 @@ export function CategoryManager({
                   <span>{newUploadStatus || 'Uploading...'}</span>
                 </div>
               ) : newCatImage ? (
-                <div className="flex items-center gap-3 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                <div 
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(true);
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(false);
+                    const file = e.dataTransfer?.files?.[0];
+                    if (file && file.type.startsWith('image/')) handleNewImageFileSelect(file);
+                  }}
+                  className={`flex items-center gap-3 p-2 bg-white border rounded-xl shadow-2xs transition-all ${
+                    isDraggingNew 
+                      ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 scale-[1.01]' 
+                      : 'border-slate-200'
+                  }`}
+                >
                   <img
                     src={newCatImage}
                     alt="Category Preview"
@@ -264,7 +294,9 @@ export function CategoryManager({
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       Image Attached
                     </p>
-                    <p className="text-[10px] text-slate-400 truncate">Saved in Supabase Storage</p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {isDraggingNew ? 'Drop to replace image' : 'Drag new image or click Change'}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -289,13 +321,44 @@ export function CategoryManager({
                 </div>
               ) : (
                 <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(true);
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingNew(false);
+                    const file = e.dataTransfer?.files?.[0];
+                    if (file && file.type.startsWith('image/')) handleNewImageFileSelect(file);
+                  }}
                   onClick={() => addFileInputRef.current?.click()}
-                  className="p-3 bg-white border border-dashed border-slate-300 hover:border-blue-400 rounded-xl text-center cursor-pointer hover:bg-blue-50/40 transition-colors shadow-2xs flex items-center justify-center gap-2"
+                  className={`p-3 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all shadow-2xs flex flex-col sm:flex-row items-center justify-center gap-2 select-none ${
+                    isDraggingNew
+                      ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 scale-[1.01]'
+                      : 'border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50/40'
+                  }`}
                 >
-                  <UploadCloud className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span className="text-xs font-semibold text-slate-700">
-                    Upload Custom Image / Collage
-                  </span>
+                  <UploadCloud className={`w-5 h-5 flex-shrink-0 ${isDraggingNew ? 'text-blue-600 animate-bounce' : 'text-blue-600'}`} />
+                  <div className="text-left">
+                    <span className="text-xs font-bold text-slate-800 block">
+                      {isDraggingNew ? 'Drop category image here...' : 'Upload Custom Image / Collage'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">
+                      Drag & Drop here, or browse device
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -400,7 +463,35 @@ export function CategoryManager({
                         <span>{editUploadStatus || 'Uploading...'}</span>
                       </div>
                     ) : editImage ? (
-                      <div className="flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div 
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(true);
+                        }}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(true);
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(false);
+                          const file = e.dataTransfer?.files?.[0];
+                          if (file && file.type.startsWith('image/')) handleEditImageFileSelect(file);
+                        }}
+                        className={`flex items-center gap-2 p-1.5 bg-slate-50 border rounded-xl transition-all ${
+                          isDraggingEdit 
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 scale-[1.01]' 
+                            : 'border-slate-200'
+                        }`}
+                      >
                         <img
                           src={editImage}
                           alt={editName}
@@ -410,7 +501,12 @@ export function CategoryManager({
                           }}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-bold text-slate-800 truncate">Custom Artwork</p>
+                          <p className="text-[11px] font-bold text-slate-800 truncate">
+                            {isDraggingEdit ? 'Drop to replace' : 'Custom Artwork'}
+                          </p>
+                          <p className="text-[9px] text-slate-400 truncate">
+                            {isDraggingEdit ? 'Release mouse' : 'Drag new or Change'}
+                          </p>
                         </div>
                         <button
                           type="button"
@@ -433,14 +529,39 @@ export function CategoryManager({
                         </button>
                       </div>
                     ) : (
-                      <button
-                        type="button"
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(true);
+                        }}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(true);
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsDraggingEdit(false);
+                          const file = e.dataTransfer?.files?.[0];
+                          if (file && file.type.startsWith('image/')) handleEditImageFileSelect(file);
+                        }}
                         onClick={() => editFileInputRef.current?.click()}
-                        className="w-full py-1.5 px-2 bg-slate-50 border border-dashed border-slate-300 hover:border-blue-400 rounded-lg text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5 cursor-pointer"
+                        className={`w-full py-2.5 px-3 border-2 border-dashed rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all select-none ${
+                          isDraggingEdit
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 text-blue-700 scale-[1.01]'
+                            : 'border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/40 text-slate-700'
+                        }`}
                       >
-                        <ImagePlus className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Upload Custom Image</span>
-                      </button>
+                        <UploadCloud className={`w-4 h-4 ${isDraggingEdit ? 'text-blue-600 animate-bounce' : 'text-blue-600'}`} />
+                        <span>{isDraggingEdit ? 'Drop Image to Attach' : 'Upload Custom Image'}</span>
+                      </div>
                     )}
 
                     {showEditUrlInput && (

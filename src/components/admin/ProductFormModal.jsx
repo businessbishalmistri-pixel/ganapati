@@ -682,19 +682,30 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             <div
               onDragOver={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setIsDragging(true);
               }}
-              onDragLeave={() => setIsDragging(false)}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+              }}
               onDrop={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setIsDragging(false);
                 const file = e.dataTransfer?.files?.[0];
-                if (file) handleImageFileSelect(file);
+                if (file && file.type.startsWith('image/')) handleImageFileSelect(file);
               }}
               onClick={() => fileInputRef.current?.click()}
               className={`relative border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center transition-all cursor-pointer select-none ${
                 isDragging
-                  ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/20'
+                  ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/20 scale-[1.01]'
                   : 'border-slate-300/90 bg-slate-50/60 hover:bg-slate-100/70 hover:border-slate-400'
               }`}
             >
