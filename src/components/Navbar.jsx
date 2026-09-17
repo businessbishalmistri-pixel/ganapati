@@ -71,8 +71,8 @@ export const Navbar = ({ searchQuery, setSearchQuery, onHomeClick, onSearchFocus
             </div>
           </div>
 
-          {/* Actions: User Profile Icon & Shopping Cart Icon */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Actions: User Profile Icon & Shopping Cart Icon (Desktop & Tablet only - Mobile uses Bottom Nav) */}
+          <div className="hidden md:flex items-center gap-2 sm:gap-3">
 
             {/* 1. Customer Details Avatar (Opens delivery info modal) */}
             <button

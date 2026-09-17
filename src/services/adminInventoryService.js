@@ -200,7 +200,8 @@ class AdminInventoryService {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
 
       if (!error && Array.isArray(data) && data.length > 0) {
         const normalized = data.map(normalizeProduct).filter(Boolean);
