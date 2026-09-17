@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { compressProductImage } from '../../utils/imageCompressor';
 import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
-import { QUICK_COMMERCE_CATEGORIES } from '../../data/categoryCatalog';
 
 export function CategoryManager({ 
   categories = [], 
@@ -45,14 +44,10 @@ export function CategoryManager({
   const [reassignModalCat, setReassignModalCat] = useState(null);
   const [targetCategoryName, setTargetCategoryName] = useState('');
 
-  // Compute category product counts & resolve fallback preset images
+  // Compute category product counts
   const categoryCounts = categories.map((cat) => {
     const count = products.filter((p) => p.category === cat.name).length;
-    const lower = (cat.name || '').toLowerCase();
-    const preset = QUICK_COMMERCE_CATEGORIES.find(
-      (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
-    );
-    const resolvedImage = cat.image_url || cat.image || (preset ? preset.image : '');
+    const resolvedImage = cat.image_url || cat.image || '';
     return { ...cat, count, resolvedImage };
   });
 

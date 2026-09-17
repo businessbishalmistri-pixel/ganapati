@@ -52,7 +52,7 @@ export async function fetchLiveProductsFromBackend() {
     if (!error && Array.isArray(data) && data.length > 0) {
       productsList = data;
     } else {
-      productsList = INITIAL_DEFAULT_PRODUCTS;
+      productsList = [];
     }
 
     // Filter out draft products from storefront
@@ -141,7 +141,7 @@ export async function fetchLiveProductsFromBackend() {
     });
   } catch (err) {
     console.error('Error fetching live products:', err);
-    return INITIAL_DEFAULT_PRODUCTS.filter(p => p.status !== 'draft');
+    return [];
   }
 }
 

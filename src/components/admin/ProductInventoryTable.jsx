@@ -309,7 +309,7 @@ export function ProductInventoryTable({
                       alt={product.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=160&q=80';
+                        e.currentTarget.style.display = 'none';
                       }}
                     />
                   ) : (

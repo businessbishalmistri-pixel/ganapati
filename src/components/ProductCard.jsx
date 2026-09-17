@@ -53,7 +53,7 @@ export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
           <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse z-0" />
         )}
 
-        {product.image_url || product.image ? (
+        {(product.image_url || product.image) && !imageError ? (
           <img
             src={product.image_url || product.image}
             alt={product.title || product.name}
@@ -61,11 +61,9 @@ export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
             decoding="async"
             fetchpriority={priority ? 'high' : 'auto'}
             onLoad={() => setImageLoaded(true)}
-            onError={(e) => {
+            onError={() => {
               setImageError(true);
               setImageLoaded(true);
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80';
             }}
             className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-300 relative z-1 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'

@@ -81,11 +81,6 @@ class AdminInventoryService {
 
         const merged = Array.from(mergedMap.values());
         this.saveCategories(merged, false);
-      } else {
-        // If DB is empty, seed defaults to Supabase
-        (this.categories || DEFAULT_CATEGORIES).forEach(c => {
-          upsertCategoryToSupabase(c).catch(console.warn);
-        });
       }
     } catch (e) {
       console.warn('Error fetching categories from Supabase backend:', e);
@@ -98,7 +93,7 @@ class AdminInventoryService {
         .channel('public:categories')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
           fetchCategoriesFromSupabase().then(fresh => {
-            if (Array.isArray(fresh) && fresh.length > 0) {
+            if (Array.isArray(fresh)) {
               this.saveCategories(fresh, false);
             }
           }).catch(console.warn);
@@ -142,7 +137,7 @@ class AdminInventoryService {
     } catch (e) {
       console.warn('Could not read catalog cache', e);
     }
-    return INITIAL_DEFAULT_PRODUCTS.map(normalizeProduct).filter(Boolean);
+    return [];
   }
 
   loadCategories() {
@@ -157,7 +152,7 @@ class AdminInventoryService {
     } catch (e) {
       console.warn('Could not read categories cache', e);
     }
-    return DEFAULT_CATEGORIES;
+    return [];
   }
 
   saveCategories(cats) {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { LayoutGrid, Package } from 'lucide-react';
-import { QUICK_COMMERCE_CATEGORIES } from '../data/categoryCatalog';
 
 export const CategorySidebar = ({ 
   categories, 
@@ -24,19 +23,15 @@ export const CategorySidebar = ({
       (p) => p.category && p.category.toLowerCase() === catName.toLowerCase()
     );
 
-    const lower = catName.toLowerCase();
     const customImage = typeof catItem === 'object' && (catItem?.image_url || catItem?.image)
       ? (catItem.image_url || catItem.image).trim()
       : null;
-    const preset = QUICK_COMMERCE_CATEGORIES.find(
-      (c) => c.name.toLowerCase() === lower || (c.keywords && c.keywords.some((k) => lower.includes(k)))
-    );
 
     return {
       name: catName,
       displayName: catName,
       count: catProds.length,
-      image: customImage && customImage.trim() ? customImage.trim() : (preset ? preset.image : null),
+      image: customImage && customImage.trim() ? customImage.trim() : null,
       isAll: false
     };
   });
