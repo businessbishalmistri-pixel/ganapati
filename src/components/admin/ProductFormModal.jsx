@@ -117,10 +117,12 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         selling_price: '',
         mrp: '',
         in_stock: true,
-        image_url: PRESET_IMAGES[0].url,
+        image_url: '',
         unit: '1 kg',
         status: 'active'
       });
+      setCompressionStats(null);
+      setShowUrlFallback(false);
       setVariants([{
         id: `v-${Date.now()}-0`,
         name: '1 Pack / 1 Unit',
@@ -722,18 +724,34 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                     </p>
                   </div>
 
-                  {/* Change Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs flex items-center gap-1 flex-shrink-0 cursor-pointer"
-                  >
-                    <ImagePlus className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Change</span>
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {/* Change Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <ImagePlus className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Change</span>
+                    </button>
+
+                    {/* Remove/Clear Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData((prev) => ({ ...prev, image_url: '' }));
+                        setCompressionStats(null);
+                      }}
+                      className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 text-xs font-bold text-slate-500 hover:text-red-600 shadow-xs flex items-center justify-center cursor-pointer"
+                      title="Remove image"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center space-y-1.5 py-1">
