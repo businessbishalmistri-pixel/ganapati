@@ -290,8 +290,7 @@ Please keep my order ready for store pickup. Thank you!`;
                             src={item.image_url || item.image}
                             alt={item.title || item.name}
                             onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=160&q=80';
+                              e.currentTarget.style.display = 'none';
                             }}
                             className="w-full h-full object-cover"
                           />

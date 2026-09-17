@@ -26,16 +26,7 @@ import {
 import { compressImage } from '../../utils/imageCompressor';
 import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
 
-const PRESET_IMAGES = [
-  { label: 'Rice / Grains', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Oil / Ghee', url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Atta / Flour', url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Spices / Masala', url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Biscuits / Snacks', url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Tea / Coffee', url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Dry Fruits', url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80' },
-  { label: 'Cleaning / Soap', url: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?auto=format&fit=crop&w=600&q=80' },
-];
+const PRESET_IMAGES = [];
 
 export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categories = [] }) {
   const isEditing = Boolean(productToEdit && productToEdit.id);
@@ -714,7 +705,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       alt="Product Preview"
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=120&q=80';
+                        e.currentTarget.style.display = 'none';
                       }}
                     />
                   </div>
@@ -780,7 +771,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               )}
             </div>
 
-            {/* 2. Fallback: Manual Image URL & Quick Sample Presets */}
+            {/* 2. Fallback: Manual Image URL */}
             {showUrlFallback && (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 animate-fadeIn">
                 <label className="block text-[11px] font-bold text-slate-600">
@@ -788,34 +779,14 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                 </label>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://example.com/product-image.webp"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                   className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
-
-                {/* Quick Sample Presets */}
-                <div className="pt-1">
-                  <span className="text-[10px] font-bold text-slate-400 block mb-1">Quick Presets:</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {PRESET_IMAGES.map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, image_url: preset.url })}
-                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
-                          formData.image_url === preset.url
-                            ? 'bg-blue-50 border-blue-300 text-blue-700 font-bold'
-                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
+
           </div>
 
           {/* Description */}
