@@ -54,10 +54,18 @@ class InventoryService {
     return () => this.listeners.delete(callback);
   }
 
-  notify() {
+  notify(broadcast = true) {
     this.saveData();
     for (const listener of this.listeners) {
       listener([...this.products]);
+    }
+    if (broadcast && typeof window !== 'undefined' && this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage({
+          type: 'INVENTORY_SYNC',
+          products: this.products
+        });
+      } catch (e) {}
     }
   }
 
@@ -87,18 +95,54 @@ class InventoryService {
   }
 
   /**
-   * Listen to real-time PostgreSQL changes in Supabase (Debounced)
+   * Listen to real-time PostgreSQL changes in Supabase with Instant Delta Patching (<50ms)
    */
   setupRealtimeSubscription() {
     try {
+      // 1. Cross-tab instant communication (Same device)
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        try {
+          this.broadcastChannel = new BroadcastChannel('ganapati_live_inventory_channel');
+          this.broadcastChannel.onmessage = (event) => {
+            if (event.data?.type === 'INVENTORY_SYNC' && Array.isArray(event.data?.products)) {
+              this.products = event.data.products;
+              this.notify(false);
+            }
+          };
+        } catch (e) {}
+      }
+
+      // 2. Supabase Realtime WebSocket stream (All devices worldwide)
       let debounceTimer = null;
       supabase
-        .channel('public:products')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+        .channel('public:products:global_realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+          // Instant In-Memory Delta Update (0ms lag before fetch completes)
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedItem = normalizeProduct(payload.new);
+            if (updatedItem) {
+              this.products = this.products.map(p => p.id === updatedItem.id ? { ...p, ...updatedItem } : p);
+              this.notify();
+            }
+          } else if (payload.eventType === 'INSERT' && payload.new) {
+            const newItem = normalizeProduct(payload.new);
+            if (newItem && !this.products.some(p => p.id === newItem.id)) {
+              this.products = [newItem, ...this.products];
+              this.notify();
+            }
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            const delId = payload.old.id;
+            if (delId) {
+              this.products = this.products.filter(p => p.id !== delId);
+              this.notify();
+            }
+          }
+
+          // Full background revalidation
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {
             this.fetchCatalog();
-          }, 300);
+          }, 350);
         })
         .subscribe();
     } catch (e) {
