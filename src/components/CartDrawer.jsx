@@ -104,10 +104,19 @@ export const CartDrawer = () => {
     if (storeDigits.startsWith('0')) storeDigits = storeDigits.substring(1);
     const cleanStorePhone = storeDigits.length === 10 ? '91' + storeDigits : (storeDigits || '919147364980');
 
+    const currency = settings?.currency || '₹';
+    const deliveryFee = deliveryMethod === 'shipping' ? (isFreeDelivery ? 0 : flatFee) : 0;
+    const totalPayable = subtotal + deliveryFee;
+
     const itemsList = cartItems
       .map((item, idx) => {
         const itemOption = item.variantName || item.selectedVariant?.name || item.unit || '';
-        return `${idx + 1}. ${item.title || item.name}${itemOption ? ` (${itemOption})` : ''} - Qty: ${item.quantity}`;
+        const unitPrice = parseFloat(item.selling_price ?? item.price ?? 0);
+        const itemTotal = unitPrice * (item.quantity || 1);
+        const priceStr = unitPrice > 0 
+          ? ` — ${item.quantity} × ${currency}${unitPrice.toFixed(2)} = *${currency}${itemTotal.toFixed(2)}*`
+          : ` - Qty: ${item.quantity}`;
+        return `${idx + 1}. *${item.title || item.name}${itemOption ? ` (${itemOption})` : ''}*${priceStr}`;
       })
       .join('\n');
 
@@ -130,6 +139,11 @@ export const CartDrawer = () => {
 *Items Ordered:*
 ${itemsList}
 
+*Order Summary:*
+• *Subtotal:* ${currency}${subtotal.toFixed(2)}
+• *Delivery Fee:* ${deliveryFee === 0 ? 'FREE' : `${currency}${deliveryFee.toFixed(2)}`}
+• *Total Amount:* *${currency}${totalPayable.toFixed(2)}*
+
 *Payment (COD):*
 The total amount may vary depending on the store. The bill will be provided by the store.
 
@@ -146,6 +160,11 @@ Please confirm and dispatch to my delivery address. Thank you!`;
 
 *Items Ordered:*
 ${itemsList}
+
+*Order Summary:*
+• *Subtotal:* ${currency}${subtotal.toFixed(2)}
+• *Store Pickup Fee:* FREE
+• *Total Amount:* *${currency}${totalPayable.toFixed(2)}*
 
 *Payment on Pickup:*
 The total amount may vary depending on the store. The bill will be provided by the store.
