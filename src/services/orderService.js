@@ -77,6 +77,7 @@ export const saveOrder = async (orderData) => {
  */
 export const formatWhatsAppMessage = (order, storeSettings = {}) => {
   const divider = '━━━━━━━━━━━━━━━━━━━━';
+  const currency = storeSettings.currency || '₹';
   
   let msg = `🛍️ *NEW ORDER: ${order.orderId || order.invoice_number || 'ORDER'}*\n`;
   msg += `${divider}\n\n`;
@@ -123,14 +124,38 @@ export const formatWhatsAppMessage = (order, storeSettings = {}) => {
   msg += `🛒 *Items to Dispatch:*\n`;
 
   const items = order.items || [];
+  let calculatedSubtotal = 0;
   items.forEach((item, index) => {
-    const vLabel = item.selectedVariant ? ` (${item.selectedVariant.name || item.selectedVariant.size})` : (item.variant_name ? ` (${item.variant_name})` : '');
-    const title = item.title || item.product_name || 'Product';
+    const vLabel = item.selectedVariant ? ` (${item.selectedVariant.name || item.selectedVariant.size})` : (item.variant_name ? ` (${item.variant_name})` : (item.unit ? ` (${item.unit})` : ''));
+    const title = item.title || item.product_name || item.name || 'Product';
     const qty = item.quantity || 1;
-    msg += `${index + 1}. *${title}${vLabel}* × ${qty}\n`;
+    const unitPrice = parseFloat(item.unit_price ?? item.price ?? item.selling_price ?? 0);
+    const itemTotal = unitPrice * qty;
+    calculatedSubtotal += itemTotal;
+
+    const priceText = unitPrice > 0 
+      ? ` — ${qty} × ${currency}${unitPrice.toFixed(2)} = *${currency}${itemTotal.toFixed(2)}*`
+      : ` × ${qty}`;
+
+    msg += `${index + 1}. *${title}${vLabel}*${priceText}\n`;
   });
 
   msg += `${divider}\n\n`;
+
+  const subtotal = order.subtotal !== undefined ? Number(order.subtotal) : calculatedSubtotal;
+  const deliveryFee = order.deliveryFee !== undefined ? Number(order.deliveryFee) : 0;
+  const totalAmount = order.total_amount !== undefined 
+    ? Number(order.total_amount) 
+    : (order.total !== undefined ? Number(order.total) : (subtotal + deliveryFee));
+
+  if (subtotal > 0 || totalAmount > 0) {
+    msg += `💰 *Order Summary:*\n`;
+    msg += `• Subtotal: ${currency}${subtotal.toFixed(2)}\n`;
+    if (isShipping) {
+      msg += `• Delivery Fee: ${deliveryFee === 0 ? 'FREE' : `${currency}${deliveryFee.toFixed(2)}`}\n`;
+    }
+    msg += `• *Total Amount:* *${currency}${totalAmount.toFixed(2)}*\n\n`;
+  }
   
   msg += `💳 *Payment:* ${isShipping ? 'Cash on Delivery (COD)' : 'Pay on Store Pickup (COD / Cash / UPI)'}\n`;
   msg += `ℹ️ *Note:* The total amount may vary depending on the store. The bill will be provided by the store.\n\n`;
