@@ -269,6 +269,14 @@ class AdminInventoryService {
       updated_at: new Date().toISOString()
     });
 
+    // The SKU is a random six-digit code; regenerate it if it already exists.
+    let sku = newProd.sku;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: clash } = await supabase.from('products').select('id').eq('sku', sku).maybeSingle();
+      if (!clash) break;
+      sku = `GP-${String(Math.floor(100000 + Math.random() * 900000))}`;
+    }
+
     // 1. Insert into Supabase. On any failure, throw: no local-only save.
     const { data, error } = await supabase
       .from('products')
@@ -288,7 +296,7 @@ class AdminInventoryService {
         status: newProd.status,
         image_url: newProd.image_url || null,
         image: newProd.image_url || null,
-        sku: newProd.sku || null,
+        sku: sku || null,
         unit: newProd.unit || null,
         brand: newProd.brand || null,
         has_variants: Array.isArray(newProd.variants) && newProd.variants.length > 1,
