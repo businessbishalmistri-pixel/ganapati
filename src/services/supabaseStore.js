@@ -2,41 +2,15 @@
  * supabaseStore.js
  * Integration with XYVOT Storefront API & Supabase Backend
  */
-import { createClient } from '@supabase/supabase-js';
+// One Supabase client for the whole app, defined in supabase.js.
+import { supabase } from './supabase';
 
-function sanitizeSupabaseUrl(rawUrl) {
-  const fallback = 'https://ftiivdzbimggyxbbkaji.supabase.co';
-  if (!rawUrl || typeof rawUrl !== 'string') return fallback;
-  const trimmed = rawUrl.trim();
-  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
-  // Guard against API keys or publishable tokens mistakenly configured as VITE_SUPABASE_URL
-  if (trimmed.startsWith('sb_') || trimmed.startsWith('eyJ') || trimmed.includes('_')) return fallback;
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    if (trimmed.includes('sb_publishable') || !trimmed.includes('.')) return fallback;
-    return trimmed;
-  }
-  if (/^[a-z0-9-]{15,30}$/i.test(trimmed)) return `https://${trimmed}.supabase.co`;
-  if (trimmed.includes('.')) return `https://${trimmed}`;
-  return fallback;
-}
-
-function sanitizeSupabaseKey(rawKey) {
-  const fallback = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0aWl2ZHpiaW1nZ3l4YmJrYWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzQ2MDksImV4cCI6MjEwNDYxMDYwOX0.ybjdQubcyaathpa4fXhv5nr2otanhyvEbDpbLxeIqXI';
-  if (!rawKey || typeof rawKey !== 'string') return fallback;
-  const trimmed = rawKey.trim();
-  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return fallback;
-  if (!trimmed.startsWith('eyJ')) return fallback;
-  return trimmed;
-}
-
-const SUPABASE_URL = sanitizeSupabaseUrl(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_URL : '');
-const SUPABASE_ANON_KEY = sanitizeSupabaseKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_ANON_KEY : '');
+export { supabase };
 
 import { INITIAL_DEFAULT_PRODUCTS, normalizeProduct } from './inventoryData';
 
 export const DEFAULT_STORE_API_KEY = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_STORE_API_KEY : '') || '';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Fetch real products dynamically from Supabase database
@@ -61,7 +35,7 @@ export async function fetchLiveProductsFromBackend() {
     return visibleProducts.map((p) => {
       const rawPrice = parseFloat(p.selling_price || p.price || p.unit_price || 0);
       const originalPrice = p.mrp ? parseFloat(p.mrp) : (p.original_price ? parseFloat(p.original_price) : null);
-      const rawStock = parseInt(p.stock_quantity ?? p.stock ?? 999, 10);
+      const rawStock = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
       
       // Parse and clean real variants array from XYVOT / Supabase
       let cleanVariants = [];
@@ -86,7 +60,7 @@ export async function fetchLiveProductsFromBackend() {
         console.warn('Error parsing variants for product', p.id, e);
       }
 
-      const hasVariants = Boolean(p.has_variants) && cleanVariants.length > 0;
+      const hasVariants = cleanVariants.length > 1;
       
       // If hasVariants, compute base price and total stock dynamically
       const minVariantPrice = hasVariants 
@@ -115,8 +89,8 @@ export async function fetchLiveProductsFromBackend() {
         selling_price: effectivePrice,
         originalPrice: originalPrice && !isNaN(originalPrice) ? originalPrice : null,
         mrp: originalPrice && !isNaN(originalPrice) ? originalPrice : effectivePrice,
-        rating: parseFloat(p.rating) || 4.9,
-        reviewsCount: parseInt(p.reviews_count ?? 48, 10),
+        rating: parseFloat(p.rating) || 0,
+        reviewsCount: parseInt(p.reviews_count ?? 0, 10),
         stock: effectiveStock,
         stock_quantity: effectiveStock,
         low_stock_threshold: parseInt(p.low_stock_threshold ?? 5, 10),
@@ -185,7 +159,7 @@ export async function fetchSingleProductById(productId) {
         console.warn('Error parsing variants', e);
       }
 
-      const hasVariants = Boolean(p.has_variants) && cleanVariants.length > 0;
+      const hasVariants = cleanVariants.length > 1;
       const minVariantPrice = hasVariants ? Math.min(...cleanVariants.map(v => v.selling_price)) : rawPrice;
       const totalVariantStock = hasVariants ? cleanVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0) : rawStock;
       const effectivePrice = isNaN(minVariantPrice) ? 0 : minVariantPrice;
@@ -203,8 +177,8 @@ export async function fetchSingleProductById(productId) {
         price: effectivePrice,
         selling_price: effectivePrice,
         originalPrice: originalPrice && !isNaN(originalPrice) ? originalPrice : null,
-        rating: parseFloat(p.rating) || 4.9,
-        reviewsCount: parseInt(p.reviews_count ?? 48, 10),
+        rating: parseFloat(p.rating) || 0,
+        reviewsCount: parseInt(p.reviews_count ?? 0, 10),
         stock: effectiveStock,
         stock_quantity: effectiveStock,
         badge: effectiveStock <= 3 && effectiveStock > 0 ? 'Low Stock' : (p.badge || (p.featured ? 'Featured' : null)),
@@ -399,34 +373,4 @@ export async function deleteCategoryFromSupabase(id) {
   return false;
 }
 
-export async function submitBackendOrder(order) {
-  if (!order) return null;
-  try {
-    const payload = {
-      order_id: order.orderId || order.invoice_number || `ORD-${Date.now()}`,
-      customer_name: order.customer?.name || order.customer_name || 'Customer',
-      customer_phone: order.customer?.phone || order.customer_phone || '',
-      customer_email: order.customer?.email || order.customer_email || '',
-      delivery_method: order.deliveryMethod || 'pickup',
-      delivery_address: order.shippingAddress ? JSON.stringify(order.shippingAddress) : (order.delivery_address || ''),
-      items: Array.isArray(order.items) ? order.items : [],
-      status: order.status || 'pending',
-      created_at: order.createdAt || new Date().toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([payload])
-      .select()
-      .maybeSingle();
-
-    if (!error && data) return data;
-    if (error) {
-      console.warn('Supabase order insert note:', error.message);
-    }
-  } catch (err) {
-    console.warn('Could not submit order to Supabase:', err);
-  }
-  return null;
-}
 

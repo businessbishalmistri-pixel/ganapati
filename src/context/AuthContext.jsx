@@ -36,6 +36,8 @@ export const AuthProvider = ({ children }) => {
   const [isPickupModalOpen, setIsPickupModalOpen] = useState(false);
   const [pickupPendingAction, setPickupPendingAction] = useState(null); // 'checkout' | null
 
+  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+
   // Keep in sync with localStorage
   useEffect(() => {
     const handleStorage = () => {
@@ -159,8 +161,8 @@ export const AuthProvider = ({ children }) => {
         isAuthOpen: false,
         setIsAuthOpen: (val) => setIsProfileOpen(val),
         openLoginModal: (action) => openProfileModal(action),
-        isOrdersOpen: false,
-        setIsOrdersOpen: () => {},
+        isOrdersOpen,
+        setIsOrdersOpen,
         logout: clearProfile
       }}
     >

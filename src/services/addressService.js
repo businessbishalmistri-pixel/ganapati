@@ -115,16 +115,24 @@ export const addressService = {
       window.dispatchEvent(new CustomEvent('address_changed', { detail: updatedList }));
     }
 
-    // Background sync to Supabase if customer phone is available
+    // Background sync to Supabase if customer phone is available.
+    // Throws on failure: the local save above already applied, but the
+    // caller must not report the cloud save as done when it failed.
     if (phone) {
       const cleanPhone = phone.toString().replace(/\D/g, '').slice(-10);
-      try {
-        await supabase
-          .from('customers')
-          .update({ addresses: updatedList })
-          .eq('phone', cleanPhone);
-      } catch (err) {
-        console.warn('Background Supabase address sync error:', err);
+      const { error } = await supabase.rpc('upsert_customer', {
+        p_phone: cleanPhone,
+        p_full_name: null,
+        p_email: null,
+        p_address: null,
+        p_city: null,
+        p_gps_lat: null,
+        p_gps_lng: null,
+        p_addresses: updatedList,
+        p_cart: null
+      });
+      if (error) {
+        throw new Error(error.message || 'Could not save the address');
       }
     }
 
@@ -148,13 +156,19 @@ export const addressService = {
 
     if (phone) {
       const cleanPhone = phone.toString().replace(/\D/g, '').slice(-10);
-      try {
-        await supabase
-          .from('customers')
-          .update({ addresses: updatedList })
-          .eq('phone', cleanPhone);
-      } catch (err) {
-        console.warn('Background sync error:', err);
+      const { error } = await supabase.rpc('upsert_customer', {
+        p_phone: cleanPhone,
+        p_full_name: null,
+        p_email: null,
+        p_address: null,
+        p_city: null,
+        p_gps_lat: null,
+        p_gps_lng: null,
+        p_addresses: updatedList,
+        p_cart: null
+      });
+      if (error) {
+        throw new Error(error.message || 'Could not save the address');
       }
     }
     return updatedList;
@@ -180,13 +194,19 @@ export const addressService = {
 
     if (phone) {
       const cleanPhone = phone.toString().replace(/\D/g, '').slice(-10);
-      try {
-        await supabase
-          .from('customers')
-          .update({ addresses: updatedList })
-          .eq('phone', cleanPhone);
-      } catch (err) {
-        console.warn('Background sync error:', err);
+      const { error } = await supabase.rpc('upsert_customer', {
+        p_phone: cleanPhone,
+        p_full_name: null,
+        p_email: null,
+        p_address: null,
+        p_city: null,
+        p_gps_lat: null,
+        p_gps_lng: null,
+        p_addresses: updatedList,
+        p_cart: null
+      });
+      if (error) {
+        throw new Error(error.message || 'Could not save the address');
       }
     }
     return updatedList;

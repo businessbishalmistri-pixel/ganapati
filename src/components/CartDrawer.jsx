@@ -20,8 +20,9 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
+import { saveOrder } from '../services/orderService';
 
-export const CartDrawer = () => {
+export const CartDrawer = ({ onOrderPlaced }) => {
   const {
     cartItems,
     isCartOpen,
@@ -78,7 +79,7 @@ export const CartDrawer = () => {
   const freeShippingProgress = freeThreshold > 0 ? Math.min(100, Math.round((subtotal / freeThreshold) * 100)) : 100;
   const amountNeededForFreeShipping = Math.max(0, freeThreshold - subtotal);
 
-  const handleCheckoutWhatsApp = () => {
+  const handleCheckoutWhatsApp = async () => {
     if (cartItems.length === 0) {
       showToast('Your cart is empty', 'error');
       return;
@@ -108,13 +109,44 @@ export const CartDrawer = () => {
     const deliveryFee = deliveryMethod === 'shipping' ? (isFreeDelivery ? 0 : flatFee) : 0;
     const totalPayable = subtotal + deliveryFee;
 
+    // 3. Save the order first. On failure stop here: no WhatsApp, cart kept.
+    const isShipping = deliveryMethod === 'shipping';
+    let savedOrder;
+    try {
+      savedOrder = await saveOrder({
+        customer_name: isShipping ? customer.name : (activePickupName || 'Customer'),
+        customer_phone: isShipping ? customer.phone : (activePickupPhone || ''),
+        customer_email: customer?.email || '',
+        delivery_method: deliveryMethod,
+        deliveryMethod,
+        delivery_address: isShipping
+          ? { address: customer.address, gpsUrl: customer.gpsUrl || '', lat: customer.lat || null, lng: customer.lng || null }
+          : { address: settings?.storeAddress || 'Main Store Hub' },
+        items: cartItems.map((item) => ({
+          id: item.id,
+          title: item.title || item.name,
+          name: item.title || item.name,
+          variant_name: item.variantName || item.selectedVariant?.name || item.unit || '',
+          price: parseFloat(item.selling_price ?? item.price ?? 0),
+          quantity: item.quantity || 1
+        })),
+        subtotal,
+        total_amount: totalPayable,
+        total: totalPayable,
+        deliveryFee
+      });
+    } catch (err) {
+      showToast(err?.message || 'Could not place your order. Please try again.', 'error');
+      return;
+    }
+
     const itemsList = cartItems
       .map((item, idx) => {
         const itemOption = item.variantName || item.selectedVariant?.name || item.unit || '';
         const unitPrice = parseFloat(item.selling_price ?? item.price ?? 0);
         const itemTotal = unitPrice * (item.quantity || 1);
-        const priceStr = unitPrice > 0 
-          ? ` — ${item.quantity} × ${currency}${unitPrice.toFixed(2)} = *${currency}${itemTotal.toFixed(2)}*`
+        const priceStr = unitPrice > 0
+          ? ` - ${item.quantity} × ${currency}${unitPrice.toFixed(2)} = *${currency}${itemTotal.toFixed(2)}*`
           : ` - Qty: ${item.quantity}`;
         return `${idx + 1}. *${item.title || item.name}${itemOption ? ` (${itemOption})` : ''}*${priceStr}`;
       })
@@ -122,12 +154,13 @@ export const CartDrawer = () => {
 
     let message = '';
     if (deliveryMethod === 'shipping') {
-      const gpsLink = customer.gpsUrl 
-        ? customer.gpsUrl 
+      const gpsLink = customer.gpsUrl
+        ? customer.gpsUrl
         : (customer.lat && customer.lng ? `https://maps.google.com/?q=${customer.lat},${customer.lng}` : 'Not provided');
 
-      message = 
+      message =
 `*New Order - ${settings?.storeName || 'Ganapati Store'}*
+*Order Number:* ${savedOrder.orderId}
 *Delivery Method:* Home Delivery (COD)
 
 *Customer Details:*
@@ -149,8 +182,9 @@ The total amount may vary depending on the store. The bill will be provided by t
 
 Please confirm and dispatch to my delivery address. Thank you!`;
     } else {
-      message = 
+      message =
 `*New Order - ${settings?.storeName || 'Ganapati Store'}*
+*Order Number:* ${savedOrder.orderId}
 *Delivery Method:* Store Pickup (Pay at Store)
 
 *Customer Details:*
@@ -176,10 +210,10 @@ Please keep my order ready for store pickup. Thank you!`;
     const whatsappUrl = `https://wa.me/${cleanStorePhone}?text=${encoded}`;
 
     window.open(whatsappUrl, '_blank');
-    
-    showToast('WhatsApp order generated! Redirecting to chat...', 'success');
+
     clearCart();
     setIsCartOpen(false);
+    if (onOrderPlaced) onOrderPlaced(savedOrder);
   };
 
   const handleProceedToWhatsApp = handleCheckoutWhatsApp;
@@ -292,7 +326,7 @@ Please keep my order ready for store pickup. Thank you!`;
               <div className="space-y-2 py-2.5">
                 {cartItems.map((item) => {
                   const itemKey = item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : item.id);
-                  const isMax = item.quantity >= (item.stockQuantity || item.stock || 999);
+                  const isMax = item.quantity >= (item.stockQuantity ?? item.stock ?? 0);
                   const unitPrice = parseFloat(item.selling_price ?? item.price ?? 0);
                   const itemTotal = unitPrice * item.quantity;
                   const variantLabel = item.variantName || (item.selectedVariant ? (item.selectedVariant.name || item.selectedVariant.size || item.selectedVariant.unit) : null);
@@ -564,7 +598,7 @@ Please keep my order ready for store pickup. Thank you!`;
               </button>
 
               <p className="text-[10px] text-center text-slate-400">
-                Products and delivery info will be sent directly to our store WhatsApp.
+                No account needed, you check out as a guest. Products and delivery info will be sent directly to our store WhatsApp.
               </p>
             </div>
           )}

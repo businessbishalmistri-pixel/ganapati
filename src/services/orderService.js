@@ -1,76 +1,142 @@
 /**
  * orderService.js
- * Handles saving orders to Firestore and formatting WhatsApp messages
+ * Single order path: saves orders to the Supabase `orders` table and
+ * formats WhatsApp messages. No Firestore, no other order store.
  */
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getFirestoreDb, isFirebaseConfigured } from './firebase';
-import { inventoryApi } from './inventoryApi';
-import { submitBackendOrder } from './supabaseStore';
+import { supabase } from './supabase';
 
 const LOCAL_ORDERS_KEY = 'quickcart_saved_orders';
 
 export const saveOrder = async (orderData) => {
-  const orderId = 'ORD-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+  const orderId = 'ORD-' + Date.now();
   const timestamp = new Date().toISOString();
 
   const completeOrder = {
+    ...orderData,
     orderId,
     createdAt: timestamp,
-    status: 'PLACED_PENDING_WHATSAPP',
-    ...orderData,
+    status: 'pending',
+    channel: 'website',
+    payment_method: 'cod',
+    paymentMethod: 'Cash on Delivery (COD)',
   };
 
-  let savedToFirestore = false;
-  let firestoreId = null;
+  const payload = {
+    order_id: orderId,
+    customer_name: orderData.customer_name || orderData.customer?.name || 'Customer',
+    customer_phone: orderData.customer_phone || orderData.customer?.phone || '',
+    customer_email: orderData.customer_email || orderData.customer?.email || '',
+    delivery_method: orderData.delivery_method || orderData.deliveryMethod || 'pickup',
+    delivery_address: orderData.delivery_address || orderData.shippingAddress || {},
+    items: Array.isArray(orderData.items) ? orderData.items : [],
+    subtotal: Number(orderData.subtotal || 0),
+    total_amount: Number(orderData.total_amount ?? orderData.total ?? orderData.subtotal ?? 0),
+    payment_method: 'cod',
+    channel: 'website',
+    status: 'pending',
+  };
 
-  // 1. Try saving to Firestore if configured
-  if (isFirebaseConfigured()) {
-    try {
-      const db = getFirestoreDb();
-      if (db) {
-        const docRef = await addDoc(collection(db, 'orders'), {
-          ...completeOrder,
-          serverTimestamp: serverTimestamp(),
-        });
-        firestoreId = docRef.id;
-        savedToFirestore = true;
+  // 1. Save the order first. On failure throw so the caller keeps the cart.
+  // No .select() here: anon has no SELECT on orders (by design), and asking
+  // for the inserted row back would fail the whole insert. The order number
+  // in completeOrder is all the caller needs.
+  const { error } = await supabase
+    .from('orders')
+    .insert([payload]);
+
+  if (error) {
+    throw new Error(error.message || 'Could not save the order');
+  }
+
+  const savedOrder = { ...completeOrder, id: null };
+
+  // 2. Reduce stock, best effort: the order is already recorded.
+  if (Array.isArray(orderData.items)) {
+    for (const item of orderData.items) {
+      if (!item?.id) continue;
+      const { error: stockError } = await supabase.rpc('decrement_stock', {
+        p_product_id: String(item.id),
+        p_qty: parseInt(item.quantity || 1, 10),
+      });
+      if (stockError) {
+        console.warn('Could not reduce stock for product', item.id, stockError.message);
       }
-    } catch (err) {
-      console.warn('Could not save to Firestore, falling back to local store:', err);
     }
   }
 
-  // 2. Fallback / local backup in localStorage
+  // 3. Local backup for order history on this device.
   try {
     const existing = JSON.parse(localStorage.getItem(LOCAL_ORDERS_KEY) || '[]');
-    existing.unshift({
-      ...completeOrder,
-      firestoreId,
-      savedToFirestore
-    });
+    existing.unshift(savedOrder);
     localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(existing.slice(0, 50)));
   } catch (err) {
     console.error('Error saving order locally', err);
   }
 
-  // 3. Sync with XYVOT / Supabase backend orders
-  try {
-    await submitBackendOrder(completeOrder);
-  } catch (err) {
-    console.log('Backend sync status:', err);
-  }
-
-  // 4. Decrement inventory
-  if (orderData.items && orderData.items.length > 0) {
-    await inventoryApi.decrementStockForOrder(orderData.items);
-  }
-
-  return {
-    ...completeOrder,
-    firestoreId,
-    savedToFirestore
-  };
+  return savedOrder;
 };
+
+/**
+ * Load this customer's orders through the get_orders_by_phone function.
+ * Returns an empty list when no phone is given, never all orders.
+ */
+export async function fetchCustomerOrders(phone) {
+  const cleanedPhone = phone ? phone.toString().replace(/\D/g, '').slice(-10) : '';
+  if (!cleanedPhone) return [];
+
+  const localOrders = getSavedOrders();
+
+  try {
+    const { data, error } = await supabase.rpc('get_orders_by_phone', { p_phone: cleanedPhone });
+
+    if (!error && Array.isArray(data)) {
+      const formattedBackendOrders = data.map((ord) => {
+        const addr = ord.delivery_address;
+        const addressStr = typeof addr === 'string'
+          ? addr
+          : (addr && typeof addr === 'object'
+            ? [addr.address || addr.street, addr.city, addr.state, addr.pincode || addr.postalCode].filter(Boolean).join(', ')
+            : '');
+        return {
+          id: ord.id,
+          orderId: ord.order_id,
+          invoice_number: ord.order_id,
+          createdAt: ord.created_at,
+          customer: {
+            name: ord.customer_name,
+            phone: ord.customer_phone || cleanedPhone,
+            email: ord.customer_email || ''
+          },
+          deliveryMethod: ord.delivery_method || 'pickup',
+          delivery_address: addressStr,
+          paymentMethod: 'Cash on Delivery (COD)',
+          payment_method: ord.payment_method || 'cod',
+          status: ord.status || 'pending',
+          subtotal: parseFloat(ord.subtotal || 0),
+          deliveryFee: 0,
+          total: parseFloat(ord.total_amount || 0),
+          total_amount: parseFloat(ord.total_amount || 0),
+          items: Array.isArray(ord.items) ? ord.items : []
+        };
+      });
+
+      const allOrders = [...localOrders];
+      for (const bo of formattedBackendOrders) {
+        if (!allOrders.some((o) => o.orderId === bo.orderId || o.invoice_number === bo.invoice_number || o.id === bo.id)) {
+          allOrders.push(bo);
+        }
+      }
+      return allOrders;
+    }
+    if (error) {
+      console.warn('Could not fetch orders:', error.message);
+    }
+  } catch (e) {
+    console.warn('Could not fetch orders:', e);
+  }
+
+  return localOrders;
+}
 
 /**
  * Generate formatted WhatsApp message
@@ -134,7 +200,7 @@ export const formatWhatsAppMessage = (order, storeSettings = {}) => {
     calculatedSubtotal += itemTotal;
 
     const priceText = unitPrice > 0 
-      ? ` — ${qty} × ${currency}${unitPrice.toFixed(2)} = *${currency}${itemTotal.toFixed(2)}*`
+      ? ` - ${qty} × ${currency}${unitPrice.toFixed(2)} = *${currency}${itemTotal.toFixed(2)}*`
       : ` × ${qty}`;
 
     msg += `${index + 1}. *${title}${vLabel}*${priceText}\n`;

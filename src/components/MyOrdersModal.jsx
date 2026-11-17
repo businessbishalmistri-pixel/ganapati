@@ -11,8 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import { fetchCustomerOrders } from '../services/apiService';
-import { supabase } from '../services/supabase';
+import { fetchCustomerOrders } from '../services/orderService';
 
 export const MyOrdersModal = () => {
   const { isOrdersOpen, setIsOrdersOpen, customer, currentCustomer } = useAuth();
@@ -33,26 +32,6 @@ export const MyOrdersModal = () => {
     if (isOrdersOpen) {
       loadOrders();
     }
-  }, [isOrdersOpen, activeCustomer]);
-
-  // Real-time Supabase listener for live status updates from XYVOT
-  useEffect(() => {
-    if (!isOrdersOpen) return;
-
-    const channel = supabase
-      .channel('my_orders_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'sales_orders' },
-        (payload) => {
-          loadOrders();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [isOrdersOpen, activeCustomer]);
 
   useEffect(() => {

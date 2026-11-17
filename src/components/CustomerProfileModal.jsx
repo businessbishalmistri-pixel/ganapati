@@ -16,12 +16,13 @@ import { useToast } from '../context/ToastContext';
 import { LocationPicker } from './LocationPicker';
 
 export function CustomerProfileModal() {
-  const { 
-    isProfileOpen, 
-    closeProfileModal, 
-    customer, 
-    saveProfile, 
-    profilePendingAction 
+  const {
+    isProfileOpen,
+    closeProfileModal,
+    customer,
+    saveProfile,
+    profilePendingAction,
+    setIsOrdersOpen
   } = useAuth();
   
   const { showToast } = useToast();
@@ -270,6 +271,13 @@ export function CustomerProfileModal() {
             className="px-4 sm:px-6 py-3 border-t border-slate-100 flex items-center justify-end gap-2.5 bg-slate-50/70 flex-shrink-0"
             style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
           >
+            <button
+              type="button"
+              onClick={() => { closeProfileModal(); setIsOrdersOpen(true); }}
+              className="px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer mr-auto"
+            >
+              View My Orders
+            </button>
             <button
               type="button"
               onClick={closeProfileModal}

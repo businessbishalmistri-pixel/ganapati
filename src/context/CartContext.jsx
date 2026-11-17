@@ -1,47 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
-import { 
-  fetchCustomerCloudCart, 
-  syncCustomerCloudCart, 
-  STORE_ORGANIZATION_ID, 
-  sanitizeWhatsAppPhone 
+import {
+  syncCustomerCloudCart,
+  STORE_ORGANIZATION_ID,
+  sanitizeWhatsAppPhone
 } from '../services/supabase';
 
 const CartContext = createContext();
 const CART_STORAGE_KEY = 'quickcart_cart_items';
-
-/**
- * Merge local guest cart items with remote cloud items
- */
-function mergeCarts(localItems, cloudItems) {
-  const mergedMap = new Map();
-
-  // 1. Add cloud items
-  (cloudItems || []).forEach((item) => {
-    const key = item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : item.id);
-    mergedMap.set(key, { ...item, cartKey: key, cartItemId: key });
-  });
-
-  // 2. Merge / Append local items
-  (localItems || []).forEach((localItem) => {
-    const key = localItem.cartKey || localItem.cartItemId || (localItem.variantId ? `${localItem.id}_${localItem.variantId}` : localItem.id);
-    if (mergedMap.has(key)) {
-      const existing = mergedMap.get(key);
-      const totalQty = (existing.quantity || 1) + (localItem.quantity || 1);
-      const maxStock = existing.stockQuantity || existing.stock || localItem.stockQuantity || localItem.stock || 999;
-      mergedMap.set(key, {
-        ...existing,
-        ...localItem,
-        quantity: Math.min(totalQty, maxStock),
-      });
-    } else {
-      mergedMap.set(key, { ...localItem, cartKey: key, cartItemId: key });
-    }
-  });
-
-  return Array.from(mergedMap.values());
-}
 
 export const CartProvider = ({ children }) => {
   const { showToast } = useToast();
@@ -57,10 +24,8 @@ export const CartProvider = ({ children }) => {
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [justAddedId, setJustAddedId] = useState(null);
 
-  const initialSyncDoneRef = useRef(false);
   const lastCustomerPhoneRef = useRef(customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null);
   const syncTimeoutRef = useRef(null);
 
@@ -73,64 +38,26 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartItems]);
 
-  // 2. Auth State Change Listener (Login / Logout / Cross-device Cloud Sync)
+  // 2. Profile cleared -> wipe the local cart session. There is no cloud
+  // read: anon cannot read the customers table, so localStorage is the
+  // source of truth and the cloud copy is backup only.
   useEffect(() => {
     const currentPhone = customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null;
     const previousPhone = lastCustomerPhoneRef.current;
     lastCustomerPhoneRef.current = currentPhone;
 
-    if (currentPhone) {
-      // User is logged in
-      let isMounted = true;
-      initialSyncDoneRef.current = false;
-
-      (async () => {
-        try {
-          const cloudItems = await fetchCustomerCloudCart(currentPhone, STORE_ORGANIZATION_ID);
-          if (!isMounted) return;
-
-          let currentLocalItems = [];
-          try {
-            const saved = localStorage.getItem(CART_STORAGE_KEY);
-            if (saved) currentLocalItems = JSON.parse(saved);
-          } catch (e) {}
-
-          const merged = mergeCarts(currentLocalItems, cloudItems);
-          setCartItems(merged);
-          
-          // Sync merged cart back to cloud
-          if (merged.length > 0 || (cloudItems && cloudItems.length > 0)) {
-            syncCustomerCloudCart(currentPhone, STORE_ORGANIZATION_ID, merged);
-          }
-        } catch (err) {
-          console.warn('Error during cloud cart sync:', err);
-        } finally {
-          if (isMounted) {
-            initialSyncDoneRef.current = true;
-          }
-        }
-      })();
-
-      return () => {
-        isMounted = false;
-      };
-    } else if (previousPhone && !currentPhone) {
-      // User logged out -> wipe local cart session
-      initialSyncDoneRef.current = false;
+    if (previousPhone && !currentPhone) {
       setCartItems([]);
       try {
         localStorage.removeItem(CART_STORAGE_KEY);
       } catch (e) {}
-    } else {
-      // Guest mode
-      initialSyncDoneRef.current = true;
     }
   }, [customer?.phone]);
 
-  // 3. Debounced (300ms) background sync to Supabase store_customers for logged-in user mutations
+  // 3. Debounced (300ms) background backup to the cloud for profiled users
   useEffect(() => {
     const currentPhone = customer?.phone ? sanitizeWhatsAppPhone(customer.phone) : null;
-    if (!currentPhone || !initialSyncDoneRef.current) return;
+    if (!currentPhone) return;
 
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current);
@@ -148,9 +75,9 @@ export const CartProvider = ({ children }) => {
   }, [cartItems, customer?.phone]);
 
   const addToCart = (product, quantity = 1, selectedVariant = null) => {
-    const itemStock = selectedVariant 
-      ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 999, 10) 
-      : parseInt(product.stock_quantity ?? product.stock ?? 999, 10);
+    const itemStock = selectedVariant
+      ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 0, 10)
+      : parseInt(product.stock_quantity ?? product.stock ?? 0, 10);
     const itemPrice = selectedVariant 
       ? parseFloat(selectedVariant.selling_price ?? selectedVariant.price) 
       : parseFloat(product.selling_price ?? product.price ?? 0);
@@ -257,7 +184,7 @@ export const CartProvider = ({ children }) => {
         const itemKeyStr = String(item.cartKey || item.cartItemId || (item.variantId ? `${item.id}_${item.variantId}` : item.id));
         const match = itemKeyStr === targetKeyStr;
         return match
-          ? { ...item, quantity: Math.min(newQuantity, item.stockQuantity || item.stock || maxStock || newQuantity) } 
+          ? { ...item, quantity: Math.min(newQuantity, item.stockQuantity ?? item.stock ?? maxStock ?? newQuantity) }
           : item;
       })
     );
@@ -313,8 +240,6 @@ export const CartProvider = ({ children }) => {
         subtotal,
         isCartOpen,
         setIsCartOpen,
-        isCheckoutOpen,
-        setIsCheckoutOpen,
         justAddedId,
       }}
     >

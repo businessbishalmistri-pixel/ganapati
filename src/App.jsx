@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { Navbar } from './components/Navbar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
@@ -33,9 +33,11 @@ import { CustomerProfileModal } from './components/CustomerProfileModal';
 import { StorePickupModal } from './components/StorePickupModal';
 import { fetchSingleProductById } from './services/supabaseStore';
 import { WelcomeConfetti } from './components/WelcomeConfetti';
-import { AdminApp } from './components/admin/AdminApp';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { MobileCategoryView } from './components/MobileCategoryView';
+
+// Admin loads on demand so the storefront bundle stays small.
+const AdminApp = lazy(() => import('./components/admin/AdminApp').then((m) => ({ default: m.AdminApp })));
 
 export function App() {
   const { settings } = useSettings();
@@ -104,7 +106,7 @@ export function App() {
       fetchSingleProductById(urlProductId).then((prod) => {
         if (prod) {
           setSelectedProduct(prod);
-          document.title = `${prod.title || prod.name} — Ganapati Store`;
+          document.title = `${prod.title || prod.name} - Ganapati Store`;
         }
       });
     }
@@ -117,7 +119,7 @@ export function App() {
       const found = products.find((p) => String(p.id).toLowerCase() === String(urlProductId).toLowerCase());
       if (found) {
         setSelectedProduct(found);
-        document.title = `${found.title || found.name} — Ganapati Store`;
+        document.title = `${found.title || found.name} - Ganapati Store`;
       }
     }
   }, [products]);
@@ -129,7 +131,7 @@ export function App() {
       setIsAdminView(isNowAdmin);
 
       if (isNowAdmin) {
-        document.title = 'Ganapati Stores — Admin Dashboard';
+        document.title = 'Ganapati Stores - Admin Dashboard';
         return;
       }
 
@@ -138,15 +140,15 @@ export function App() {
         const found = products.find((p) => String(p.id).toLowerCase() === String(urlProductId).toLowerCase());
         if (found) {
           setSelectedProduct(found);
-          document.title = `${found.title || found.name} — Ganapati Store`;
+          document.title = `${found.title || found.name} - Ganapati Store`;
         } else {
           fetchSingleProductById(urlProductId).then((prod) => {
             if (prod) {
               setSelectedProduct(prod);
-              document.title = `${prod.title || prod.name} — Ganapati Store`;
+              document.title = `${prod.title || prod.name} - Ganapati Store`;
             } else {
               setSelectedProduct(null);
-              document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
+              document.title = 'Ganapati Store - Fresh Groceries & Daily Essentials';
             }
           });
         }
@@ -160,7 +162,7 @@ export function App() {
           }
           return null;
         });
-        document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
+        document.title = 'Ganapati Store - Fresh Groceries & Daily Essentials';
       }
     };
 
@@ -172,7 +174,7 @@ export function App() {
   const handleNavigateToAdmin = () => {
     window.history.pushState({ view: 'admin' }, '', '/amit');
     setIsAdminView(true);
-    document.title = 'Ganapati Stores — Admin Dashboard';
+    document.title = 'Ganapati Stores - Admin Dashboard';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -181,7 +183,7 @@ export function App() {
     window.history.pushState({ view: 'store' }, '', '/');
     setIsAdminView(false);
     setSelectedProduct(null);
-    document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
+    document.title = 'Ganapati Store - Fresh Groceries & Daily Essentials';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -191,7 +193,7 @@ export function App() {
       scrollPosRef.current = window.scrollY || document.documentElement.scrollTop || 0;
       setSelectedProduct(prod);
       window.history.pushState({ productId: prod.id }, '', `/product/${prod.id}`);
-      document.title = `${prod.title || prod.name} — Ganapati Store`;
+      document.title = `${prod.title || prod.name} - Ganapati Store`;
     } else {
       handleCloseProduct();
     }
@@ -201,7 +203,7 @@ export function App() {
   const handleCloseProduct = () => {
     setSelectedProduct(null);
     window.history.pushState({}, '', '/');
-    document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
+    document.title = 'Ganapati Store - Fresh Groceries & Daily Essentials';
     const targetScroll = scrollPosRef.current || 0;
     requestAnimationFrame(() => {
       window.scrollTo({ top: targetScroll, behavior: 'auto' });
@@ -218,7 +220,7 @@ export function App() {
     setSelectedCategoryKeywords([]);
     setSearchQuery('');
     window.history.pushState({}, '', '/');
-    document.title = 'Ganapati Store — Fresh Groceries & Daily Essentials';
+    document.title = 'Ganapati Store - Fresh Groceries & Daily Essentials';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -381,7 +383,9 @@ export function App() {
     return (
       <div className="min-h-screen bg-[#F8FAFC]">
         <ToastContainer />
-        <AdminApp onNavigateToStore={handleNavigateToStore} />
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-sm text-slate-500">Loading admin...</div>}>
+          <AdminApp onNavigateToStore={handleNavigateToStore} />
+        </Suspense>
       </div>
     );
   }
@@ -421,7 +425,7 @@ export function App() {
                   <img
                     key={settings.bannerImageUrl}
                     src={settings.bannerImageUrl}
-                    alt={settings?.storeName ? `${settings.storeName} — Fresh Groceries & Daily Essentials` : "Ganapati Store"}
+                    alt={settings?.storeName ? `${settings.storeName} - Fresh Groceries & Daily Essentials` : "Ganapati Store"}
                     className={`w-full h-auto block rounded-[16px] relative z-1 transition-opacity duration-300 ${bannerLoaded ? 'opacity-100' : 'opacity-0'}`}
                     loading="eager"
                     fetchpriority="high"
@@ -756,7 +760,7 @@ export function App() {
       </footer>
 
       {/* Modals & Drawers */}
-      <CartDrawer />
+      <CartDrawer onOrderPlaced={setLatestOrderInfo} />
 
       <OrderSuccessModal
         orderDetails={latestOrderInfo}

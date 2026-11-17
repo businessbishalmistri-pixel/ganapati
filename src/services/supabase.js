@@ -136,28 +136,6 @@ export const verifyWhatsAppOtpWithXyvot = verifyWhatsAppOtp;
 export const requestStoreWhatsAppOtp = sendWhatsAppOtp;
 export const verifyStoreWhatsAppOtp = verifyWhatsAppOtp;
 
-/**
- * 3. Submit COD Order to XYVOT Platform
- */
-export const submitCodOrderToXyvot = async (orderData) => {
-  const result = await submitStoreApiOrder(STORE_API_KEY, {
-    customer_name: orderData.customerName || orderData.customer_name,
-    customer_phone: orderData.customerPhone || orderData.customer_phone,
-    delivery_address: orderData.deliveryAddress || orderData.delivery_address,
-    gps_lat: orderData.gpsLat || orderData.gps_lat,
-    gps_lng: orderData.gpsLng || orderData.gps_lng,
-    channel: 'website',
-    payment_gateway: 'Cash on Delivery (COD)',
-    total_amount: orderData.totalAmount || orderData.total_amount || orderData.total,
-    items: orderData.items
-  });
-
-  if (result.status !== 201) {
-    throw new Error(result.error || 'Failed to submit order');
-  }
-  return result; // Order saved in POS > Online Orders + WhatsApp receipt sent!
-};
-
 export function sanitizeWhatsAppPhone(phone) {
   const clean = (phone || '').toString().replace(/\D/g, '');
   return clean.slice(-10);
@@ -225,167 +203,62 @@ export async function upsertStoreCustomerProfile(profileData, orgId) {
   localStorage.setItem('customer_session', JSON.stringify(customer));
   localStorage.setItem(`xyvot_customer_${formattedPhone}`, JSON.stringify(customer));
 
-  try {
-    if (orgId) {
-      await supabase.from('store_customers').upsert(customer, { onConflict: 'admin_id,phone' });
-    } else {
-      await supabase.from('customers').upsert([
-        {
-          phone: formattedPhone,
-          full_name: customer.full_name,
-          email: customer.email,
-          address: customer.address,
-          city: customer.city,
-          gps_lat: customer.gps_lat,
-          gps_lng: customer.gps_lng,
-          addresses: customer.addresses,
-          updated_at: new Date().toISOString()
-        }
-      ], { onConflict: 'phone' });
-    }
-  } catch (e) {
-    console.warn('Supabase customer upsert notice:', e);
+  // Save to the database through upsert_customer (the only write path anon can use).
+  // Returns the real result: success is true only when the call succeeds.
+  const { data, error } = await supabase.rpc('upsert_customer', {
+    p_phone: formattedPhone,
+    p_full_name: customer.full_name,
+    p_email: customer.email,
+    p_address: customer.address,
+    p_city: customer.city,
+    p_gps_lat: customer.gps_lat,
+    p_gps_lng: customer.gps_lng,
+    p_addresses: customer.addresses,
+    p_cart: null
+  });
+
+  if (error) {
+    console.warn('Supabase customer upsert failed:', error.message);
+    return {
+      success: false,
+      status: 500,
+      error: error.message,
+      customer,
+      ...customer
+    };
   }
 
   return {
     success: true,
     status: 200,
     customer,
-    ...customer
+    ...customer,
+    dbCustomer: data || null
   };
 }
 
 /**
- * Submit Store API Order to XYVOT Platform
+ * 4. Cloud cart backup. localStorage is the source of truth for the cart;
+ * anon cannot read the customers table, so there is no cloud read. This only
+ * backs the cart up through upsert_customer. Returns false when the backup fails.
  */
-export async function submitStoreApiOrder(apiKey, orderPayload) {
-  const invNumber = `INV-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-  const totalAmount = parseFloat(orderPayload.total_amount || orderPayload.total || 0);
-  const subtotalAmount = parseFloat(orderPayload.subtotal || totalAmount);
-
-  const formattedOrder = {
-    invoice_number: invNumber,
-    orderId: invNumber,
-    organization_id: STORE_ORGANIZATION_ID,
-    customer_name: orderPayload.customer_name || orderPayload.customerName || orderPayload.customer?.name || 'Website Customer',
-    customer_phone: orderPayload.customer_phone || orderPayload.customerPhone || orderPayload.customer?.phone || '',
-    customer_email: orderPayload.customer_email || orderPayload.customerEmail || orderPayload.customer?.email || null,
-    delivery_address: orderPayload.delivery_address || orderPayload.deliveryAddress || (orderPayload.shippingAddress ? `${orderPayload.shippingAddress.street}, ${orderPayload.shippingAddress.city}` : 'Store Pickup'),
-    gps_lat: orderPayload.gps_lat || orderPayload.gpsLat || orderPayload.shippingAddress?.coordinates?.lat || null,
-    gps_lng: orderPayload.gps_lng || orderPayload.gpsLng || orderPayload.shippingAddress?.coordinates?.lng || null,
-    channel: 'website',
-    payment_gateway: 'Cash on Delivery (COD)',
-    payment_method: 'Cash on Delivery (COD)',
-    status: 'pending_cod',
-    subtotal: subtotalAmount,
-    discount_pct: 0,
-    discount_amount: 0,
-    gst: 0,
-    total_amount: totalAmount,
-    total: totalAmount,
-    deliveryFee: orderPayload.deliveryFee || 0,
-    items: (orderPayload.items || []).map((item) => ({
-      id: item.id,
-      title: item.product_name || item.title || item.name,
-      product_name: item.product_name || item.title || item.name,
-      price: parseFloat(item.unit_price || item.price || 0),
-      unit_price: parseFloat(item.unit_price || item.price || 0),
-      quantity: parseInt(item.quantity || 1, 10),
-      image: item.image || item.image_url || null
-    })),
-    createdAt: new Date().toISOString()
-  };
-
-  // Save to XYVOT sales_orders table
-  try {
-    const { data, error } = await supabase
-      .from('sales_orders')
-      .insert([{
-        organization_id: STORE_ORGANIZATION_ID,
-        invoice_number: formattedOrder.invoice_number,
-        customer_name: formattedOrder.customer_name,
-        customer_phone: formattedOrder.customer_phone,
-        customer_email: formattedOrder.customer_email,
-        delivery_address: formattedOrder.delivery_address,
-        gps_lat: formattedOrder.gps_lat,
-        gps_lng: formattedOrder.gps_lng,
-        subtotal: formattedOrder.subtotal,
-        discount_pct: 0,
-        discount_amount: 0,
-        gst: 0,
-        total_amount: formattedOrder.total_amount,
-        payment_method: formattedOrder.payment_method,
-        channel: 'website',
-        status: 'pending_cod',
-        items: formattedOrder.items
-      }])
-      .select();
-
-    if (error) {
-      console.error('Supabase sales_orders insert error:', error);
-    } else if (data && data.length > 0) {
-      formattedOrder.id = data[0].id;
-    }
-  } catch (err) {
-    console.error('Could not record in sales_orders table:', err);
-  }
-
-  // Backup to localStorage for client order history
-  try {
-    const existing = JSON.parse(localStorage.getItem('quickcart_saved_orders') || '[]');
-    existing.unshift(formattedOrder);
-    localStorage.setItem('quickcart_saved_orders', JSON.stringify(existing.slice(0, 50)));
-  } catch (e) {}
-
-  return {
-    status: 201,
-    success: true,
-    order: formattedOrder,
-    invoice_number: invNumber
-  };
-}
-
-/**
- * 4. Cloud Cart Persistence (Option B - store_customers JSONB cart)
- */
-export async function fetchCustomerCloudCart(phone, orgId) {
-  if (!phone) return [];
-  const cleanPhone = sanitizeWhatsAppPhone(phone);
-  const targetOrg = orgId || STORE_ORGANIZATION_ID;
-
-  try {
-    const { data, error } = await supabase
-      .from('store_customers')
-      .select('cart')
-      .eq('admin_id', targetOrg)
-      .eq('phone', cleanPhone)
-      .maybeSingle();
-
-    if (error || !data) {
-      return [];
-    }
-    return Array.isArray(data.cart) ? data.cart : [];
-  } catch (err) {
-    console.warn('fetchCustomerCloudCart warning:', err);
-    return [];
-  }
-}
-
 export async function syncCustomerCloudCart(phone, orgId, items) {
   if (!phone) return false;
   const cleanPhone = sanitizeWhatsAppPhone(phone);
-  const targetOrg = orgId || STORE_ORGANIZATION_ID;
   const cartData = Array.isArray(items) ? items : [];
 
   try {
-    const { error } = await supabase
-      .from('store_customers')
-      .update({
-        cart: cartData,
-        updated_at: new Date().toISOString()
-      })
-      .eq('admin_id', targetOrg)
-      .eq('phone', cleanPhone);
+    const { error } = await supabase.rpc('upsert_customer', {
+      p_phone: cleanPhone,
+      p_full_name: null,
+      p_email: null,
+      p_address: null,
+      p_city: null,
+      p_gps_lat: null,
+      p_gps_lng: null,
+      p_addresses: null,
+      p_cart: cartData
+    });
 
     if (error) {
       console.warn('syncCustomerCloudCart notice:', error?.message);
