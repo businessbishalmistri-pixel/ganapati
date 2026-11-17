@@ -24,7 +24,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
-import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
+import { uploadImageToSupabase } from '../../services/imageUploadService';
 
 const PRESET_IMAGES = [];
 
@@ -39,6 +39,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     description: '',
     selling_price: '',
     mrp: '',
+    stock_quantity: '',
     in_stock: true,
     image_url: '',
     unit: '1 kg',
@@ -84,6 +85,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         description: productToEdit.description || '',
         selling_price: productToEdit.selling_price ?? productToEdit.price ?? '',
         mrp: productToEdit.mrp ?? productToEdit.original_price ?? '',
+        stock_quantity: productToEdit.stock_quantity ?? productToEdit.stock ?? '',
         in_stock: productToEdit.in_stock !== false && (productToEdit.stock > 0 || productToEdit.stock === undefined),
         image_url: initialImg,
         image: initialImg,
@@ -101,7 +103,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
             price: parseFloat(productToEdit.selling_price ?? productToEdit.price ?? 100) || 100,
             mrp: parseFloat(productToEdit.mrp ?? productToEdit.original_price ?? 120) || 120,
             original_price: parseFloat(productToEdit.mrp ?? productToEdit.original_price ?? 120) || 120,
-            stock_quantity: 999,
+            stock_quantity: parseInt(productToEdit.stock_quantity ?? productToEdit.stock ?? 0, 10) || 0,
             in_stock: true
           }];
       setVariants(existingVariants);
@@ -113,6 +115,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         description: '',
         selling_price: '',
         mrp: '',
+        stock_quantity: '',
         in_stock: true,
         image_url: '',
         unit: '1 kg',
@@ -128,7 +131,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         price: 100,
         mrp: 120,
         original_price: 120,
-        stock_quantity: 999,
+        stock_quantity: 0,
         in_stock: true
       }]);
     }
@@ -151,8 +154,6 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
     setIsUploadingImage(true);
     setUploadStatusText('Processing image...');
     try {
-      const previousUrl = formData.image_url;
-
       // 1. High-speed client-side compression with HTML5 Canvas -> WebP
       const compressed = await compressImage(file, { maxWidth: 1080, maxHeight: 1080, quality: 0.82 });
       
@@ -165,15 +166,11 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         image: persistentUrl 
       }));
 
-      // 3. Upload to Supabase Storage if available, fallback smoothly to WebP Data URI
+      // 3. Upload to Supabase Storage if available, fallback smoothly to WebP Data URI.
+      // The old photo is NOT deleted here; the service removes it only after the save succeeds.
       if (compressed?.file) {
         const publicUrl = await uploadImageToSupabase(compressed.file, formData.title || 'product', persistentUrl);
         if (publicUrl && publicUrl !== persistentUrl) {
-          // Auto-clean previous image from Supabase storage
-          if (previousUrl && previousUrl !== publicUrl) {
-            deleteImageFromSupabase(previousUrl).catch(console.warn);
-          }
-
           setFormData(prev => ({
             ...prev,
             image_url: publicUrl,
@@ -207,7 +204,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       price: prevPrice,
       mrp: prevMrp,
       original_price: prevMrp,
-      stock_quantity: 999,
+      stock_quantity: 0,
       in_stock: true
     };
     setVariants(prev => [...prev, newVariant]);
@@ -229,7 +226,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
           price: prevPrice,
           mrp: prevMrp,
           original_price: prevMrp,
-          stock_quantity: 999,
+          stock_quantity: 0,
           in_stock: true
         });
       }
@@ -251,7 +248,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       price: prevPrice,
       mrp: prevMrp,
       original_price: prevMrp,
-      stock_quantity: 999,
+      stock_quantity: 0,
       in_stock: true
     };
     setVariants(prev => [...prev, newVariant]);
@@ -306,6 +303,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
       const firstVariantMrp = variants.length > 0 ? (parseFloat(variants[0].mrp || variants[0].original_price) || firstVariantPrice) : 0;
       const anyInStock = variants.length > 0 ? variants.some(v => v.in_stock !== false) : true;
       const primaryUnit = variants.length > 0 ? (variants[0].name || variants[0].unit || '1 unit') : '1 unit';
+      const stockQty = Math.max(0, parseInt(formData.stock_quantity, 10) || 0);
 
       const cleanImg = formData.image_url ? String(formData.image_url).trim() : '';
       const finalImg = cleanImg.includes('unsplash.com') ? '' : cleanImg;
@@ -321,17 +319,21 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
         original_price: firstVariantMrp,
         unit: primaryUnit,
         in_stock: anyInStock,
-        stock: anyInStock ? 999 : 0,
-        stock_quantity: anyInStock ? 999 : 0,
+        stock: stockQty,
+        stock_quantity: stockQty,
         has_variants: variants.length > 1,
         hasVariants: variants.length > 1,
-        variants: variants,
+        variants: variants.map(v => ({
+          ...v,
+          stock_quantity: Math.max(0, parseInt(v.stock_quantity, 10) || 0)
+        })),
         id: productToEdit?.id
       };
-      onSave(payload);
+      // Wait for the save: close only on success, keep the form open on failure.
+      await onSave(payload);
       onClose();
     } catch (err) {
-      console.error('Failed to save product', err);
+      setErrors(prev => ({ ...prev, submit: err.message || 'Could not save product. Please try again.' }));
     } finally {
       setIsSaving(false);
     }
@@ -408,6 +410,24 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                 ))}
                 <option value="Other">Other / General</option>
               </select>
+            </div>
+          </div>
+
+          {/* Stock Quantity */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div className="sm:col-span-5">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Stock Quantity
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g. 25"
+                value={formData.stock_quantity}
+                onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
             </div>
           </div>
 
@@ -554,6 +574,7 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                   <div className="flex-1 min-w-[100px]">Variant / Size</div>
                   <div className="w-20 sm:w-24 text-center">Price (₹)</div>
                   <div className="w-20 sm:w-24 text-center">MRP (₹)</div>
+                  <div className="w-16 sm:w-20 text-center">Qty</div>
                   <div className="w-12 text-center flex-shrink-0">Stock</div>
                   <div className="w-6 text-center flex-shrink-0"></div>
                 </div>
@@ -597,6 +618,19 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                             className="w-full pl-5 pr-1.5 py-1 border border-slate-200 rounded-lg font-mono text-slate-500 text-xs focus:outline-none focus:border-blue-500"
                           />
                         </div>
+                      </div>
+
+                      {/* Variant Stock Quantity */}
+                      <div className="w-16 sm:w-20 flex-shrink-0">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          value={v.stock_quantity ?? ''}
+                          onChange={(e) => handleUpdateVariant(v.id, 'stock_quantity', e.target.value)}
+                          className="w-full px-1.5 py-1 border border-slate-200 rounded-lg font-mono text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                        />
                       </div>
 
                       {/* In Stock Toggle Switch with Fixed Width */}
@@ -759,14 +793,12 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
                       <span>Change</span>
                     </button>
 
-                    {/* Remove/Clear Button */}
+                    {/* Remove/Clear Button: only clears the local field; the old
+                        file is deleted only after the save succeeds. */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (formData.image_url) {
-                          deleteImageFromSupabase(formData.image_url).catch(console.warn);
-                        }
                         setFormData((prev) => ({ ...prev, image_url: '', image: '' }));
                         setCompressionStats(null);
                       }}
@@ -825,6 +857,13 @@ export function ProductFormModal({ isOpen, onClose, onSave, productToEdit, categ
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
             />
           </div>
+
+          {/* Save Error (form stays open so nothing is lost) */}
+          {errors.submit && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+              {errors.submit}
+            </div>
+          )}
         </form>
 
         {/* Modal Sticky Bottom Actions (Thumb Optimized) */}

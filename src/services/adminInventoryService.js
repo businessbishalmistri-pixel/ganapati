@@ -5,7 +5,6 @@
  */
 import { 
   supabase, 
-  fetchCategoriesFromSupabase, 
   upsertCategoryToSupabase, 
   deleteCategoryFromSupabase 
 } from './supabaseStore';
@@ -57,31 +56,50 @@ class AdminInventoryService {
     }
   }
 
+  // Direct category read so an empty result (zero categories) is distinct
+  // from a failed request. The shared helper returns null for both.
+  async fetchCategoriesFromDatabase() {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return (Array.isArray(data) ? data : []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug || (c.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      image_url: c.image_url || c.image || '',
+      image: c.image_url || c.image || '',
+      icon: c.icon || 'Package',
+      created_at: c.created_at,
+      updated_at: c.updated_at
+    }));
+  }
+
   async fetchCategoriesFromBackend() {
     try {
-      const dbCats = await fetchCategoriesFromSupabase();
-      if (Array.isArray(dbCats) && dbCats.length > 0) {
-        // Merge DB categories with any local products
-        const current = this.categories || [];
-        const mergedMap = new Map();
-        
-        // Add DB categories
-        dbCats.forEach(c => {
-          if (c && c.name) mergedMap.set(c.name.toLowerCase().trim(), c);
-        });
+      const dbCats = await this.fetchCategoriesFromDatabase();
+      // Merge DB categories with any local products
+      const current = this.categories || [];
+      const mergedMap = new Map();
 
-        // Add local categories if not yet in DB
-        current.forEach(c => {
-          const lower = (c.name || '').toLowerCase().trim();
-          if (!mergedMap.has(lower)) {
-            mergedMap.set(lower, c);
-            upsertCategoryToSupabase(c).catch(console.warn);
-          }
-        });
+      // Add DB categories
+      dbCats.forEach(c => {
+        if (c && c.name) mergedMap.set(c.name.toLowerCase().trim(), c);
+      });
 
-        const merged = Array.from(mergedMap.values());
-        this.saveCategories(merged, false);
-      }
+      // Add local categories if not yet in DB
+      current.forEach(c => {
+        const lower = (c.name || '').toLowerCase().trim();
+        if (!mergedMap.has(lower)) {
+          mergedMap.set(lower, c);
+          upsertCategoryToSupabase(c).catch(console.warn);
+        }
+      });
+
+      const merged = Array.from(mergedMap.values());
+      this.saveCategories(merged, false);
     } catch (e) {
       console.warn('Error fetching categories from Supabase backend:', e);
     }
@@ -92,10 +110,8 @@ class AdminInventoryService {
       supabase
         .channel('public:categories')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
-          fetchCategoriesFromSupabase().then(fresh => {
-            if (Array.isArray(fresh)) {
-              this.saveCategories(fresh, false);
-            }
+          this.fetchCategoriesFromDatabase().then(fresh => {
+            this.saveCategories(fresh, false);
           }).catch(console.warn);
         })
         .subscribe();
@@ -203,17 +219,18 @@ class AdminInventoryService {
         .order('created_at', { ascending: false })
         .order('id', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
-        const normalized = data.map(normalizeProduct).filter(Boolean);
-        this.cacheProductsLocally(normalized);
-        this.syncCategoriesWithProducts(normalized);
-        return normalized;
-      }
+      if (error) throw error;
+
+      // An empty result is real: zero products means an empty list, not the cache.
+      const normalized = (Array.isArray(data) ? data : []).map(normalizeProduct).filter(Boolean);
+      this.cacheProductsLocally(normalized);
+      this.syncCategoriesWithProducts(normalized);
+      return normalized;
     } catch (err) {
       console.error('Failed to query Supabase products table:', err);
     }
 
-    // Return in-memory cached data
+    // Only fall back to the cache when the request itself failed.
     return this.getCachedProducts();
   }
 
@@ -252,49 +269,42 @@ class AdminInventoryService {
       updated_at: new Date().toISOString()
     });
 
-    // 1. Try Supabase Insert
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .insert([{
-          id: newProd.id,
-          name: newProd.title,
-          title: newProd.title,
-          category: newProd.category,
-          sub_category: newProd.sub_category || null,
-          description: newProd.description || null,
-          price: newProd.selling_price,
-          selling_price: newProd.selling_price,
-          original_price: newProd.mrp,
-          mrp: newProd.mrp,
-          stock: newProd.stock,
-          stock_quantity: newProd.stock_quantity,
-          status: newProd.status,
-          image_url: newProd.image_url || null,
-          image: newProd.image_url || null,
-          sku: newProd.sku || null,
-          unit: newProd.unit || null,
-          brand: newProd.brand || null,
-          variants: newProd.variants || [],
-          created_at: newProd.created_at,
-          updated_at: newProd.updated_at
-        }])
-        .select();
+    // 1. Insert into Supabase. On any failure, throw: no local-only save.
+    const { data, error } = await supabase
+      .from('products')
+      .insert([{
+        id: newProd.id,
+        name: newProd.title,
+        title: newProd.title,
+        category: newProd.category,
+        sub_category: newProd.sub_category || null,
+        description: newProd.description || null,
+        price: newProd.selling_price,
+        selling_price: newProd.selling_price,
+        original_price: newProd.mrp,
+        mrp: newProd.mrp,
+        stock: newProd.stock,
+        stock_quantity: newProd.stock_quantity,
+        status: newProd.status,
+        image_url: newProd.image_url || null,
+        image: newProd.image_url || null,
+        sku: newProd.sku || null,
+        unit: newProd.unit || null,
+        brand: newProd.brand || null,
+        has_variants: Array.isArray(newProd.variants) && newProd.variants.length > 1,
+        variants: newProd.variants || [],
+        created_at: newProd.created_at,
+        updated_at: newProd.updated_at
+      }])
+      .select();
 
-      if (!error && data && data.length > 0) {
-        const saved = normalizeProduct(data[0]);
-        this.updateLocalList(saved, 'add');
-        inventoryApi.fetchCatalog();
-        return saved;
-      }
-    } catch (err) {
-      console.warn('Supabase insert failed, maintaining local sync', err);
-    }
+    if (error) throw new Error(error.message || 'Failed to add product');
+    if (!data || data.length === 0) throw new Error('Product was not saved to the database');
 
-    // Fallback local update
-    this.updateLocalList(newProd, 'add');
+    const saved = normalizeProduct(data[0]);
+    this.updateLocalList(saved, 'add');
     inventoryApi.fetchCatalog();
-    return newProd;
+    return saved;
   }
 
   /**
@@ -314,10 +324,8 @@ class AdminInventoryService {
       cleanUpdates.images = finalImg ? [finalImg] : [];
     }
 
-    // Auto-clean old image from Supabase Storage if image was removed or changed
-    if (existing.image_url && (!cleanUpdates.image_url || existing.image_url !== cleanUpdates.image_url)) {
-      deleteImageFromSupabase(existing.image_url).catch(console.warn);
-    }
+    // Remember the old photo; it is deleted only after the save succeeds.
+    const oldImageUrl = existing.image_url || '';
 
     const updated = normalizeProduct({
       ...existing,
@@ -325,48 +333,46 @@ class AdminInventoryService {
       updated_at: new Date().toISOString()
     });
 
-    // 1. Try Supabase Update
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .update({
-          name: updated.title,
-          title: updated.title,
-          category: updated.category,
-          sub_category: updated.sub_category || null,
-          description: updated.description || null,
-          price: updated.selling_price,
-          selling_price: updated.selling_price,
-          original_price: updated.mrp,
-          mrp: updated.mrp,
-          stock: updated.stock,
-          stock_quantity: updated.stock_quantity,
-          status: updated.status,
-          image_url: updated.image_url || null,
-          image: updated.image_url || null,
-          sku: updated.sku || null,
-          unit: updated.unit || null,
-          brand: updated.brand || null,
-          variants: updated.variants || [],
-          updated_at: updated.updated_at
-        })
-        .eq('id', id)
-        .select();
+    // 1. Update in Supabase. On any failure, throw: no local-only save.
+    const { data, error } = await supabase
+      .from('products')
+      .update({
+        name: updated.title,
+        title: updated.title,
+        category: updated.category,
+        sub_category: updated.sub_category || null,
+        description: updated.description || null,
+        price: updated.selling_price,
+        selling_price: updated.selling_price,
+        original_price: updated.mrp,
+        mrp: updated.mrp,
+        stock: updated.stock,
+        stock_quantity: updated.stock_quantity,
+        status: updated.status,
+        image_url: updated.image_url || null,
+        image: updated.image_url || null,
+        sku: updated.sku || null,
+        unit: updated.unit || null,
+        brand: updated.brand || null,
+        has_variants: Array.isArray(updated.variants) && updated.variants.length > 1,
+        variants: updated.variants || [],
+        updated_at: updated.updated_at
+      })
+      .eq('id', id)
+      .select();
 
-      if (!error && data && data.length > 0) {
-        const saved = normalizeProduct(data[0]);
-        this.updateLocalList(saved, 'update');
-        inventoryApi.fetchCatalog();
-        return saved;
-      }
-    } catch (err) {
-      console.warn('Supabase update failed, maintaining local sync', err);
-    }
+    if (error) throw new Error(error.message || 'Failed to update product');
+    if (!data || data.length === 0) throw new Error('Product was not saved to the database');
 
-    // Fallback local update
-    this.updateLocalList(updated, 'update');
+    const saved = normalizeProduct(data[0]);
+    this.updateLocalList(saved, 'update');
     inventoryApi.fetchCatalog();
-    return updated;
+
+    // 2. Only now delete the replaced or removed old photo.
+    if (oldImageUrl && oldImageUrl !== saved.image_url) {
+      deleteImageFromSupabase(oldImageUrl).catch(console.warn);
+    }
+    return saved;
   }
 
   /**
@@ -394,10 +400,11 @@ class AdminInventoryService {
     if (!prod) return null;
 
     const nextInStock = !prod.in_stock;
-    return this.updateProduct(id, { 
-      in_stock: nextInStock, 
-      stock: nextInStock ? 999 : 0,
-      stock_quantity: nextInStock ? 999 : 0
+    // Back in stock with no known stock: use 1, the admin sets the real number in the form.
+    return this.updateProduct(id, {
+      in_stock: nextInStock,
+      stock: nextInStock ? (prod.stock > 0 ? prod.stock : 1) : 0,
+      stock_quantity: nextInStock ? (prod.stock_quantity > 0 ? prod.stock_quantity : 1) : 0
     });
   }
 
@@ -427,13 +434,18 @@ class AdminInventoryService {
   }
 
   /**
-   * Delete product (also purges associated images from Supabase Storage)
+   * Delete product (also purges associated images from Supabase Storage,
+   * but only after the database delete succeeds)
    */
   async deleteProduct(id) {
     const currentList = this.getCachedProducts();
     const targetProd = currentList.find(p => p.id === id);
 
-    // 1. Purge product images from Supabase Storage
+    // 1. Delete from Supabase Database first, and check the result.
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) throw new Error(error.message || 'Failed to delete product');
+
+    // 2. Only now purge the product images from Supabase Storage.
     if (targetProd?.image_url) {
       deleteImageFromSupabase(targetProd.image_url).catch(console.warn);
     }
@@ -443,13 +455,6 @@ class AdminInventoryService {
           deleteImageFromSupabase(img).catch(console.warn);
         }
       });
-    }
-
-    // 2. Delete from Supabase Database
-    try {
-      await supabase.from('products').delete().eq('id', id);
-    } catch (err) {
-      console.warn('Supabase delete error', err);
     }
 
     const nextList = currentList.filter(p => p.id !== id);
@@ -477,78 +482,111 @@ class AdminInventoryService {
     return this.categories;
   }
 
+  // Category upsert that reports failure (the shared helper swallows errors).
+  async upsertCategoryInDatabase(category) {
+    const payload = {
+      id: category.id || `cat_${Date.now()}`,
+      name: (category.name || '').trim(),
+      slug: category.slug || (category.name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      image_url: category.image_url || category.image || '',
+      icon: category.icon || 'Package',
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await supabase.from('categories').upsert([payload], { onConflict: 'id' });
+    if (error) throw new Error(error.message || 'Failed to save category');
+    return payload;
+  }
+
+  // Move every product from one category name to another, database first.
+  async moveProductsToCategory(oldName, newName) {
+    const { error } = await supabase
+      .from('products')
+      .update({ category: newName, updated_at: new Date().toISOString() })
+      .eq('category', oldName);
+    if (error) throw new Error(error.message || 'Failed to move products to the new category');
+
+    const updatedProducts = this.getCachedProducts().map(p => {
+      if (p.category === oldName) {
+        return { ...p, category: newName, updated_at: new Date().toISOString() };
+      }
+      return p;
+    });
+    this.cacheProductsLocally(updatedProducts);
+    inventoryApi.products = updatedProducts.filter(p => p.status === 'active');
+    inventoryApi.notify();
+  }
+
   async addCategory(category) {
+    const name = (category.name || '').trim();
+    if (!name) throw new Error('Category name is required');
+    if (this.categories.some(c => (c.name || '').trim().toLowerCase() === name.toLowerCase())) {
+      throw new Error(`A category named "${name}" already exists`);
+    }
+
     const newCat = {
       id: category.id || `cat_${Date.now()}`,
-      name: category.name.trim(),
-      slug: category.slug || category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name,
+      slug: category.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       icon: category.icon || 'Package',
       image_url: category.image_url || category.image || '',
       image: category.image_url || category.image || '',
       count: 0
     };
-    const updated = [...this.categories, newCat];
-    this.saveCategories(updated);
 
-    // Save directly to Supabase Database
-    try {
-      await upsertCategoryToSupabase(newCat);
-    } catch (err) {
-      console.warn('Supabase category database save notice:', err);
-    }
-
+    // Save to Supabase first; only update the local list on success.
+    await this.upsertCategoryInDatabase(newCat);
+    this.saveCategories([...this.categories, newCat]);
     return newCat;
   }
 
   async updateCategory(id, updates) {
     const targetCat = this.categories.find(c => c.id === id);
-    const newImg = updates.image_url !== undefined ? updates.image_url : updates.image;
-    
-    // Auto-clean old image if updated or removed
-    if (targetCat && targetCat.image_url && newImg !== undefined && targetCat.image_url !== newImg) {
-      deleteImageFromSupabase(targetCat.image_url).catch(console.warn);
+    if (!targetCat) return null;
+
+    const oldName = targetCat.name;
+    const newName = (updates.name || '').trim() || oldName;
+    const oldImageUrl = targetCat.image_url || targetCat.image || '';
+
+    // 1. If renamed, move the products in the database first and check the result.
+    if (newName !== oldName) {
+      await this.moveProductsToCategory(oldName, newName);
     }
 
-    const updated = this.categories.map(c => c.id === id ? { 
-      ...c, 
+    const merged = {
+      ...targetCat,
       ...updates,
-      image_url: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : c.image_url),
-      image: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : c.image)
-    } : c);
-    this.saveCategories(updated);
+      name: newName,
+      image_url: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : targetCat.image_url),
+      image: updates.image_url !== undefined ? updates.image_url : (updates.image !== undefined ? updates.image : targetCat.image)
+    };
 
-    const savedCat = updated.find(c => c.id === id);
-    
-    // Update directly in Supabase Database
-    if (savedCat) {
-      try {
-        await upsertCategoryToSupabase(savedCat);
-      } catch (err) {
-        console.warn('Supabase category database update notice:', err);
-      }
+    // 2. Save the category in the database; throw on failure.
+    await this.upsertCategoryInDatabase(merged);
+
+    // 3. Only now update the local list.
+    this.saveCategories(this.categories.map(c => c.id === id ? merged : c));
+
+    // 4. Delete the replaced or removed old photo only after the save succeeded.
+    const newImageUrl = merged.image_url || '';
+    if (oldImageUrl && oldImageUrl !== newImageUrl) {
+      deleteImageFromSupabase(oldImageUrl).catch(console.warn);
     }
 
-    return savedCat;
+    return merged;
   }
 
   async deleteCategory(id) {
     const targetCat = this.categories.find(c => c.id === id);
-    
-    // Auto-clean category cover image from Supabase Storage
+
+    // Delete from Supabase first and check the result.
+    const deleted = await deleteCategoryFromSupabase(id);
+    if (!deleted) throw new Error('Could not delete category from the database');
+
+    // Only now remove the cover photo and the local entry.
     if (targetCat?.image_url) {
       deleteImageFromSupabase(targetCat.image_url).catch(console.warn);
     }
-
-    const updated = this.categories.filter(c => c.id !== id);
-    this.saveCategories(updated);
-
-    // Delete directly from Supabase Database
-    try {
-      await deleteCategoryFromSupabase(id);
-    } catch (err) {
-      console.warn('Supabase category database delete notice:', err);
-    }
-
+    this.saveCategories(this.categories.filter(c => c.id !== id));
     return true;
   }
 
@@ -558,35 +596,13 @@ class AdminInventoryService {
 
     const oldCategoryName = targetCat.name;
 
-    // 1. Reassign products in local cache and database if newCategoryName provided
+    // 1. Reassign products in the database first and check the result.
     if (newCategoryName && newCategoryName.trim()) {
-      const cleanNewCat = newCategoryName.trim();
-      let currentProducts = this.getCachedProducts();
-      
-      // Update local products
-      const updatedProducts = currentProducts.map(p => {
-        if (p.category === oldCategoryName) {
-          return { ...p, category: cleanNewCat, updated_at: new Date().toISOString() };
-        }
-        return p;
-      });
-      this.cacheProductsLocally(updatedProducts);
-      inventoryApi.products = updatedProducts.filter(p => p.status === 'active');
-      inventoryApi.notify();
-
-      // Update in Supabase PostgreSQL
-      try {
-        await supabase
-          .from('products')
-          .update({ category: cleanNewCat, updated_at: new Date().toISOString() })
-          .eq('category', oldCategoryName);
-      } catch (err) {
-        console.warn('Supabase bulk category update notice:', err);
-      }
+      await this.moveProductsToCategory(oldCategoryName, newCategoryName.trim());
     }
 
-    // 2. Delete the category
-    this.deleteCategory(id);
+    // 2. Delete the category, waiting for the result.
+    await this.deleteCategory(id);
     return true;
   }
 }

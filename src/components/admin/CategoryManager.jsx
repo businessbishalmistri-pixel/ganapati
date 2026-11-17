@@ -14,7 +14,7 @@ import {
   Package
 } from 'lucide-react';
 import { compressProductImage } from '../../utils/imageCompressor';
-import { uploadImageToSupabase, deleteImageFromSupabase } from '../../services/imageUploadService';
+import { uploadImageToSupabase } from '../../services/imageUploadService';
 
 export function CategoryManager({ 
   categories = [], 
@@ -66,17 +66,12 @@ export function CategoryManager({
       setIsUploadingNew(true);
       setNewUploadStatus('Compressing category image...');
       
-      const previousImage = newCatImage;
       const compressed = await compressProductImage(file);
       setNewUploadStatus('Saving to Supabase Storage...');
       
       const cleanName = (newCatName || file.name.split('.')[0] || 'category').trim();
       const uploadedUrl = await uploadImageToSupabase(compressed.blob, `categories/${cleanName}`, compressed.dataUrl);
       
-      if (uploadedUrl && previousImage && previousImage !== uploadedUrl) {
-        deleteImageFromSupabase(previousImage).catch(console.warn);
-      }
-
       setNewCatImage(uploadedUrl || compressed.dataUrl);
     } catch (err) {
       console.warn('Category image upload notice:', err);
@@ -88,9 +83,14 @@ export function CategoryManager({
 
   const handleSaveAdd = (e) => {
     e.preventDefault();
-    if (!newCatName.trim()) return;
+    const name = newCatName.trim();
+    if (!name) return;
+    if (categories.some((c) => (c.name || '').trim().toLowerCase() === name.toLowerCase())) {
+      alert(`A category named "${name}" already exists.`);
+      return;
+    }
     onAddCategory({ 
-      name: newCatName.trim(),
+      name,
       image_url: newCatImage.trim(),
       image: newCatImage.trim()
     });
@@ -112,17 +112,13 @@ export function CategoryManager({
       setIsUploadingEdit(true);
       setEditUploadStatus('Compressing image...');
       
-      const previousImage = editImage;
       const compressed = await compressProductImage(file);
       setEditUploadStatus('Saving to Supabase...');
       
       const cleanName = (editName || file.name.split('.')[0] || 'category').trim();
       const uploadedUrl = await uploadImageToSupabase(compressed.blob, `categories/${cleanName}`, compressed.dataUrl);
       
-      if (uploadedUrl && previousImage && previousImage !== uploadedUrl) {
-        deleteImageFromSupabase(previousImage).catch(console.warn);
-      }
-
+      // The old photo is NOT deleted here; the service removes it only after the save succeeds.
       setEditImage(uploadedUrl || compressed.dataUrl);
     } catch (err) {
       console.warn('Edit category image upload notice:', err);
@@ -133,19 +129,27 @@ export function CategoryManager({
   };
 
   const handleSaveEdit = (id) => {
-    if (!editName.trim()) return;
-    onUpdateCategory(id, { 
-      name: editName.trim(),
+    const name = editName.trim();
+    if (!name) return;
+    if (categories.some((c) => c.id !== id && (c.name || '').trim().toLowerCase() === name.toLowerCase())) {
+      alert(`A category named "${name}" already exists.`);
+      return;
+    }
+    onUpdateCategory(id, {
+      name,
       image_url: editImage.trim(),
       image: editImage.trim()
     });
     setEditingId(null);
   };
 
-  // Smart Delete Handler: 0 items = instant delete with no confirmation; >0 items = modal popup
+  // Delete Handler: empty categories ask for confirmation first; categories
+  // with products open the reassign modal, which is itself the confirmation.
   const handleDeleteClick = (cat) => {
     if (cat.count === 0) {
-      onDeleteCategory(cat.id);
+      if (window.confirm(`Delete category "${cat.name}"?`)) {
+        onDeleteCategory(cat.id);
+      }
     } else {
       setReassignModalCat(cat);
       setTargetCategoryName('');
@@ -308,9 +312,6 @@ export function CategoryManager({
                   <button
                     type="button"
                     onClick={() => {
-                      if (newCatImage) {
-                        deleteImageFromSupabase(newCatImage).catch(console.warn);
-                      }
                       setNewCatImage('');
                     }}
                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
@@ -518,9 +519,8 @@ export function CategoryManager({
                         <button
                           type="button"
                           onClick={() => {
-                            if (editImage) {
-                              deleteImageFromSupabase(editImage).catch(console.warn);
-                            }
+                            // Only clears the local field; the old file is deleted
+                            // only after the save succeeds.
                             setEditImage('');
                           }}
                           className="p-1 text-slate-400 hover:text-red-600"
@@ -653,7 +653,7 @@ export function CategoryManager({
                       <button
                         onClick={() => handleDeleteClick(cat)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                        title={cat.count === 0 ? "Delete empty category immediately" : `Delete category (Reassign ${cat.count} products)`}
+                        title={cat.count === 0 ? "Delete empty category" : `Delete category (Reassign ${cat.count} products)`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

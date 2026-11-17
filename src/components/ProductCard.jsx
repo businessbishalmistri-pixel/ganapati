@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Minus, Clock, Check, AlertTriangle, XCircle, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
+import { productHasVariants } from '../services/inventoryData';
 import { VariantSelectorSheet } from './VariantSelectorSheet';
 
 export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
@@ -14,10 +15,7 @@ export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
   const priceVal = parseFloat(product.selling_price || product.price || 0) || 0;
   const mrpVal = parseFloat(product.mrp || product.originalPrice || product.original_price || 0) || 0;
   const variantsList = Array.isArray(product?.variants) ? product.variants : [];
-  const hasVariants = Boolean(
-    variantsList.length > 1 || 
-    ((product?.has_variants || product?.hasVariants) && variantsList.length > 0)
-  );
+  const hasVariants = productHasVariants(product);
   const firstVariant = hasVariants ? variantsList[0] : null;
   const displayPrice = firstVariant 
     ? (parseFloat(firstVariant.selling_price || firstVariant.price || priceVal) || priceVal)
@@ -36,7 +34,7 @@ export const ProductCard = ({ product, onSelectProduct, priority = false }) => {
     ? (matchingCartItems[0].cartKey || matchingCartItems[0].cartItemId || matchingCartItems[0].id) 
     : product.id;
 
-  const maxStock = parseInt(product.stock_quantity ?? product.stock ?? 999, 10);
+  const maxStock = parseInt(product.stock_quantity ?? product.stock ?? 0, 10);
   const isOutOfStock = product.in_stock === false || (product.stock !== undefined && product.stock <= 0 && (!hasVariants || variantsList.every(v => (v.stock_quantity ?? v.stock ?? 0) <= 0)));
   const isMaxInCart = maxStock > 0 && totalQtyInCart >= maxStock;
 

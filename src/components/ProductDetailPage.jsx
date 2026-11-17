@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
+import { productHasVariants } from '../services/inventoryData';
 import { ProductCard } from './ProductCard';
 
 export const ProductDetailPage = ({ 
@@ -24,12 +25,12 @@ export const ProductDetailPage = ({
   const [selectedImage, setSelectedImage] = useState(product?.image || '');
   const [quantity, setQuantity] = useState(1);
 
-  // Real XYVOT variants
+  // Real XYVOT variants, same rule as the product card.
   const variants = product?.variants || [];
-  const hasRealVariants = Boolean((product?.has_variants || product?.hasVariants) && Array.isArray(variants) && variants.length > 0);
+  const hasRealVariants = productHasVariants(product);
   
   const [selectedVariant, setSelectedVariant] = useState(() => {
-    if ((product?.has_variants || product?.hasVariants) && Array.isArray(product?.variants) && product.variants.length > 0) {
+    if (productHasVariants(product)) {
       return product.variants.find((v) => (v.stock_quantity || 0) > 0) || product.variants[0];
     }
     return null;
@@ -42,7 +43,7 @@ export const ProductDetailPage = ({
       setSelectedImage(product.image_url || product.image || '');
       setQuantity(1);
       const vList = product.variants || [];
-      const hasV = Boolean((product.has_variants || product.hasVariants) && Array.isArray(vList) && vList.length > 0);
+      const hasV = productHasVariants(product);
       setSelectedVariant(hasV ? (vList.find((v) => (v.stock_quantity || 0) > 0) || vList[0]) : null);
     }
   }, [product]);
@@ -59,8 +60,8 @@ export const ProductDetailPage = ({
     ? parseFloat(selectedVariant.selling_price ?? selectedVariant.price ?? 0) 
     : parseFloat(product.selling_price ?? product.price ?? 0);
   const currentStock = selectedVariant 
-    ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 999, 10) 
-    : parseInt(product.stock_quantity ?? product.stock ?? 999, 10);
+    ? parseInt(selectedVariant.stock_quantity ?? selectedVariant.stock ?? 0, 10) 
+    : parseInt(product.stock_quantity ?? product.stock ?? 0, 10);
   const currentSku = selectedVariant 
     ? (selectedVariant.sku || product.sku) 
     : (product.sku || '');

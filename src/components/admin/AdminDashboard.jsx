@@ -16,12 +16,14 @@ import {
 } from 'lucide-react';
 import { adminInventoryService } from '../../services/adminInventoryService';
 import { supabase } from '../../services/supabaseStore';
+import { useToast } from '../../context/ToastContext';
 import { ProductInventoryTable } from './ProductInventoryTable';
 import { CategoryManager } from './CategoryManager';
 import { ProductFormModal } from './ProductFormModal';
 import { AdminSettingsModal } from './AdminSettingsModal';
 
 export function AdminDashboard({ session, onLogout, onVisitStore }) {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'categories'
   // ⚡ 0ms SWR Instant Paint: initialize immediately from cached snapshot
   const [products, setProducts] = useState(() => adminInventoryService.getCachedProducts() || []);
@@ -41,10 +43,11 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
     try {
       const prods = await adminInventoryService.getAllProducts();
       const cats = adminInventoryService.getCategories();
-      if (Array.isArray(prods) && prods.length > 0) {
+      // Always take the database result, including an empty list.
+      if (Array.isArray(prods)) {
         setProducts(prods);
       }
-      if (Array.isArray(cats) && cats.length > 0) {
+      if (Array.isArray(cats)) {
         setCategories([...cats]);
       }
     } catch (err) {
@@ -86,36 +89,34 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
   const inStockCount = products.filter(p => p.in_stock !== false && (p.stock > 0 || p.stock === undefined)).length;
   const outOfStockCount = totalProductsCount - inStockCount;
 
-  // Product CRUD Handlers (0ms Optimistic UI + Guaranteed DB Sync)
+  // Product CRUD Handlers: update the screen only after the database confirms.
   const handleSaveProduct = async (productData) => {
-    if (productData.id) {
-      setProducts(prev => prev.map(p => p.id === productData.id ? { ...p, ...productData } : p));
-      try {
+    try {
+      if (productData.id) {
         const saved = await adminInventoryService.updateProduct(productData.id, productData);
         if (saved) {
           setProducts(prev => prev.map(p => p.id === productData.id ? saved : p));
         }
-      } catch (err) {
-        console.error('Error updating product in database:', err);
+        return saved;
       }
-    } else {
-      const tempId = productData.id || `prod_${Date.now()}`;
-      const optimisticProd = { ...productData, id: tempId };
-      setProducts(prev => [optimisticProd, ...prev]);
-      try {
-        const created = await adminInventoryService.addProduct(productData);
-        if (created) {
-          setProducts(prev => prev.map(p => p.id === tempId ? created : p));
-        }
-      } catch (err) {
-        console.error('Error adding product to database:', err);
+      const created = await adminInventoryService.addProduct(productData);
+      if (created) {
+        setProducts(prev => [created, ...prev.filter(p => p.id !== created.id)]);
       }
+      return created;
+    } catch (err) {
+      showToast(err.message || 'Could not save product', 'error');
+      throw err;
     }
   };
 
   const handleDeleteProduct = async (id) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-    adminInventoryService.deleteProduct(id).catch(console.error);
+    try {
+      await adminInventoryService.deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      showToast(err.message || 'Could not delete product', 'error');
+    }
   };
 
   const handleToggleInStock = async (id) => {
@@ -127,19 +128,20 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
           return {
             ...p,
             in_stock: nextInStock,
-            stock: nextInStock ? (p.stock > 0 ? p.stock : 50) : 0,
-            stock_quantity: nextInStock ? (p.stock_quantity > 0 ? p.stock_quantity : 50) : 0
+            stock: nextInStock ? (p.stock > 0 ? p.stock : 1) : 0,
+            stock_quantity: nextInStock ? (p.stock_quantity > 0 ? p.stock_quantity : 1) : 0
           };
         }
         return p;
       })
     );
 
-    // 2. Background database sync
+    // 2. Background database sync; reload the true state on failure.
     try {
       await adminInventoryService.toggleInStock(id);
     } catch (err) {
-      console.warn('Failed to sync stock toggle to database:', err);
+      showToast(err.message || 'Could not update stock', 'error');
+      loadData(true);
     }
   };
 
@@ -152,7 +154,12 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
         return p;
       })
     );
-    await adminInventoryService.toggleStatus(id);
+    try {
+      await adminInventoryService.toggleStatus(id);
+    } catch (err) {
+      showToast(err.message || 'Could not update product status', 'error');
+      loadData(true);
+    }
   };
 
   const handleTogglePinProduct = async (id) => {
@@ -166,48 +173,58 @@ export function AdminDashboard({ session, onLogout, onVisitStore }) {
         return p;
       })
     );
-    const updated = await adminInventoryService.togglePinProduct(id);
-    if (updated) {
-      showToast(
-        updated.is_pinned 
-          ? `⭐ "${updated.title}" starred!` 
-          : `"${updated.title}" unstarred`,
-        'info'
-      );
+    try {
+      const updated = await adminInventoryService.togglePinProduct(id);
+      if (updated) {
+        showToast(
+          updated.is_pinned 
+            ? `⭐ "${updated.title}" starred!` 
+            : `"${updated.title}" unstarred`,
+          'info'
+        );
+      }
+    } catch (err) {
+      showToast(err.message || 'Could not update product', 'error');
+      loadData(true);
     }
   };
 
-  // Category Handlers (Instant optimistic state + Supabase Database Sync)
+  // Category Handlers: update the screen only after the database confirms.
   const handleAddCategory = async (cat) => {
-    const newCat = { ...cat, id: cat.id || `cat_${Date.now()}` };
-    setCategories((prev) => [...prev, newCat]);
-    await adminInventoryService.addCategory(cat);
-    setCategories([...adminInventoryService.getCategories()]);
+    try {
+      await adminInventoryService.addCategory(cat);
+      setCategories([...adminInventoryService.getCategories()]);
+    } catch (err) {
+      showToast(err.message || 'Could not add category', 'error');
+    }
   };
 
   const handleUpdateCategory = async (id, updates) => {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
-    await adminInventoryService.updateCategory(id, updates);
-    setCategories([...adminInventoryService.getCategories()]);
+    try {
+      await adminInventoryService.updateCategory(id, updates);
+      setCategories([...adminInventoryService.getCategories()]);
+      // A rename moves products too, so refresh the product list as well.
+      setProducts([...adminInventoryService.getCachedProducts()]);
+    } catch (err) {
+      showToast(err.message || 'Could not update category', 'error');
+    }
   };
 
   const handleDeleteCategory = async (id, targetCategoryName) => {
-    if (targetCategoryName) {
-      const oldCat = categories.find((c) => c.id === id);
-      const oldName = oldCat?.name;
-
-      // Optimistically shift products in local React state
-      if (oldName) {
-        setProducts((prev) =>
-          prev.map((p) => (p.category === oldName ? { ...p, category: targetCategoryName } : p))
-        );
+    try {
+      if (targetCategoryName) {
+        const deleted = await adminInventoryService.deleteCategoryAndReassign(id, targetCategoryName);
+        if (!deleted) {
+          showToast('Could not delete category', 'error');
+          return;
+        }
+      } else {
+        await adminInventoryService.deleteCategory(id);
       }
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-
-      await adminInventoryService.deleteCategoryAndReassign(id, targetCategoryName);
-    } else {
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      adminInventoryService.deleteCategory(id);
+      setCategories([...adminInventoryService.getCategories()]);
+      setProducts([...adminInventoryService.getCachedProducts()]);
+    } catch (err) {
+      showToast(err.message || 'Could not delete category', 'error');
     }
   };
 

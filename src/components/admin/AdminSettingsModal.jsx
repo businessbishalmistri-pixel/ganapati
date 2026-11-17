@@ -26,8 +26,10 @@ export function AdminSettingsModal({ isOpen, onClose }) {
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Fill the fields only when the modal opens, never while it is open,
+  // so a settings change mid-edit cannot wipe unsaved typing.
   useEffect(() => {
-    if (isOpen && !isSaving) {
+    if (isOpen) {
       setWhatsappNumber(settings?.whatsappNumber || '+91 9147364980');
       setStoreName(settings?.storeName || 'Ganapati Store');
       setStoreAddress(settings?.storeAddress || 'Main Store Hub');
@@ -39,7 +41,8 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setIsUploadingBanner(false);
       setIsDragging(false);
     }
-  }, [isOpen, settings?.updated_at, settings?.storeName, settings?.storeAddress, settings?.whatsappNumber, settings?.bannerImageUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -64,12 +67,12 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       setIsUploadingBanner(true);
       showToast('Compressing & uploading banner image...', 'info');
 
-      const previousBanner = settings?.bannerImageUrl || bannerImageUrl;
-
       // 1. High quality compression for wide banner (1920x800 max)
       const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 800, quality: 0.82 });
 
-      // 2. Upload to Supabase Storage bucket
+      // 2. Upload to Supabase Storage bucket. The choice is only staged here;
+      // it waits for Save like every other field, and the old banner is
+      // deleted only after the save succeeds.
       const uploadedUrl = await uploadImageToSupabase(
         compressed.blob || file, 
         'store_banner', 
@@ -77,19 +80,8 @@ export function AdminSettingsModal({ isOpen, onClose }) {
       );
 
       if (uploadedUrl) {
-        // Auto-clean previous banner from Supabase storage
-        if (previousBanner && previousBanner !== uploadedUrl) {
-          deleteImageFromSupabase(previousBanner).catch(console.warn);
-        }
-
         setBannerImageUrl(uploadedUrl);
-        
-        // 3. Auto-save to Supabase store_settings table
-        await updateSettings({
-          bannerImageUrl: uploadedUrl
-        });
-
-        showToast('New banner image uploaded & published live!', 'success');
+        showToast('Banner staged. Press Save Settings to publish it.', 'success');
       } else {
         showToast('Failed to upload banner image', 'error');
       }
@@ -125,19 +117,10 @@ export function AdminSettingsModal({ isOpen, onClose }) {
     setIsDragging(false);
   };
 
-  const handleRemoveBanner = async (e) => {
+  const handleRemoveBanner = (e) => {
     if (e) e.stopPropagation();
-    const oldBanner = bannerImageUrl || settings?.bannerImageUrl;
-    if (oldBanner) {
-      deleteImageFromSupabase(oldBanner).catch(console.warn);
-    }
+    // Only clears the local field; the old file is deleted only after Save succeeds.
     setBannerImageUrl('');
-    try {
-      await updateSettings({ bannerImageUrl: '' });
-      showToast('Banner image removed from storefront', 'info');
-    } catch (err) {
-      console.error('Failed to remove banner:', err);
-    }
   };
 
   const handleTestWhatsApp = () => {
@@ -166,19 +149,26 @@ export function AdminSettingsModal({ isOpen, onClose }) {
 
     try {
       setIsSaving(true);
+      const previousBanner = settings?.bannerImageUrl || '';
+      const newBanner = (bannerImageUrl || '').trim();
       const res = await updateSettings({
         whatsappNumber: whatsappNumber.trim(),
         storeName: storeName.trim(),
         storeAddress: storeAddress.trim(),
         storeHours: storeHours.trim(),
         announcementText: announcementText.trim(),
-        bannerImageUrl: (bannerImageUrl || '').trim(),
+        bannerImageUrl: newBanner,
         flatShippingFee: Number(flatShippingFee) || 0,
         freeShippingThreshold: Number(freeShippingThreshold) || 0
       });
 
       if (res && res.success === false) {
         throw new Error(res.error?.message || 'Failed to update database');
+      }
+
+      // Save confirmed: only now delete the replaced or removed old banner.
+      if (previousBanner && previousBanner !== newBanner) {
+        deleteImageFromSupabase(previousBanner).catch(console.warn);
       }
 
       showToast('Store settings & banner saved to Supabase cloud!', 'success');

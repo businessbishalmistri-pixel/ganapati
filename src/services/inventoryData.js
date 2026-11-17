@@ -46,10 +46,12 @@ export function normalizeProduct(p) {
   }
 
   const status = p.status === 'draft' ? 'draft' : 'active';
-  const effectiveStock = parseInt(p.stock_quantity ?? p.stock ?? (inStock ? 50 : 0), 10);
+  // Missing stock means 0 and out of stock, never an invented number.
+  const effectiveStock = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
   const costPrice = parseFloat(p.cost_price || 0) || 0;
   const lowStockThreshold = parseInt(p.low_stock_threshold ?? 5, 10);
   const isPinned = Boolean(p.is_pinned || p.is_starred || p.sub_category === 'pinned' || p.featured);
+  const hasVariants = Boolean(p.has_variants || p.hasVariants);
 
   return {
     id: p.id || `prod_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -78,7 +80,18 @@ export function normalizeProduct(p) {
     brand: p.brand || 'Ganapati Stores',
     created_at: p.created_at || new Date().toISOString(),
     updated_at: p.updated_at || new Date().toISOString(),
+    has_variants: hasVariants,
+    hasVariants: hasVariants,
     variants: Array.isArray(p.variants) ? p.variants : []
   };
+}
+
+/**
+ * One rule for showing variants, used by the product card and the detail page:
+ * more than one variant in the list. A single default variant is not a choice.
+ */
+export function productHasVariants(p) {
+  const list = Array.isArray(p?.variants) ? p.variants : [];
+  return list.length > 1;
 }
 

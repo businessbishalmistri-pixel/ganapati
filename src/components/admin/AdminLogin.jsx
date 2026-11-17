@@ -10,40 +10,39 @@ import {
   Sparkles,
   AlertCircle
 } from 'lucide-react';
+import { supabase } from '../../services/supabaseStore';
 
 export function AdminLogin({ onLoginSuccess, onBackToStore }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      // Required credentials: admin / admin@132
-      if (username.trim() === 'admin' && password === 'admin@132') {
-        const session = {
-          user: 'admin',
-          role: 'Administrator',
-          token: `ganapati_adm_${Date.now()}`,
-          loginTime: new Date().toISOString()
-        };
-        try {
-          localStorage.setItem('ganapati_admin_session', JSON.stringify(session));
-        } catch (e) {
-          console.warn(e);
-        }
-        setIsLoading(false);
-        onLoginSuccess(session);
-      } else {
-        setIsLoading(false);
-        setError('Invalid username or password. Please check your credentials.');
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password
+      });
+      if (signInError) {
+        setError(signInError.message || 'Could not sign in. Please check your email and password.');
+        return;
       }
-    }, 400);
+      if (!data?.session) {
+        setError('Could not sign in. Please check your email and password.');
+        return;
+      }
+      onLoginSuccess(data.session);
+    } catch (err) {
+      setError('Could not sign in. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -88,19 +87,19 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
-                Admin Username
+                Admin Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <User className="w-4 h-4" />
                 </div>
                 <input
-                  type="text"
+                  type="email"
                   required
                   autoFocus
-                  value={username}
-                  onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                  placeholder="admin"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                  placeholder="admin@example.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                 />
               </div>

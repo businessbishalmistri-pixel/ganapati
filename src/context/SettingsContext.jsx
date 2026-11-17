@@ -142,40 +142,37 @@ export const SettingsProvider = ({ children }) => {
     };
   }, []);
 
-  const updateSettings = async (newValues) => {
-    // 1. Optimistic update & instant tab broadcast
-    setSettings((prev) => {
-      const updated = { ...prev, ...newValues };
-      try {
-        localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(updated));
-        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-          const bc = new BroadcastChannel(BROADCAST_NAME);
-          bc.postMessage(updated);
-          bc.close();
-        }
-      } catch (e) {
-        console.warn(e);
+  const persistSettingsLocally = (next) => {
+    try {
+      localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(next));
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel(BROADCAST_NAME);
+        bc.postMessage(next);
+        bc.close();
       }
-      return updated;
-    });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  const updateSettings = async (newValues) => {
+    const previous = settings;
+
+    // 1. Optimistic update & instant tab broadcast
+    const updated = { ...previous, ...newValues };
+    setSettings(updated);
+    persistSettingsLocally(updated);
 
     // 2. Persist 100% directly to Supabase store_settings table
     const res = await updateStoreSettingsInSupabase(newValues);
     if (res?.success && res.data) {
-      setSettings((prev) => {
-        const next = { ...prev, ...res.data };
-        try {
-          localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(next));
-          if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-            const bc = new BroadcastChannel(BROADCAST_NAME);
-            bc.postMessage(next);
-            bc.close();
-          }
-        } catch (e) {
-          console.warn(e);
-        }
-        return next;
-      });
+      const next = { ...updated, ...res.data };
+      setSettings(next);
+      persistSettingsLocally(next);
+    } else {
+      // Roll the screen state and cache back to the previous settings.
+      setSettings(previous);
+      persistSettingsLocally(previous);
     }
     return res;
   };
