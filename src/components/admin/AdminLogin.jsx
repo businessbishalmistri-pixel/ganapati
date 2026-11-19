@@ -13,7 +13,7 @@ import {
 import { supabase } from '../../services/supabaseStore';
 
 export function AdminLogin({ onLoginSuccess, onBackToStore }) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -25,16 +25,21 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
     setIsLoading(true);
 
     try {
+      // Username login: "admin" signs in as the store admin account; a full
+      // email address still works as-is.
+      const loginEmail = username.trim().toLowerCase() === 'admin'
+        ? 'hello@bishalmistri.com'
+        : username.trim();
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: loginEmail,
         password
       });
       if (signInError) {
-        setError(signInError.message || 'Could not sign in. Please check your email and password.');
+        setError(signInError.message || 'Could not sign in. Please check your username and password.');
         return;
       }
       if (!data?.session) {
-        setError('Could not sign in. Please check your email and password.');
+        setError('Could not sign in. Please check your username and password.');
         return;
       }
       onLoginSuccess(data.session);
@@ -87,19 +92,19 @@ export function AdminLogin({ onLoginSuccess, onBackToStore }) {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
-                Admin Email
+                Username
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <User className="w-4 h-4" />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
                   autoFocus
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  placeholder="admin@example.com"
+                  value={username}
+                  onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                  placeholder="admin"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                 />
               </div>
